@@ -1,8 +1,9 @@
 # 補完（Homebrew の bash-completion@2）
 [ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ] && source "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
 
-# ls をカラー表示
+# alias設定
 alias ls='ls -G'
+alias ll='ls -lahG'
 
 # git の補完とプロンプト用関数（Xcode Command Line Tools 付属のもの）
 GIT_CORE=/Library/Developer/CommandLineTools/usr/share/git-core
