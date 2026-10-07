@@ -206,6 +206,7 @@
     "**/.forgejo/workflows/*.yml",
     "**/.forgejo/workflows/*.yaml",
   ],
+  "git.confirmSync": false,
 }
 
 // {
