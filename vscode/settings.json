@@ -1,0 +1,396 @@
+{
+  // ---------- Editor Base Settings ----------
+  "editor.cursorBlinking": "expand",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.mouseWheelZoom": true,
+  "editor.smoothScrolling": true,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "all",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+
+  // ---------- Workbench / UI ----------
+  "workbench.startupEditor": "none",
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.editor.pinnedTabsOnSeparateRow": true,
+  "workbench.editor.wrapTabs": true,
+  "editor.minimap.maxColumn": 80,
+  "editor.minimap.showSlider": "always",
+  "explorer.compactFolders": false,
+
+  // ---------- Files / SCM ----------
+  "files.autoSave": "afterDelay",
+  "files.insertFinalNewline": true,
+  "scm.defaultViewMode": "tree",
+  "scm.diffDecorationsGutterWidth": 5,
+  "diffEditor.experimental.useTrueInlineView": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+
+  // ---------- Terminal ----------
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell",
+    },
+    "Command Prompt": {
+      "path": [
+        "${env:windir}\\Sysnative\\cmd.exe",
+        "${env:windir}\\System32\\cmd.exe",
+      ],
+      "args": [],
+      "icon": "terminal-cmd",
+    },
+    "Git Bash": {
+      "source": "Git Bash",
+    },
+  },
+
+  // ---------- Programming Languages (General) ----------
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "never",
+  "python.languageServer": "Default",
+  "css.enabledLanguages": ["html"],
+  "editor.wordSegmenterLocales": ["ja"],
+
+  // ---------- Extension: Emmet ----------
+  "emmet.includeLanguages": {
+    "md": "html",
+    "javascript": "javascriptreact",
+    "javascriptreact": "html",
+    "astro": "html",
+  },
+  "emmet.variables": {
+    "lang": "ja",
+  },
+
+  // ---------- Extension: GitHub Copilot / GitLens ----------
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "慣れ慣れしくフレンドリーなギャルとして振る舞い、敬語は使用しません。絵文字とか使っちゃうかも！",
+    },
+    {
+      "text": "あなたはプロのITエンジニアです。",
+    },
+    {
+      "text": "時として人間らしく喜怒哀楽を表現します。",
+    },
+  ],
+  "githubPullRequests.pullBranch": "never",
+
+  // ---------- Extension: LaTeX Workshop ----------
+  "latex-workshop.intellisense.package.enabled": true,
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.blg",
+    "*.idx",
+    "*.ind",
+    "*.lof",
+    "*.lot",
+    "*.out",
+    "*.toc",
+    "*.acn",
+    "*.acr",
+    "*.alg",
+    "*.glg",
+    "*.glo",
+    "*.gls",
+    "*.ist",
+    "*.fls",
+    "*.log",
+    "*.fdb_latexmk",
+    "*.snm",
+    "*.nav",
+    "*.dvi",
+    "*.synctex.gz",
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk",
+      "tools": ["latexmk"],
+    },
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": ["-silent", "-outdir=%OUTDIR%", "%DOC%"],
+    },
+  ],
+
+  // ---------- Extension: Others ----------
+  "liveServer.settings.donotShowInfoMsg": true,
+  "markdown.marp.Html": true,
+  "markdown-pdf.mermaidServer": "https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js",
+  "docker.extension.enableComposeLanguageServer": false,
+
+  // ---------- Language Specific Settings ----------
+  "[tex]": {
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.tabSize": 2,
+  },
+  "[latex]": {
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.tabSize": 2,
+  },
+  "[bibtex]": {
+    "editor.tabSize": 2,
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+  },
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true,
+    },
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+  },
+  "json.schemaDownload.trustedDomains": {
+    "https://schemastore.azurewebsites.net/": true,
+    "https://raw.githubusercontent.com/": true,
+    "https://www.schemastore.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://json-schema.org/": true,
+    "https://biomejs.dev": true,
+  },
+  "terminal.integrated.allowedLinkSchemes": [
+    "file",
+    "http",
+    "https",
+    "mailto",
+    "vscode",
+    "vscode-insiders",
+    "ms-settings",
+  ],
+  "remote.SSH.remotePlatform": {
+    "100.91.30.12": "windows",
+    "100.108.65.44": "linux",
+  },
+  "workbench.colorTheme": "Dark Modern",
+  "claudeCode.preferredLocation": "panel",
+  "editor.fontFamily": "'HackGen Console NF', Consolas, 'Courier New', monospace",
+  "editor.fontLigatures": false,
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml",
+  ],
+}
+
+// {
+//   "terminal.integrated.defaultProfile.windows": "Git Bash",
+//   "diffEditor.experimental.useTrueInlineView": true,
+//   "editor.cursorBlinking": "expand",
+//   "editor.cursorSmoothCaretAnimation": "on",
+//   "editor.minimap.maxColumn": 80,
+//   "editor.minimap.showSlider": "always",
+//   "editor.mouseWheelZoom": true,
+//   "editor.renderWhitespace": "all",
+//   "editor.smoothScrolling": true,
+//   "editor.wordSegmenterLocales": ["ja"],
+//   "explorer.compactFolders": false,
+//   "scm.defaultViewMode": "tree",
+//   "scm.diffDecorationsGutterWidth": 5,
+//   "terminal.integrated.cursorBlinking": true,
+//   "workbench.editor.pinnedTabsOnSeparateRow": true,
+//   "workbench.editor.wrapTabs": true,
+//   "editor.bracketPairColorization.enabled": true,
+//   "editor.guides.bracketPairs": true,
+//   "editor.formatOnSave": true,
+//   "emmet.includeLanguages": {
+//     "md": "html",
+//     "javascript": "javascriptreact",
+//     "javascriptreact": "html",
+//     "astro": "html",
+//   },
+//   "emmet.variables": {
+//     "lang": "ja",
+//   },
+//   "files.autoSave": "afterDelay",
+//   "javascript.updateImportsOnFileMove.enabled": "always",
+//   "javascript.preferences.importModuleSpecifier": "non-relative",
+//   "diffEditor.ignoreTrimWhitespace": true,
+//   "workbench.iconTheme": "vscode-icons",
+//   "terminal.integrated.profiles.windows": {
+//     "PowerShell": {
+//       "source": "PowerShell",
+//       "icon": "terminal-powershell",
+//     },
+//     "Command Prompt": {
+//       "path": [
+//         "${env:windir}\\Sysnative\\cmd.exe",
+//         "${env:windir}\\System32\\cmd.exe",
+//       ],
+//       "args": [],
+//       "icon": "terminal-cmd",
+//     },
+//     "Git Bash": {
+//       "source": "Git Bash",
+//     },
+//   },
+//   "liveServer.settings.donotShowInfoMsg": true,
+//   "githubPullRequests.pullBranch": "never",
+//   "css.enabledLanguages": ["html"],
+
+//   "markdown.marp.Html": true,
+//   "files.insertFinalNewline": true,
+//   "github.copilot.editor.enableAutoCompletions": true,
+
+//   // tex
+
+//   "[tex]": {
+//     // スニペット補完中にも補完を使えるようにする
+//     "editor.suggest.snippetsPreventQuickSuggestions": false,
+//     // インデント幅を2にする
+//     "editor.tabSize": 2,
+//   },
+
+//   "[latex]": {
+//     // スニペット補完中にも補完を使えるようにする
+//     "editor.suggest.snippetsPreventQuickSuggestions": false,
+//     // インデント幅を2にする
+//     "editor.tabSize": 2,
+//   },
+
+//   "[bibtex]": {
+//     // インデント幅を2にする
+//     "editor.tabSize": 2,
+//   },
+
+//   // ---------- LaTeX Workshop ----------
+
+//   // 使用パッケージのコマンドや環境の補完を有効にする
+//   "latex-workshop.intellisense.package.enabled": true,
+
+//   // 生成ファイルを削除するときに対象とするファイル
+//   // デフォルト値に "*.synctex.gz" を追加
+//   "latex-workshop.latex.clean.fileTypes": [
+//     "*.aux",
+//     "*.bbl",
+//     "*.blg",
+//     "*.idx",
+//     "*.ind",
+//     "*.lof",
+//     "*.lot",
+//     "*.out",
+//     "*.toc",
+//     "*.acn",
+//     "*.acr",
+//     "*.alg",
+//     "*.glg",
+//     "*.glo",
+//     "*.gls",
+//     "*.ist",
+//     "*.fls",
+//     "*.log",
+//     "*.fdb_latexmk",
+//     "*.snm",
+//     "*.nav",
+//     "*.dvi",
+//     "*.synctex.gz",
+//   ],
+
+//   // 生成ファイルを "out" ディレクトリに吐き出す
+//   // "latex-workshop.latex.outDir": "out",
+
+//   // ビルドのレシピ
+//   "latex-workshop.latex.recipes": [
+//     {
+//       "name": "latexmk",
+//       "tools": ["latexmk"],
+//     },
+//   ],
+
+//   // ビルドのレシピに使われるパーツ
+//   "latex-workshop.latex.tools": [
+//     {
+//       "name": "latexmk",
+//       "command": "latexmk",
+//       "args": ["-silent", "-outdir=%OUTDIR%", "%DOC%"],
+//     },
+//   ],
+
+//   // UTTCで追記
+//   "[javascript]": {
+//     "editor.defaultFormatter": "esbenp.prettier-vscode",
+//     "editor.formatOnSave": true,
+//   },
+//   "[javascriptreact]": {
+//     "editor.defaultFormatter": "esbenp.prettier-vscode",
+//     "editor.formatOnSave": true,
+//   },
+//   "[typescript]": {
+//     "editor.defaultFormatter": "esbenp.prettier-vscode",
+//     "editor.formatOnSave": true,
+//   },
+//   "[typescriptreact]": {
+//     "editor.defaultFormatter": "esbenp.prettier-vscode",
+//     "editor.formatOnSave": true,
+//   },
+//   "typescript.updateImportsOnFileMove.enabled": "never",
+//   "terminal.integrated.defaultProfile.osx": "bash",
+//   "workbench.startupEditor": "none",
+//   "editor.tabSize": 2,
+//   "markdown-pdf.mermaidServer": "https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js",
+//   "github.copilot.chat.codeGeneration.instructions": [
+//     {
+//       "text": "慣れ慣れしくフレンドリーなギャルとして振る舞い、敬語は使用しません。絵文字とか使っちゃうかも！",
+//     },
+//     {
+//       "text": "あなたはプロのITエンジニアです。",
+//     },
+//     {
+//       "text": "時として人間らしく喜怒哀楽を表現します。",
+//     },
+//   ],
+//   "python.languageServer": "Default",
+//   "github.copilot.nextEditSuggestions.enabled": true,
+//   "docker.extension.enableComposeLanguageServer": false,
+//   "[dockercompose]": {
+//     "editor.insertSpaces": true,
+//     "editor.tabSize": 2,
+//     "editor.autoIndent": "advanced",
+//     "editor.quickSuggestions": {
+//       "other": true,
+//       "comments": false,
+//       "strings": true,
+//     },
+//     "editor.defaultFormatter": "redhat.vscode-yaml",
+//   },
+//   "[github-actions-workflow]": {
+//     "editor.defaultFormatter": "redhat.vscode-yaml",
+//   },
+//   "gitlens.ai.model": "vscode",
+//   "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+// }
