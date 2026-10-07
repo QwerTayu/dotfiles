@@ -1,4 +1,4 @@
 .DS_Store
 *.local
-*.baskup
+*.backup
 .ssh/
