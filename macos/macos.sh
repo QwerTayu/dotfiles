@@ -7,5 +7,9 @@ defaults write com.apple.finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowPathbar -bool true
 # Dock: 自動で隠す
 defaults write com.apple.dock autohide -bool true
+# トラックパッド: タップでクリック（内蔵・Bluetooth・ログイン画面）
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
 
 killall Finder Dock
