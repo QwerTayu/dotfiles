@@ -220,4 +220,8 @@ git push
   （フォルダ内には会話履歴なども溜まるため）。
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
+- Raycast の 1Password 拡張は入れない（Raycast と 1Password CLI を連携しない）。
+  CLI 連携は一度許可すると、しばらく Raycast のプロセスから `op` で vault を読めるため、
+  Raycast 本体や他の拡張機能に問題があったときに 1Password の中身が漏れるおそれがある。
+  代わりに 1Password 標準のクイックアクセス（`Cmd + Shift + Space`）を使う。
 - 最終目標はこの[dotfiles](https://github.com/YosukeIida/dotfiles)
