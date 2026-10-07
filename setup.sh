@@ -20,3 +20,4 @@ link bash/bashrc              .bashrc
 link git/gitconfig            .gitconfig
 link vscode/settings.json     "Library/Application Support/Code/User/settings.json"
 link vscode/keybindings.json  "Library/Application Support/Code/User/keybindings.json"
+link vscode/snippets          "Library/Application Support/Code/User/snippets"
