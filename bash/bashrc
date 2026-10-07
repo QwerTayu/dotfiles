@@ -17,6 +17,9 @@ GIT_CORE=/Library/Developer/CommandLineTools/usr/share/git-core
 [ -r "$GIT_CORE/git-prompt.sh" ] && source "$GIT_CORE/git-prompt.sh"
 unset GIT_CORE
 
+# 1Password CLI の補完
+type op &>/dev/null && source <(op completion bash)
+
 # プロンプト: [ユーザー@ホスト ディレクトリ] (ブランチ*)$
 GIT_PS1_SHOWDIRTYSTATE=true
 # git-prompt.sh が読めなかったときは空の関数にしてエラーを防ぐ
