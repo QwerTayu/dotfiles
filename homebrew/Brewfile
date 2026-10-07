@@ -12,6 +12,8 @@ cask "1password"
 cask "claude-code"
 # Web browser
 cask "google-chrome"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
 # Replacement for Docker Desktop
 cask "orbstack"
 # Move and resize windows using keyboard shortcuts or snap areas
