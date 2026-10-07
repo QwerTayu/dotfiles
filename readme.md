@@ -17,6 +17,9 @@ dotfiles/
 │   ├── settings.json       → ~/Library/Application Support/Code/User/settings.json
 │   ├── keybindings.json    → ~/Library/Application Support/Code/User/keybindings.json
 │   └── snippets/           → ~/Library/Application Support/Code/User/snippets/
+├── claude/
+│   ├── settings.json       → ~/.claude/settings.json
+│   └── CLAUDE.md           → ~/.claude/CLAUDE.md
 ├── macos/
 │   └── macos.sh            Finder・Dock などのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
@@ -44,7 +47,7 @@ cd ~/dotfiles
 brew bundle --file=homebrew/Brewfile
 ```
 
-bash・gh・VS Code・Chrome・VS Code拡張機能などがまとめて入る。
+bash・gh・VS Code・Chrome・Claude Code・VS Code拡張機能などがまとめて入る。
 公式サイトから入れたアプリと重複してエラーになる場合は
 `brew install --cask --adopt アプリ名` で Homebrew 管理に移す。
 
@@ -84,7 +87,16 @@ gh auth login
 
 GitHub.com → HTTPS → Yes → Login with a web browser の順に選ぶ。
 
-### 7. macOS の設定
+### 7. Claude Code にログイン
+
+```sh
+claude
+```
+
+ブラウザが開くので Claude アカウント（有料プラン）でログインする。
+ユーザー全体で使う MCP サーバーがあれば `claude mcp add --scope user ...` で追加する。
+
+### 8. macOS の設定
 
 ```sh
 ./macos/macos.sh
@@ -93,7 +105,7 @@ defaultbrowser chrome
 
 デフォルトブラウザは macOS の仕様で確認ダイアログが出るので、ボタンを押して許可する。
 
-### 8. VS Code の Settings Sync を調整
+### 9. VS Code の Settings Sync を調整
 
 Settings Sync を使う場合は、dotfiles と競合しないように同期項目を絞る。
 `Cmd+Shift+P` →「Settings Sync: Configure」で以下のチェックを外す。
@@ -115,6 +127,15 @@ Settings Sync を使う場合は、dotfiles と競合しないように同期項
 brew bundle dump --file=homebrew/Brewfile --force
 ```
 
+### アプリを更新するとき
+
+```sh
+brew update && brew upgrade
+```
+
+Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
+Chrome は自動アップデートされるので brew では更新されない。
+
 ### macOS の設定を変えたいとき
 
 `macos/macos.sh` に `defaults write` の行を追加して実行する。
@@ -131,16 +152,19 @@ git push
 
 | 対象 | 管理方法 |
 |---|---|
-| シェル・git・VS Code の設定 | dotfiles（シンボリックリンク） |
+| シェル・git・VS Code・Claude Code の設定 | dotfiles（シンボリックリンク） |
 | アプリ・コマンド・VS Code 拡張機能 | Brewfile |
 | Finder・Dock などの macOS 設定 | macos/macos.sh |
 | Chrome のブックマーク・拡張機能 | Google アカウントの同期 |
 | VS Code の UI 状態 | Settings Sync（または管理しない） |
+| Claude Code のログイン情報・履歴（`~/.claude.json` など） | 管理しない |
 
 ## メモ
 
 - Mac のターミナルはログインシェルで起動するので `.bash_profile` が読まれる。
   設定本体は `bashrc` に書き、`bash_profile` から読み込んでいる。
 - `setlocale` の警告が出る場合は `bash_profile` の `LANG` / `LC_ALL` を確認。
-- Chrome は自動アップデートされるので `brew upgrade` では更新されない。
+- `~/.claude/` はフォルダごとリンクせず、自分で書くファイルだけを個別にリンクする
+  （フォルダ内には会話履歴なども溜まるため）。
+- `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
