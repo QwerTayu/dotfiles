@@ -2,3 +2,5 @@
 brew "bash"
 # GitHub command-line tool
 brew "gh"
+# Web browser
+cask "google-chrome"
