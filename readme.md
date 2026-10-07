@@ -112,6 +112,7 @@ defaultbrowser chrome
 
 - **Rectangle**：初回起動時に システム設定 → プライバシーとセキュリティ → アクセシビリティ で許可する。
   ショートカットは「Recommended」を選ぶ（`Control + Option + ←/→` で左右半分、`Control + Option + Enter` で最大化）。
+  起動中しかショートカットが効かないので、メニューバーのアイコン → 設定 で「ログイン時に起動（Launch on login）」をオンにする。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
 ### 10. VS Code の Settings Sync を調整
