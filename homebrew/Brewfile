@@ -12,6 +12,8 @@ cask "1password"
 cask "claude-code"
 # Web browser
 cask "google-chrome"
+# Replacement for Docker Desktop
+cask "orbstack"
 # Move and resize windows using keyboard shortcuts or snap areas
 cask "rectangle"
 # Open-source code editor

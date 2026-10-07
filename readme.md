@@ -37,7 +37,11 @@ dotfiles/
 xcode-select --install
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
+softwareupdate --install-rosetta --agree-to-license
 ```
+
+Rosetta は OrbStack で Intel（amd64）向けの Docker イメージを動かすのに使う。
+入れておかなくても、必要になったときにダイアログで聞かれる。
 
 ### 2. clone してアプリを一括インストール
 
