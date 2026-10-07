@@ -1,7 +1,11 @@
 # Bourne-Again SHell, a UNIX command interpreter
 brew "bash"
+# Command-line tool for getting & setting the default browser
+brew "defaultbrowser"
 # GitHub command-line tool
 brew "gh"
+# Terminal-based AI coding assistant
+cask "claude-code"
 # Web browser
 cask "google-chrome"
 # Open-source code editor
