@@ -10,6 +10,8 @@ brew "gh"
 cask "1password"
 # Terminal-based AI coding assistant
 cask "claude-code"
+# Voice and text chat software
+cask "discord"
 # Web browser
 cask "google-chrome"
 # Knowledge base that works on top of a local folder of plain text Markdown files
@@ -18,6 +20,10 @@ cask "obsidian"
 cask "orbstack"
 # Control your tools with a few keystrokes
 cask "raycast"
+# Team communication and collaboration software
+cask "slack"
+# Music streaming service
+cask "spotify"
 # Open-source code editor
 cask "visual-studio-code"
 vscode "anthropic.claude-code"
