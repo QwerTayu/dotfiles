@@ -6,6 +6,8 @@ brew "bash-completion@2"
 brew "defaultbrowser"
 # GitHub command-line tool
 brew "gh"
+# Password manager that keeps all passwords secure behind one password
+cask "1password"
 # Terminal-based AI coding assistant
 cask "claude-code"
 # Web browser
