@@ -51,7 +51,7 @@ cd ~/dotfiles
 brew bundle --file=homebrew/Brewfile
 ```
 
-bash・bash-completion・gh・VS Code・Chrome・Claude Code・Rectangle・VS Code拡張機能などがまとめて入る。
+bash・bash-completion・gh・VS Code・Chrome・Claude Code・VS Code拡張機能などがまとめて入る。
 公式サイトから入れたアプリと重複してエラーになる場合は
 `brew install --cask --adopt アプリ名` で Homebrew 管理に移す。
 
@@ -124,9 +124,6 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 
 スクリプト化できない（macOS のセキュリティ上、手動操作が必要な）もの。
 
-- **Rectangle**：初回起動時に システム設定 → プライバシーとセキュリティ → アクセシビリティ で許可する。
-  ショートカットは「Recommended」を選ぶ（`Control + Option + ←/→` で左右半分、`Control + Option + Enter` で最大化）。
-  起動中しかショートカットが効かないので、メニューバーのアイコン → 設定 で「ログイン時に起動（Launch on login）」をオンにする。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
 ### 10. VS Code の Settings Sync を調整
@@ -174,12 +171,6 @@ GUI（システム設定）で変えた設定を取り込みたいときは、`~
 
 差分が見つからない設定は `defaults` で再現できないタイプなので、
 このREADMEの「手動で許可・確認するもの」に手順として書いておく。
-
-### Rectangle のショートカットを変えたとき
-
-Rectangle の設定画面の「Export」で JSON を書き出し、
-`rectangle/RectangleConfig.json` として保存して
-`~/Library/Application Support/Rectangle/RectangleConfig.json` にリンクする。
 
 ### 変更を保存する
 

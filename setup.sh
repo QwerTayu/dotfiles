@@ -23,4 +23,3 @@ link vscode/keybindings.json         "Library/Application Support/Code/User/keyb
 link vscode/snippets                 "Library/Application Support/Code/User/snippets"
 link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
-link rectangle/RectangleConfig.json  "Library/Application Support/Rectangle/RectangleConfig.json"
