@@ -1,5 +1,7 @@
 # Bourne-Again SHell, a UNIX command interpreter
 brew "bash"
+# Programmable completion for Bash 4.2+
+brew "bash-completion@2"
 # Command-line tool for getting & setting the default browser
 brew "defaultbrowser"
 # GitHub command-line tool
