@@ -196,3 +196,4 @@ git push
   （フォルダ内には会話履歴なども溜まるため）。
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
+- 最終目標はこの[dotfiles](https://github.com/YosukeIida/dotfiles)
