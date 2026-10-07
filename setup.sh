@@ -21,3 +21,5 @@ link git/gitconfig            .gitconfig
 link vscode/settings.json     "Library/Application Support/Code/User/settings.json"
 link vscode/keybindings.json  "Library/Application Support/Code/User/keybindings.json"
 link vscode/snippets          "Library/Application Support/Code/User/snippets"
+link claude/settings.json  .claude/settings.json
+link claude/CLAUDE.md      .claude/CLAUDE.md
