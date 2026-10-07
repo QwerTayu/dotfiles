@@ -16,6 +16,8 @@ cask "google-chrome"
 cask "obsidian"
 # Replacement for Docker Desktop
 cask "orbstack"
+# Control your tools with a few keystrokes
+cask "raycast"
 # Open-source code editor
 cask "visual-studio-code"
 vscode "anthropic.claude-code"
