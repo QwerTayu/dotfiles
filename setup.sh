@@ -15,11 +15,12 @@ link() {
 }
 
 # ここにリンクを追加していく
-link bash/bash_profile        .bash_profile
-link bash/bashrc              .bashrc
-link git/gitconfig            .gitconfig
-link vscode/settings.json     "Library/Application Support/Code/User/settings.json"
-link vscode/keybindings.json  "Library/Application Support/Code/User/keybindings.json"
-link vscode/snippets          "Library/Application Support/Code/User/snippets"
-link claude/settings.json  .claude/settings.json
-link claude/CLAUDE.md      .claude/CLAUDE.md
+link bash/bash_profile               .bash_profile
+link bash/bashrc                     .bashrc
+link git/gitconfig                   .gitconfig
+link vscode/settings.json            "Library/Application Support/Code/User/settings.json"
+link vscode/keybindings.json         "Library/Application Support/Code/User/keybindings.json"
+link vscode/snippets                 "Library/Application Support/Code/User/snippets"
+link claude/settings.json            .claude/settings.json
+link claude/CLAUDE.md                .claude/CLAUDE.md
+link rectangle/RectangleConfig.json  "Library/Application Support/Rectangle/RectangleConfig.json"
