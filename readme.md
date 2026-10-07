@@ -21,7 +21,7 @@ dotfiles/
 │   ├── settings.json       → ~/.claude/settings.json
 │   └── CLAUDE.md           → ~/.claude/CLAUDE.md
 ├── macos/
-│   └── macos.sh            Finder・Dock などのmacOS設定
+│   └── macos.sh            Finder・Dock・トラックパッドなどのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
 └── README.md
 ```
@@ -47,7 +47,7 @@ cd ~/dotfiles
 brew bundle --file=homebrew/Brewfile
 ```
 
-bash・gh・VS Code・Chrome・Claude Code・VS Code拡張機能などがまとめて入る。
+bash・bash-completion・gh・VS Code・Chrome・Claude Code・Rectangle・VS Code拡張機能などがまとめて入る。
 公式サイトから入れたアプリと重複してエラーになる場合は
 `brew install --cask --adopt アプリ名` で Homebrew 管理に移す。
 
@@ -68,6 +68,7 @@ chsh -s /opt/homebrew/bin/bash
 ```
 
 ターミナルを開き直して `echo $BASH_VERSION` が 5.x ならOK。
+`git ` と打って Tab を押し、サブコマンドが補完されれば bash-completion も有効。
 
 ### 5. git の個人情報を設定（リポジトリには入れない）
 
@@ -105,7 +106,15 @@ defaultbrowser chrome
 
 デフォルトブラウザは macOS の仕様で確認ダイアログが出るので、ボタンを押して許可する。
 
-### 9. VS Code の Settings Sync を調整
+### 9. 手動で許可・確認するもの
+
+スクリプト化できない（macOS のセキュリティ上、手動操作が必要な）もの。
+
+- **Rectangle**：初回起動時に システム設定 → プライバシーとセキュリティ → アクセシビリティ で許可する。
+  ショートカットは「Recommended」を選ぶ（`Control + Option + ←/→` で左右半分、`Control + Option + Enter` で最大化）。
+- **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
+
+### 10. VS Code の Settings Sync を調整
 
 Settings Sync を使う場合は、dotfiles と競合しないように同期項目を絞る。
 `Cmd+Shift+P` →「Settings Sync: Configure」で以下のチェックを外す。
@@ -140,6 +149,23 @@ Chrome は自動アップデートされるので brew では更新されない�
 
 `macos/macos.sh` に `defaults write` の行を追加して実行する。
 
+GUI（システム設定）で変えた設定を取り込みたいときは、`~/dotfiles` で Claude Code を起動して
+次のように頼むと、変更前後の `defaults read` の差分から `defaults write` に起こしてくれる。
+
+```
+これからシステム設定で〇〇を変更します。
+変更前と変更後の defaults の差分を取って、macos/macos.sh に追記してください。
+```
+
+差分が見つからない設定は `defaults` で再現できないタイプなので、
+このREADMEの「手動で許可・確認するもの」に手順として書いておく。
+
+### Rectangle のショートカットを変えたとき
+
+Rectangle の設定画面の「Export」で JSON を書き出し、
+`rectangle/RectangleConfig.json` として保存して
+`~/Library/Application Support/Rectangle/RectangleConfig.json` にリンクする。
+
 ### 変更を保存する
 
 ```sh
@@ -154,7 +180,8 @@ git push
 |---|---|
 | シェル・git・VS Code・Claude Code の設定 | dotfiles（シンボリックリンク） |
 | アプリ・コマンド・VS Code 拡張機能 | Brewfile |
-| Finder・Dock などの macOS 設定 | macos/macos.sh |
+| Finder・Dock・トラックパッドなどの macOS 設定 | macos/macos.sh |
+| アクセシビリティ許可・FileVault・デフォルトブラウザの確認 | 手動（このREADMEに手順を記載） |
 | Chrome のブックマーク・拡張機能 | Google アカウントの同期 |
 | VS Code の UI 状態 | Settings Sync（または管理しない） |
 | Claude Code のログイン情報・履歴（`~/.claude.json` など） | 管理しない |
