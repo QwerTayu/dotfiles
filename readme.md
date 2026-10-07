@@ -20,6 +20,8 @@ dotfiles/
 ├── claude/
 │   ├── settings.json       → ~/.claude/settings.json
 │   └── CLAUDE.md           → ~/.claude/CLAUDE.md
+├── raycast/
+│   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
 │   └── macos.sh            Finder・Dock・トラックパッドなどのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
@@ -124,6 +126,9 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 
 スクリプト化できない（macOS のセキュリティ上、手動操作が必要な）もの。
 
+- **Raycast**：起動して「Import Settings & Data」を実行し、`raycast/raycast.rayconfig` を読み込む。
+  パスワードは 1Password の「Raycast Export」に保存してある。
+  ウィンドウ管理を使うので、システム設定 → プライバシーとセキュリティ → アクセシビリティ で Raycast を許可する。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
 ### 10. VS Code の Settings Sync を調整
@@ -172,6 +177,19 @@ GUI（システム設定）で変えた設定を取り込みたいときは、`~
 差分が見つからない設定は `defaults` で再現できないタイプなので、
 このREADMEの「手動で許可・確認するもの」に手順として書いておく。
 
+### Raycast の設定を変えたとき
+
+Raycast で「Export Settings & Data」を実行し、保存先に `raycast/` を選ぶ。
+パスワードは 1Password の「Raycast Export」と同じものにする。
+書き出されたファイル（`Raycast-...rayconfig`）を `raycast/raycast.rayconfig` に上書きで名前を変える。
+
+```sh
+mv raycast/Raycast-*.rayconfig raycast/raycast.rayconfig
+```
+
+中身は暗号化されているので git で差分は見られない。
+書き出す項目は選べず全部入るが、暗号化されているのでクリップボード履歴なども外からは読めない。
+
 ### 変更を保存する
 
 ```sh
@@ -188,6 +206,7 @@ git push
 | アプリ・コマンド・VS Code 拡張機能 | Brewfile |
 | Finder・Dock・トラックパッドなどの macOS 設定 | macos/macos.sh |
 | アクセシビリティ許可・FileVault・デフォルトブラウザの確認 | 手動（このREADMEに手順を記載） |
+| Raycast の設定・拡張機能 | dotfiles（暗号化した `.rayconfig` を Import） |
 | Chrome のブックマーク・拡張機能 | Google アカウントの同期 |
 | VS Code の UI 状態 | Settings Sync（または管理しない） |
 | Claude Code のログイン情報・履歴（`~/.claude.json` など） | 管理しない |
