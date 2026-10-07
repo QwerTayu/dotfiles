@@ -5,6 +5,12 @@
 alias ls='ls -G'
 alias ll='ls -lahG'
 
+# 履歴
+HISTSIZE=10000                 # 記憶するコマンド数
+HISTFILESIZE=20000             # ファイルに保存するコマンド数
+HISTCONTROL=ignoreboth         # 重複と、先頭がスペースのコマンドは残さない
+shopt -s histappend            # 複数ターミナルの履歴を上書きせず追記する
+
 # git の補完とプロンプト用関数（Xcode Command Line Tools 付属のもの）
 GIT_CORE=/Library/Developer/CommandLineTools/usr/share/git-core
 [ -r "$GIT_CORE/git-completion.bash" ] && source "$GIT_CORE/git-completion.bash"
