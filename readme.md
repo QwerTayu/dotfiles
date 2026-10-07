@@ -110,6 +110,16 @@ defaultbrowser chrome
 
 デフォルトブラウザは macOS の仕様で確認ダイアログが出るので、ボタンを押して許可する。
 
+Mac の名前は Mac ごとに違うので `macos.sh` には入れず、手で設定する（例: `QwerTayuMac`）。
+
+```sh
+sudo scutil --set ComputerName  名前   # AirDrop・Finder の共有などに表示される名前
+sudo scutil --set LocalHostName 名前   # ネットワーク上の名前（名前.local）
+sudo scutil --set HostName      名前   # ターミナルのプロンプトの \h
+```
+
+システム設定 → 一般 → 情報 → 名前 で変えると、HostName は未設定のまま残るので、HostName だけはコマンドで設定する。
+
 ### 9. 手動で許可・確認するもの
 
 スクリプト化できない（macOS のセキュリティ上、手動操作が必要な）もの。
