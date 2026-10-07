@@ -28,6 +28,8 @@ cask "raycast"
 cask "slack"
 # Music streaming service
 cask "spotify"
+# Video game digital distribution service
+cask "steam"
 # Open-source code editor
 cask "visual-studio-code"
 vscode "anthropic.claude-code"
