@@ -1,0 +1,17 @@
+# 補完（Homebrew の bash-completion@2）
+[ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ] && source "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
+
+# ls をカラー表示
+alias ls='ls -G'
+
+# git の補完とプロンプト用関数（Xcode Command Line Tools 付属のもの）
+GIT_CORE=/Library/Developer/CommandLineTools/usr/share/git-core
+[ -r "$GIT_CORE/git-completion.bash" ] && source "$GIT_CORE/git-completion.bash"
+[ -r "$GIT_CORE/git-prompt.sh" ] && source "$GIT_CORE/git-prompt.sh"
+unset GIT_CORE
+
+# プロンプト: [ユーザー@ホスト ディレクトリ] (ブランチ*)$
+GIT_PS1_SHOWDIRTYSTATE=true
+# git-prompt.sh が読めなかったときは空の関数にしてエラーを防ぐ
+type __git_ps1 &>/dev/null || __git_ps1() { :; }
+PS1='\[\033[37m\][\[\033[36m\]\u\[\033[37m\]@\h \[\033[32m\]\w\[\033[37m\]]\[\033[1;36m\]$(__git_ps1)\[\033[00m\]\$ '
