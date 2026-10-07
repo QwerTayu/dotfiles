@@ -11,9 +11,11 @@ defaults write com.apple.dock autohide -bool true
 defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+# スクリーンショット: ファイルに保存せずクリップボードにコピーする
+defaults write com.apple.screencapture target clipboard
 # Spotlight: Cmd+Space のショートカットをオフにする（Raycast に使うため）
 defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 64 '<dict><key>enabled</key><false/></dict>'
 
 # ショートカットの変更をログアウトせずに反映する
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
-killall Finder Dock
+killall Finder Dock SystemUIServer
