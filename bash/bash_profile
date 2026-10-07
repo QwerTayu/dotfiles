@@ -7,3 +7,6 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # ロケール設定（setlocale警告の対策）
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+
+# bash補完
+[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
