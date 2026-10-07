@@ -1,0 +1,9 @@
+# Homebrewのパスを通す
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# 設定本体はbashrcに書く
+[ -f ~/.bashrc ] && source ~/.bashrc
+
+# ロケール設定（setlocale警告の対策）
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8

@@ -1,0 +1,4 @@
+# Bourne-Again SHell, a UNIX command interpreter
+brew "bash"
+# GitHub command-line tool
+brew "gh"
