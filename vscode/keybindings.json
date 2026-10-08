@@ -3,7 +3,7 @@
     {
         "key": "tab",
         "command": "editor.action.triggerSuggest",
-        "when": "editorHasCompletionItemProvider && textInputFocus && !editorReadonly && !suggestWidgetVisible"
+        "when": "editorHasCompletionItemProvider && textInputFocus && !editorReadonly && !suggestWidgetVisible && editorLangId != 'markdown'"
     },
     {
         "key": "cmd+i",
