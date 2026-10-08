@@ -11,6 +11,8 @@ defaults write com.apple.dock autohide -bool true
 defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+# スクロールバー: 常に表示する（スクロールの向きを分かりやすくする）
+defaults write NSGlobalDomain AppleShowScrollBars -string Always
 # スクリーンショット: ファイルに保存せずクリップボードにコピーする
 defaults write com.apple.screencapture target clipboard
 # Spotlight: Cmd+Space のショートカットをオフにする（Raycast に使うため）
