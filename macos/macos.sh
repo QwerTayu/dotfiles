@@ -5,6 +5,8 @@ defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 defaults write com.apple.finder AppleShowAllFiles -bool true
 # Finder: パスバーを表示
 defaults write com.apple.finder ShowPathbar -bool true
+# Finder: ウィンドウのタイトルにフルパスを表示
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
 # Dock: 自動で隠す
 defaults write com.apple.dock autohide -bool true
 # トラックパッド: タップでクリック（内蔵・Bluetooth・ログイン画面）
