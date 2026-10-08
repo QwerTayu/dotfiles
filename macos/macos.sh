@@ -11,6 +11,11 @@ defaults write com.apple.dock autohide -bool true
 defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+# 電源: 電源アダプタ接続時はディスプレイを消さず、スリープもしない（バッテリー時は変えない）
+# 画面が消えずスクリーンセーバーも起動しなければロックはかからない。クラムシェルモードも電源接続時に使える
+sudo pmset -c displaysleep 0 sleep 0
+# スクリーンセーバー: 起動しない
+defaults -currentHost write com.apple.screensaver idleTime -int 0
 # スクロールバー: 常に表示する（スクロールの向きを分かりやすくする）
 defaults write NSGlobalDomain AppleShowScrollBars -string Always
 # スクリーンショット: ファイルに保存せずクリップボードにコピーする
