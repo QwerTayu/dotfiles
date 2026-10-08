@@ -7,8 +7,8 @@ defaults write com.apple.finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowPathbar -bool true
 # Finder: ステータスバー（項目数・空き容量）を表示
 defaults write com.apple.finder ShowStatusBar -bool true
-# Finder: ウィンドウのタイトルにフルパスを表示
-defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+# Finder: ウィンドウのタイトルにフルパスを表示（使わないのでオフ）
+# defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
 # Dock: 自動で隠す
 defaults write com.apple.dock autohide -bool true
 # トラックパッド: タップでクリック（内蔵・Bluetooth・ログイン画面）
