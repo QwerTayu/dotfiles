@@ -16,6 +16,7 @@ cask "claude"
 cask "claude-code"
 # Voice and text chat software
 cask "discord"
+cask "font-hackgen-nerd"
 # Web browser
 cask "google-chrome"
 # Knowledge base that works on top of a local folder of plain text Markdown files

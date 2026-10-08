@@ -9,7 +9,7 @@
   "editor.renderWhitespace": "all",
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": true,
-  "editor.fontFamily": "'HackGen Console NF', Consolas, 'Courier New', monospace",
+  "editor.fontFamily": "'HackGen Console NF', Menlo, monospace",
   "editor.fontLigatures": false,
   "editor.wordSegmenterLocales": ["ja"],
 
