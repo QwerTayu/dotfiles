@@ -129,6 +129,9 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 - **Raycast**：起動して「Import Settings & Data」を実行し、`raycast/raycast.rayconfig` を読み込む。
   パスワードは 1Password の「Raycast Export」に保存してある。
   ウィンドウ管理を使うので、システム設定 → プライバシーとセキュリティ → アクセシビリティ で Raycast を許可する。
+- **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
+  マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
+- **入力ソース**：システム設定 → キーボード → 入力ソース で「ABC」と「日本語 - ローマ字入力」を追加する。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
 ### 10. VS Code の Settings Sync を調整
