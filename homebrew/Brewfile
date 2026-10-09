@@ -19,6 +19,8 @@ cask "discord"
 cask "font-hackgen-nerd"
 # Web browser
 cask "google-chrome"
+# Software for Logitech devices
+cask "logi-options+"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Replacement for Docker Desktop
