@@ -57,6 +57,10 @@ bash・bash-completion・gh・VS Code・Chrome・Claude Code・VS Code拡張機�
 公式サイトから入れたアプリと重複してエラーになる場合は
 `brew install --cask --adopt アプリ名` で Homebrew 管理に移す。
 
+clone 先は `~/dotfiles` でなくてもよい。`setup.sh` は自分が置かれた場所を基準にリンクを貼る。
+ただし `setup.sh` を実行した後にフォルダを移動・名前変更・削除すると、リンクが全部切れる。
+移動したときは、新しい場所で `./setup.sh` を実行し直す。
+
 ### 3. シンボリックリンクを貼る
 
 ```sh
