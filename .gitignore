@@ -2,3 +2,4 @@
 *.local
 *.backup
 .ssh/
+todo.md
