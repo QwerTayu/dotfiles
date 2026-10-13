@@ -24,7 +24,9 @@ dotfiles/
 ├── herdr/
 │   └── config.toml         → ~/.config/herdr/config.toml
 ├── fresh/
-│   └── config.json         → ~/.config/fresh/config.json
+│   ├── config.json         → ~/.config/fresh/config.json
+│   └── themes/
+│       └── vscode-dark-modern.json → ~/.config/fresh/themes/vscode-dark-modern.json
 ├── raycast/
 │   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
@@ -244,6 +246,9 @@ git push
   herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
+- fresh の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
+  色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
+  fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
