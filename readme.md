@@ -230,6 +230,13 @@ git push
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
   herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
+- `claude/settings.json` の `SessionStart` フックは herdr の Claude 連携が書き込んだもので、
+  `/Users/icoca/.claude/hooks/herdr-agent-state.sh` を絶対パスで呼んでいる。
+  `$HOME` には書き換えない。herdr は文字列の完全一致で自分のフックを見分けるので、
+  書き換えると `herdr integration install claude` のたびにフックが追加されて二重に実行される。
+  ユーザー名が違う Mac では、このフックを消してから `herdr integration install claude` を実行し、
+  herdr にその Mac のパスで書き直させる。
+  なお `herdr integration status` はスクリプトの有無しか見ないので、フックの確認には使えない。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
 - Raycast の 1Password 拡張は入れない（Raycast と 1Password CLI を連携しない）。
   CLI 連携は一度許可すると、しばらく Raycast のプロセスから `op` で vault を読めるため、
