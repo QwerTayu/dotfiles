@@ -1,0 +1,3 @@
+# herdr の設定（~/.config/herdr/config.toml にリンクされる）
+# 設定できる項目とデフォルト値は `herdr --default-config` で全部見られる。
+# 変更したら `herdr server reload-config` で起動中の herdr に反映する。
