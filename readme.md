@@ -23,6 +23,8 @@ dotfiles/
 │   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
 │   └── config.toml         → ~/.config/herdr/config.toml
+├── fresh/
+│   └── config.json         → ~/.config/fresh/config.json
 ├── raycast/
 │   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
@@ -240,6 +242,8 @@ git push
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
   herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
+- `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
+  welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
