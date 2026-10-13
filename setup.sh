@@ -24,3 +24,6 @@ link vscode/snippets                 "Library/Application Support/Code/User/snip
 link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
 link herdr/config.toml               .config/herdr/config.toml
+
+# Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
+"$DOTFILES/setup-agent-skills.sh"
