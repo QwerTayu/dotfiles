@@ -19,7 +19,8 @@ dotfiles/
 │   └── snippets/           → ~/Library/Application Support/Code/User/snippets/
 ├── claude/
 │   ├── settings.json       → ~/.claude/settings.json
-│   └── CLAUDE.md           → ~/.claude/CLAUDE.md
+│   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
+│   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
 │   └── config.toml         → ~/.config/herdr/config.toml
 ├── raycast/
@@ -27,6 +28,7 @@ dotfiles/
 ├── macos/
 │   └── macos.sh            Finder・Dock・トラックパッドなどのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
+├── setup-agent-skills.sh   Claude Code の skill を ~/.claude/skills/ に入れる（setup.sh から呼ばれる）
 └── README.md
 ```
 
@@ -171,6 +173,13 @@ brew update && brew upgrade
 Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
 Chrome は自動アップデートされるので brew では更新されない。
 
+Claude Code の skill は別に更新する。
+
+```sh
+gh skill update --all     # claude/skills.txt から入れた skill（--dry-run で確認だけ）
+./setup-agent-skills.sh   # herdr の skill を今の herdr の版で書き出し直す
+```
+
 ### macOS の設定を変えたいとき
 
 `macos/macos.sh` に `defaults write` の行を追加して実行する。
@@ -219,6 +228,7 @@ git push
 | Chrome のブックマーク・拡張機能 | Google アカウントの同期 |
 | VS Code の UI 状態 | Settings Sync（または管理しない） |
 | Claude Code のログイン情報・履歴（`~/.claude.json` など） | 管理しない |
+| Claude Code の skill（`~/.claude/skills/`） | 中身は管理しない。`setup-agent-skills.sh` と `claude/skills.txt` で入れ直す |
 
 ## メモ
 
@@ -230,6 +240,16 @@ git push
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
   herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
+- `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
+  - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
+  - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
+    リポジトリは clone されず、その skill のフォルダだけがコピーされる。
+    `--agent` と `--scope` を省くと別のエージェント向けに今のディレクトリへ入れようとするので、必ず付ける。
+    `gh skill` には lockfile も削除コマンドもない。消すときは `claude/skills.txt` の行と `~/.claude/skills/<名前>` を手で消す。
+    `gh skill` はまだ preview なので、使い方が変わることがある。
+  - brew が入れる skill（terminal-browser など）: brew が自分でリンクを張るので何もしない。
+  - 自作の skill: 自分のリポジトリを clone して、各 skill のフォルダを `~/.claude/skills/` にリンクする予定（未作成）。
+    編集をすぐ反映させたいので `gh skill` のコピーではなくリンクにする。
 - `claude/settings.json` の `SessionStart` フックは herdr の Claude 連携が書き込んだもので、
   `/Users/icoca/.claude/hooks/herdr-agent-state.sh` を絶対パスで呼んでいる。
   `$HOME` には書き換えない。herdr は文字列の完全一致で自分のフックを見分けるので、

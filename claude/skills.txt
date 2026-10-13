@@ -1,0 +1,6 @@
+# 他人の Claude Code skill の一覧。setup-agent-skills.sh が gh skill install で ~/.claude/skills/ に入れる。
+# 1 行に 1 つ、「owner/repo path/to/skill [tag か commit]」の形で書く。3 列目は省略でき、書くとその版に固定する（--pin）。
+# すでに ~/.claude/skills/ に同じ名前のフォルダがあれば飛ばす。消すときはこの行と ~/.claude/skills/<名前> を手で消す。
+# 例:
+# owner/repo skills/foo
+# owner/repo skills/bar v1.2.0
