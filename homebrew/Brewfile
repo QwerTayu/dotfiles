@@ -4,10 +4,14 @@ brew "bash"
 brew "bash-completion@2"
 # Command-line tool for getting & setting the default browser
 brew "defaultbrowser"
+# Text editor for your terminal: easy, powerful and fast
+brew "fresh-editor"
 # GitHub command-line tool
 brew "gh"
 # Agent multiplexer that lives in your terminal
 brew "herdr"
+# Review-first terminal diff viewer for agent-authored changesets
+brew "hunk"
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password
