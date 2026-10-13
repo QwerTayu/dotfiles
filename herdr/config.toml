@@ -7,3 +7,29 @@ onboarding = false
 
 [experimental]
 kitty_graphics = true
+
+# 色は VS Code の Dark Modern に合わせている。
+# one-dark を土台にして、全部の色を上書きする。
+[theme]
+name = "one-dark"
+
+[theme.custom]
+panel_bg = "#1F1F1F"
+sidebar_bg = "#181818"
+active_row_bg = "#2A2D2E"
+selection_bg = "#04395E"
+surface0 = "#2B2B2B"
+surface1 = "#3C3C3C"
+surface_dim = "#181818"
+overlay0 = "#6E7681"
+overlay1 = "#868686"
+text = "#CCCCCC"
+subtext0 = "#9D9D9D"
+accent = "#0078D4"
+blue = "#4DAAFC"
+green = "#2EA043"
+red = "#F85149"
+yellow = "#CCA700"
+teal = "#4EC9B0"
+peach = "#CE9178"
+mauve = "#C586C0"
