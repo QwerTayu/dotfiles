@@ -4,3 +4,6 @@
 
 # 初回のオンボーディング画面を出さない
 onboarding = false
+
+[experimental]
+kitty_graphics = true
