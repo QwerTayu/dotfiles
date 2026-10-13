@@ -1,4 +1,5 @@
 {
+  "terminal.integrated.enableImages": true,
   // ---------- Editor Base Settings ----------
   "editor.cursorBlinking": "expand",
   "editor.cursorSmoothCaretAnimation": "on",
