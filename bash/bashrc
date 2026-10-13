@@ -25,3 +25,39 @@ GIT_PS1_SHOWDIRTYSTATE=true
 # git-prompt.sh が読めなかったときは空の関数にしてエラーを防ぐ
 type __git_ps1 &>/dev/null || __git_ps1() { :; }
 PS1='\[\033[37m\][\[\033[36m\]\u\[\033[37m\]@\h \[\033[32m\]\w\[\033[37m\]]\[\033[1;36m\]$(__git_ps1)\[\033[00m\]\$ '
+
+# herdr を起動している間だけ、Terminal.app のタブの配色を VS Code の Dark Modern にする
+# （プロファイルは terminal/VSCode Dark Modern.terminal。終わったら元のプロファイルに戻す）
+# タブは tty で探すので、herdr の起動中に別のウィンドウを前に出しても元のタブが戻る。
+__terminal_profile() {  # 使い方: __terminal_profile <tty> [新しいプロファイル名] → 元のプロファイル名を出力
+  osascript - "$@" <<'APPLESCRIPT' 2>/dev/null
+on run argv
+  tell application "Terminal"
+    repeat with w in windows
+      repeat with t in tabs of w
+        if tty of t is item 1 of argv then
+          set old to name of current settings of t
+          if (count of argv) > 1 then set current settings of t to settings set (item 2 of argv)
+          return old
+        end if
+      end repeat
+    end repeat
+  end tell
+end run
+APPLESCRIPT
+}
+
+herdr() {
+  # Terminal.app の外（herdr のペインの中など）や、server・pane などのサブコマンドでは切り替えない
+  if [ "$TERM_PROGRAM" != Apple_Terminal ] || { [ $# -gt 0 ] && [[ $1 != -* && "$1 $2" != "session attach" ]]; }; then
+    command herdr "$@"
+    return
+  fi
+  local tty old
+  tty=$(tty)
+  old=$(__terminal_profile "$tty" "VSCode Dark Modern")
+  command herdr "$@"
+  local status=$?
+  [ -n "$old" ] && __terminal_profile "$tty" "$old" >/dev/null
+  return $status
+}
