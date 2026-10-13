@@ -20,6 +20,8 @@ dotfiles/
 ├── claude/
 │   ├── settings.json       → ~/.claude/settings.json
 │   └── CLAUDE.md           → ~/.claude/CLAUDE.md
+├── herdr/
+│   └── config.toml         → ~/.config/herdr/config.toml
 ├── raycast/
 │   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
@@ -226,6 +228,8 @@ git push
 - `~/.claude/` はフォルダごとリンクせず、自分で書くファイルだけを個別にリンクする
   （フォルダ内には会話履歴なども溜まるため）。
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
+- `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
+  herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
 - Raycast の 1Password 拡張は入れない（Raycast と 1Password CLI を連携しない）。
   CLI 連携は一度許可すると、しばらく Raycast のプロセスから `op` で vault を読めるため、
