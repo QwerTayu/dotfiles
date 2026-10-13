@@ -1,0 +1,30 @@
+# lazygit の設定（~/Library/Application Support/lazygit/config.yml にリンクされる）
+# 色は VS Code の Dark Modern に合わせている。背景色はターミナルのものがそのまま使われる。
+gui:
+  theme:
+    activeBorderColor:
+      - "#0078D4"
+      - bold
+    inactiveBorderColor:
+      - "#454545"
+    searchingActiveBorderColor:
+      - "#CCA700"
+      - bold
+    optionsTextColor:
+      - "#4DAAFC"
+    selectedLineBgColor:
+      - "#04395E"
+    inactiveViewSelectedLineBgColor:
+      - "#37373D"
+    cherryPickedCommitFgColor:
+      - "#4DAAFC"
+    cherryPickedCommitBgColor:
+      - "#04395E"
+    markedBaseCommitFgColor:
+      - "#4DAAFC"
+    markedBaseCommitBgColor:
+      - "#9E6A03"
+    unstagedChangesColor:
+      - "#F85149"
+    defaultFgColor:
+      - "#CCCCCC"

@@ -26,6 +26,7 @@ link claude/CLAUDE.md                .claude/CLAUDE.md
 link herdr/config.toml               .config/herdr/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json
+link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
