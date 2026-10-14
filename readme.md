@@ -29,7 +29,8 @@ dotfiles/
 ├── herdr/
 │   ├── config.toml         → ~/.config/herdr/config.toml
 │   └── plugins/
-│       └── ascii-input-source/  herdr のプラグイン（setup.sh が herdr plugin link で登録する）
+│       ├── ascii-input-source/  英字で使うアプリのペインで入力ソースを英字にする
+│       └── dev-layout/          タブを claude / fresh / lazygit / ターミナル に並べる
 ├── fresh/
 │   ├── config.json         → ~/.config/fresh/config.json
 │   ├── themes/
@@ -277,6 +278,10 @@ git push
   Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
   保存するとスライドも更新される。`Ctrl+C` でサーバーを止める（terminal-browser のペインは自分で閉じる）。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
+- 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
+  右下 1/4 にターミナル」の並びにする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。
+  ペインを移して作ったワークスペースなど、最初からペインが2つ以上あるときやシェル以外が動いているときは並べ替えない。
+  起動するコマンドは `herdr/plugins/dev-layout/apply-layout.sh` の先頭で変えられる。
 - lazygit などを使っている間は入力ソースを英字（ABC）にし、離れたら元の入力ソースに戻す。
   ペインの移動は herdr のプラグイン `ascii-input-source` が担当する（`pane.focused` のたびに、そのペインで
   `on-pane-focused.sh` の `ASCII_APPS` に書いたアプリが動いているかを見る）。英字にしたいアプリが増えたらそこに足す。
