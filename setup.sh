@@ -29,5 +29,12 @@ link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-moder
 link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 
+# 1Password CLI の補完を書き出す（bashrc で毎回 op を動かさないため。op を更新したら setup.sh を実行し直す）
+if command -v op >/dev/null; then
+  mkdir -p "$HOME/.local/share/bash-completion/completions"
+  op completion bash > "$HOME/.local/share/bash-completion/completions/op"
+  echo "completion: ~/.local/share/bash-completion/completions/op"
+fi
+
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
