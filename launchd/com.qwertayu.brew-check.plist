@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  毎日 10:00 に Homebrew の更新を確かめる（homebrew/brew-check.sh）。
+  その時刻にスリープしていたら、起きたあとに1回だけ実行される。
+  setup.sh が ~/Library/LaunchAgents/ にコピーして launchd に登録する。
+  （launchd はリンクの plist をログイン時に読まないことがあるので、リンクではなくコピー）
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.qwertayu.brew-check</string>
+  <key>ProgramArguments</key>
+  <array>
+    <!-- plist では ~ や $HOME が使えないので、sh に展開させる -->
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>exec "$HOME/.local/bin/brew-check"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+</dict>
+</plist>
