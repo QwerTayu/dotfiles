@@ -26,6 +26,7 @@ link claude/CLAUDE.md                .claude/CLAUDE.md
 link herdr/config.toml               .config/herdr/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json
+link fresh/plugins/file_icons.ts     .config/fresh/plugins/file_icons.ts
 link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 link homebrew/brew-check.sh          .local/bin/brew-check

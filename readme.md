@@ -28,8 +28,10 @@ dotfiles/
 │   └── config.toml         → ~/.config/herdr/config.toml
 ├── fresh/
 │   ├── config.json         → ~/.config/fresh/config.json
-│   └── themes/
-│       └── vscode-dark-modern.json → ~/.config/fresh/themes/vscode-dark-modern.json
+│   ├── themes/
+│   │   └── vscode-dark-modern.json → ~/.config/fresh/themes/vscode-dark-modern.json
+│   └── plugins/
+│       └── file_icons.ts   → ~/.config/fresh/plugins/file_icons.ts
 ├── lazygit/
 │   └── config.yml          → ~/Library/Application Support/lazygit/config.yml
 ├── ghostty/
@@ -259,6 +261,11 @@ git push
   herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
+- fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。
+  Nerd Font のアイコンを使うので、ターミナルのフォントが Nerd Font（HackGen Console NF）である必要がある。
+  起動時にプロジェクトのファイルをたどってアイコンを付け、その後は保存・作成・名前変更されたファイルだけ付け直す。
+  `node_modules`・`.git`・キャッシュ系のフォルダは中をたどらない（フォルダ自体には付ける）。対象は `SKIP_DIRS` で変える。
+  fresh の外で増えたファイルは、コマンドパレットの `File Icons: Refresh` で付け直す。
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
