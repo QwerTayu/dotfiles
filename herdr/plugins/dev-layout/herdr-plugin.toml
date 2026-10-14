@@ -5,6 +5,7 @@
 #   │ 1/4  │    terminal     │  1/4
 #   └──────┴─────────────────┘
 # - 新しくワークスペースを作ったときは自動でこの並びにして、左で claude を起動し、タブの名前を main にする
+# - `apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]` で、渡したペインを左に残してこの並びにし、左でコマンドを起動してタブの名前を変える（skill から使う）
 # - 既存のタブでは prefix+shift+l（herdr/config.toml）で、今いるペインを左に残してこの並びにする
 # setup.sh が `herdr plugin link` で登録する。
 id = "qwertayu.dev-layout"
