@@ -33,3 +33,9 @@ palette = 12=#3b8eea
 palette = 13=#d670d6
 palette = 14=#29b8db
 palette = 15=#e5e5e5
+
+# テキストとウィンドウの端の間に余白を入れる
+window-padding-x = 10
+window-padding-y = 10
+# 余った端数の余白を上下左右に均等に分ける（右下だけ広くならないようにする）
+window-padding-balance = true
