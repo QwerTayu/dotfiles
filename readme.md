@@ -14,6 +14,8 @@ dotfiles/
 ├── homebrew/
 │   ├── Brewfile            アプリ・コマンド・VS Code拡張機能の一覧
 │   └── brew-check.sh       → ~/.local/bin/brew-check（更新があれば通知する。launchd が毎日実行）
+├── marp/
+│   └── marp-preview.sh     → ~/.local/bin/marp-preview（Marp のスライドを terminal-browser で表示する）
 ├── launchd/
 │   └── com.qwertayu.brew-check.plist  ~/Library/LaunchAgents/ にコピーして登録する（setup.sh）
 ├── vscode/
@@ -267,7 +269,11 @@ git push
   `node_modules`・`.git`・キャッシュ系のフォルダは中をたどらない（フォルダ自体には付ける）。対象は `SKIP_DIRS` で変える。
   fresh の外で増えたファイルは、コマンドパレットの `File Icons: Refresh` で付け直す。
   フォルダ名も標準の青（`syntax.keyword` の色）ではなく、ファイル名と同じ文字色にしている。
-- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`）をここにリンクする。
+- Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
+  整形して見たいときは別のペインで `glow ファイル.md`。
+  Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
+  保存するとスライドも更新される。`Ctrl+C` でサーバーを止める（terminal-browser のペインは自分で閉じる）。
+- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
