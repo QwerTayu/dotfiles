@@ -36,3 +36,10 @@ yellow = "#CCA700"
 teal = "#4EC9B0"
 peach = "#CE9178"
 mauve = "#C586C0"
+
+# prefix+shift+l で、今のタブを claude / fresh / lazygit / ターミナル の並びにする（herdr/plugins/dev-layout）
+[[keys.command]]
+key = "prefix+shift+l"
+type = "plugin_action"
+command = "qwertayu.dev-layout.apply"
+description = "dev layout"

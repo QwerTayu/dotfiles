@@ -1,0 +1,25 @@
+# タブを「左に claude、右上に fresh と lazygit、右下にターミナル」の並びにする。
+#   ┌──────┬────────┬────────┐
+#   │      │ fresh  │lazygit │  3/4
+#   │claude├────────┴────────┤
+#   │ 1/4  │    terminal     │  1/4
+#   └──────┴─────────────────┘
+# - 新しくワークスペースを作ったときは自動でこの並びにして、左で claude を起動する
+# - 既存のタブでは prefix+shift+l（herdr/config.toml）で、今いるペインを左に残してこの並びにする
+# setup.sh が `herdr plugin link` で登録する。
+id = "qwertayu.dev-layout"
+name = "Dev layout"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Split the tab into claude / fresh / lazygit / terminal"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "apply"
+title = "Apply dev layout"
+contexts = ["workspace"]
+command = ["./apply-layout.sh", "current"]
+
+[[events]]
+on = "workspace.created"
+command = ["./apply-layout.sh", "new-workspace"]

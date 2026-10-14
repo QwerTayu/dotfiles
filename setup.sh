@@ -50,8 +50,10 @@ echo "launchd: com.qwertayu.brew-check"
 
 # herdr のプラグインを登録する（登録は herdr が持つので、新しい環境ではここで登録し直す）
 if command -v herdr >/dev/null; then
-  herdr plugin link "$DOTFILES/herdr/plugins/ascii-input-source" >/dev/null 2>&1 || true
-  echo "herdr plugin: ascii-input-source"
+  for plugin in "$DOTFILES"/herdr/plugins/*/; do
+    herdr plugin link "$plugin" >/dev/null 2>&1 || true
+    echo "herdr plugin: $(basename "$plugin")"
+  done
 fi
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
