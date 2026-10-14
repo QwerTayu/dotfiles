@@ -3,10 +3,11 @@
 #         apply-layout.sh new-workspace  作られたワークスペースを並べ、左で LEFT_CMD を起動する（イベントから）
 set -u
 herdr=${HERDR_BIN_PATH:-herdr}
+here=$(cd "$(dirname "$0")" && pwd)
 
 # 各ペインで起動するコマンド（空にすると何も起動しない）
 LEFT_CMD="claude"     # 新しいワークスペースのときだけ起動する（既存のタブでは今のペインをそのまま使う）
-TOP_LEFT_CMD="fresh ."
+TOP_LEFT_CMD="'$here/fresh-trusted.sh' ."  # 初めてのディレクトリでも信頼済みにしてから fresh を開く
 TOP_RIGHT_CMD="lazygit"
 
 # JSON から "key": "value" の最初の値を取り出す（jq を使わずに済ませる）

@@ -6,6 +6,7 @@
 #   └──────┴─────────────────┘
 # - 新しくワークスペースを作ったときは自動でこの並びにして、左で claude を起動し、タブの名前を main にする
 # - 既存のタブでは prefix+shift+l（herdr/config.toml）で、今いるペインを左に残してこの並びにする
+# - fresh は fresh-trusted.sh で、今のディレクトリを信頼済みにしてから起動する
 # setup.sh が `herdr plugin link` で登録する。
 id = "qwertayu.dev-layout"
 name = "Dev layout"

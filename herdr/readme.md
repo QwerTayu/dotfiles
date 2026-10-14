@@ -48,5 +48,5 @@ miruomo-portfolio            ~/Documents/personal/miruomo-portfolio
 
 `setup.sh` が `herdr plugin link` で登録する。
 
-- `dev-layout/`: 新しいワークスペースを claude / fresh / lazygit / ターミナルの並びにする。既存のタブでは `prefix+shift+l` で同じ並びにする。
+- `dev-layout/`: 新しいワークスペースを claude / fresh / lazygit / ターミナルの並びにする。既存のタブでは `prefix+shift+l` で同じ並びにする。fresh は `fresh-trusted.sh` 経由で起動するので、初めてのディレクトリでも「このフォルダを信頼しますか」は出ない（claude の確認はそのまま出る）。
 - `ascii-input-source/`: lazygit などのペインに移ったとき、入力ソースを英字にする。
