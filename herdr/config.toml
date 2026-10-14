@@ -7,6 +7,9 @@ onboarding = false
 
 [experimental]
 kitty_graphics = true
+# プレフィックスモード（Ctrl+b）の間だけ入力ソースを英字にして、終わったら元の入力ソースに戻す。
+# 日本語入力のままだとプレフィックスの後のキーが IME に取られてコマンドにならないため。
+switch_ascii_input_source_in_prefix = true
 
 # 色は VS Code の Dark Modern に合わせている。
 # one-dark を土台にして、全部の色を上書きする。
