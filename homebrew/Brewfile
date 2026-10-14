@@ -8,12 +8,16 @@ brew "defaultbrowser"
 brew "fresh-editor"
 # GitHub command-line tool
 brew "gh"
+# Render markdown on the CLI
+brew "glow"
 # Agent multiplexer that lives in your terminal
 brew "herdr"
 # Review-first terminal diff viewer for agent-authored changesets
 brew "hunk"
 # Simple terminal UI for git commands
 brew "lazygit"
+# Easily convert Marp Markdown files into static HTML/CSS, PDF, PPT and images
+brew "marp-cli"
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password

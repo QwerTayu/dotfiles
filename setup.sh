@@ -30,6 +30,7 @@ link fresh/plugins/file_icons.ts     .config/fresh/plugins/file_icons.ts
 link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 link homebrew/brew-check.sh          .local/bin/brew-check
+link marp/marp-preview.sh            .local/bin/marp-preview
 
 # 1Password CLI の補完を書き出す（bashrc で毎回 op を動かさないため。op を更新したら setup.sh を実行し直す）
 if command -v op >/dev/null; then
