@@ -266,6 +266,7 @@ git push
   起動時にプロジェクトのファイルをたどってアイコンを付け、その後は保存・作成・名前変更されたファイルだけ付け直す。
   `node_modules`・`.git`・キャッシュ系のフォルダは中をたどらない（フォルダ自体には付ける）。対象は `SKIP_DIRS` で変える。
   fresh の外で増えたファイルは、コマンドパレットの `File Icons: Refresh` で付け直す。
+  フォルダ名も標準の青（`syntax.keyword` の色）ではなく、ファイル名と同じ文字色にしている。
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
