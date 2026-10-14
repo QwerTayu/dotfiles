@@ -27,6 +27,7 @@ dotfiles/
 │   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
 │   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
+│   ├── readme.md           ワークスペースとタブの分け方
 │   ├── config.toml         → ~/.config/herdr/config.toml
 │   └── plugins/
 │       ├── ascii-input-source/  英字で使うアプリのペインで入力ソースを英字にする
@@ -278,8 +279,9 @@ git push
   Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
   保存するとスライドも更新される。`Ctrl+C` でサーバーを止める（terminal-browser のペインは自分で閉じる）。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
+- herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
-  右下 1/4 にターミナル」の並びにする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。
+  右下 1/4 にターミナル」の並びにし、タブの名前を `main` にする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。
   ペインを移して作ったワークスペースなど、最初からペインが2つ以上あるときやシェル以外が動いているときは並べ替えない。
   起動するコマンドは `herdr/plugins/dev-layout/apply-layout.sh` の先頭で変えられる。
 - lazygit などを使っている間は入力ソースを英字（ABC）にし、離れたら元の入力ソースに戻す。
