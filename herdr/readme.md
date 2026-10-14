@@ -50,3 +50,11 @@ miruomo-portfolio            ~/Documents/personal/miruomo-portfolio
 
 - `dev-layout/`: 新しいワークスペースを claude / fresh / lazygit / ターミナルの並びにする。既存のタブでは `prefix+shift+l` で同じ並びにする。
 - `ascii-input-source/`: lazygit などのペインに移ったとき、入力ソースを英字にする。
+
+skill などからタブを足すときは、`dev-layout/apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]` で同じ並びにする。
+渡したペインを左に残し、左で `<コマンド>` を起動して、タブの名前を `<タブ名>` にする（`<コマンド>` を省くと何も起動しない）。
+
+```sh
+pane=$(herdr tab create --workspace wM --cwd ~/Documents/personal/foo --label Review --no-focus | grep -o '"pane_id": *"[^"]*"' | head -1 | cut -d'"' -f4)
+~/dotfiles/herdr/plugins/dev-layout/apply-layout.sh tab "$pane" Review "claude --name review-foo"
+```
