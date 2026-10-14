@@ -1,6 +1,8 @@
 #!/bin/bash
 # 使い方: apply-layout.sh current        今フォーカスしているペインを左に残して並べる（キーから）
 #         apply-layout.sh new-workspace  作られたワークスペースを並べ、左で LEFT_CMD を起動する（イベントから）
+#         apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]
+#                                        渡したペインを左に残して並べ、左でコマンドを起動し、タブの名前を変える（skill などから）
 set -u
 herdr=${HERDR_BIN_PATH:-herdr}
 here=$(cd "$(dirname "$0")" && pwd)
@@ -16,6 +18,7 @@ json_get() { grep -o "\"$1\": *\"[^\"]*\"" | head -1 | sed 's/.*"\([^"]*\)"$/\1/
 case "${1:-current}" in
   current)
     left=${HERDR_PANE_ID:-}
+    left_cmd= tab_name=
     ;;
   new-workspace)
     ws=$(printf '%s' "${HERDR_PLUGIN_EVENT_JSON:-}" | json_get workspace_id)
@@ -28,9 +31,15 @@ case "${1:-current}" in
     info=$("$herdr" pane process-info --pane "$left" 2>/dev/null)
     num_get() { printf '%s' "$info" | grep -o "\"$1\": *[0-9]*" | head -1 | grep -o '[0-9]*$'; }
     [ -n "$(num_get shell_pid)" ] && [ "$(num_get foreground_process_group_id)" = "$(num_get shell_pid)" ] || exit 0
+    left_cmd=$LEFT_CMD
+    tab_name=main  # 最初のタブは main にする（役割ごとのタブはあとから足す）
+    ;;
+  tab)
+    left=${2:-} tab_name=${3:-} left_cmd=${4:-}
+    [ -n "$tab_name" ] || { echo "usage: $0 tab <pane-id> <tab-name> [<command>]" >&2; exit 1; }
     ;;
   *)
-    echo "usage: $0 current|new-workspace" >&2
+    echo "usage: $0 current|new-workspace|tab <pane-id> <tab-name> [<command>]" >&2
     exit 1
     ;;
 esac
@@ -46,11 +55,10 @@ top_right=$(split "$right" right 0.5)    # 右上を左右半分に（左が fre
 
 [ -n "$TOP_LEFT_CMD" ] && "$herdr" pane run "$right" "$TOP_LEFT_CMD" >/dev/null
 [ -n "$TOP_RIGHT_CMD" ] && "$herdr" pane run "$top_right" "$TOP_RIGHT_CMD" >/dev/null
-if [ "${1:-current}" = new-workspace ]; then
-  [ -n "$LEFT_CMD" ] && "$herdr" pane run "$left" "$LEFT_CMD" >/dev/null
-  # 最初のタブは main にする（役割ごとのタブはあとから足す）
+[ -n "$left_cmd" ] && "$herdr" pane run "$left" "$left_cmd" >/dev/null
+if [ -n "$tab_name" ]; then
   tab=$("$herdr" pane get "$left" | json_get tab_id)
-  [ -n "$tab" ] && "$herdr" tab rename "$tab" main >/dev/null
+  [ -n "$tab" ] && "$herdr" tab rename "$tab" "$tab_name" >/dev/null
 fi
 : "$bottom"  # 右下はシェルのまま
 exit 0
