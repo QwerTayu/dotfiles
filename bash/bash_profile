@@ -1,6 +1,9 @@
 # Homebrewのパスを通す
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# dotfiles のスクリプト（setup.sh が ~/.local/bin にリンクする: brew-check, marp-preview）
+export PATH="$HOME/.local/bin:$PATH"
+
 # ロケール設定（setlocale警告の対策）
 # bashrc の bash-completion が LC_COLLATE を触るので、bashrc より先に設定する
 export LANG=en_US.UTF-8
