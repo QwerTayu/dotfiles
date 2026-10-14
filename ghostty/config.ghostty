@@ -1,0 +1,35 @@
+# Ghostty の設定（~/.config/ghostty/config.ghostty にリンクされる）
+# 設定できる項目は `ghostty +show-config --default --docs` で全部見られる。
+# 変更したら Ghostty で Cmd+Shift+, を押すと読み直す。
+
+# VS Code のエディタと同じフォント（Brewfile の font-hackgen-nerd）
+font-family = "HackGen Console NF"
+font-size = 12
+
+# Option キーを Meta（Alt）として使う（Terminal.app の「Option キーをメタキーとして使用」と同じ）
+macos-option-as-alt = true
+
+# 色は VS Code の Dark Modern の統合ターミナルに合わせている。
+# 背景は terminal.background（未指定なので panel.background の #181818）、
+# ANSI の16色は VS Code の terminal.ansi* の標準の値。
+# Ghostty 内蔵の「Dark Modern」テーマは別の人が作った近い配色で、値が違うので使っていない。
+background = #181818
+foreground = #cccccc
+cursor-color = #aeafad
+selection-background = #264f78
+palette = 0=#000000
+palette = 1=#cd3131
+palette = 2=#0dbc79
+palette = 3=#e5e510
+palette = 4=#2472c8
+palette = 5=#bc3fbc
+palette = 6=#11a8cd
+palette = 7=#e5e5e5
+palette = 8=#666666
+palette = 9=#f14c4c
+palette = 10=#23d18b
+palette = 11=#f5f543
+palette = 12=#3b8eea
+palette = 13=#d670d6
+palette = 14=#29b8db
+palette = 15=#e5e5e5

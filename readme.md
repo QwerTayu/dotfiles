@@ -29,8 +29,8 @@ dotfiles/
 │       └── vscode-dark-modern.json → ~/.config/fresh/themes/vscode-dark-modern.json
 ├── lazygit/
 │   └── config.yml          → ~/Library/Application Support/lazygit/config.yml
-├── terminal/
-│   └── VSCode Dark Modern.terminal  Terminal.app のプロファイル（herdr の起動中だけ使う。開いて読み込む）
+├── ghostty/
+│   └── config.ghostty      → ~/.config/ghostty/config.ghostty
 ├── raycast/
 │   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
@@ -149,8 +149,6 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
   マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
 - **入力ソース**：システム設定 → キーボード → 入力ソース で「ABC」と「日本語 - ローマ字入力」を追加する。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
-- **Terminal.app のプロファイル**：`open "terminal/VSCode Dark Modern.terminal"` で読み込む（新しいウィンドウが開くので閉じてよい）。
-  初めて `herdr` を起動したときに「Terminal を操作する許可」を聞かれるので許可する。
 
 ### 10. VS Code の Settings Sync を調整
 
@@ -255,11 +253,11 @@ git push
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
-  lazygit と herdr のペインの背景色はターミナルの色がそのまま使われる。
-  そのため `bashrc` の `herdr` 関数で、herdr を起動している間だけ Terminal.app のタブを
-  `VSCode Dark Modern` プロファイル（VS Code の端末と同じ背景と ANSI の16色）に切り替え、終わったら元に戻している。
-  プロファイルは標準の「Clear Dark」をコピーして色だけ変えたもの。色を変えたいときは Terminal.app の設定で直してから
-  「書き出す…」で `terminal/VSCode Dark Modern.terminal` に上書きする。
+  lazygit と herdr のペインの背景色はターミナル（Ghostty）の色がそのまま使われるので、
+  Ghostty の背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
+- ターミナルは Terminal.app ではなく Ghostty を使う。terminal-browser が kitty graphics protocol で画面を描くため
+  （Terminal.app は対応していない）。herdr の `[experimental] kitty_graphics = true` もこのための設定。
+  Terminal.app の中で herdr と terminal-browser を使うと、画像のデータが文字のまま出て herdr がとても重くなる。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。

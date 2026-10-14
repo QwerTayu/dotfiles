@@ -27,6 +27,8 @@ cask "claude-code"
 # Voice and text chat software
 cask "discord"
 cask "font-hackgen-nerd"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
 # Web browser
 cask "google-chrome"
 # Software for Logitech devices
