@@ -23,7 +23,10 @@ case "${1:-current}" in
     # ペインを移して作ったワークスペースなどは並べ替えない（ペインが1つで、シェルだけが動いているときだけ）
     [ "$(printf '%s\n' "$panes" | grep -c .)" -eq 1 ] || exit 0
     left=$panes
-    "$herdr" pane process-info --pane "$left" 2>/dev/null | grep -o '"name": *"[^"]*"' | grep -qv -E '"-?(ba|z)?sh"' && exit 0
+    # 前面のプロセスグループがシェル自身なら、まだ何も起動していない（起動直後の path_helper などもシェルのグループで動く）
+    info=$("$herdr" pane process-info --pane "$left" 2>/dev/null)
+    num_get() { printf '%s' "$info" | grep -o "\"$1\": *[0-9]*" | head -1 | grep -o '[0-9]*$'; }
+    [ -n "$(num_get shell_pid)" ] && [ "$(num_get foreground_process_group_id)" = "$(num_get shell_pid)" ] || exit 0
     ;;
   *)
     echo "usage: $0 current|new-workspace" >&2
@@ -42,6 +45,11 @@ top_right=$(split "$right" right 0.5)    # 右上を左右半分に（左が fre
 
 [ -n "$TOP_LEFT_CMD" ] && "$herdr" pane run "$right" "$TOP_LEFT_CMD" >/dev/null
 [ -n "$TOP_RIGHT_CMD" ] && "$herdr" pane run "$top_right" "$TOP_RIGHT_CMD" >/dev/null
-[ "${1:-current}" = new-workspace ] && [ -n "$LEFT_CMD" ] && "$herdr" pane run "$left" "$LEFT_CMD" >/dev/null
+if [ "${1:-current}" = new-workspace ]; then
+  [ -n "$LEFT_CMD" ] && "$herdr" pane run "$left" "$LEFT_CMD" >/dev/null
+  # 最初のタブは main にする（役割ごとのタブはあとから足す）
+  tab=$("$herdr" pane get "$left" | json_get tab_id)
+  [ -n "$tab" ] && "$herdr" tab rename "$tab" main >/dev/null
+fi
 : "$bottom"  # 右下はシェルのまま
 exit 0
