@@ -27,7 +27,9 @@ dotfiles/
 │   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
 │   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
-│   └── config.toml         → ~/.config/herdr/config.toml
+│   ├── config.toml         → ~/.config/herdr/config.toml
+│   └── plugins/
+│       └── ascii-input-source/  herdr のプラグイン（setup.sh が herdr plugin link で登録する）
 ├── fresh/
 │   ├── config.json         → ~/.config/fresh/config.json
 │   ├── themes/
@@ -260,7 +262,8 @@ git push
   （フォルダ内には会話履歴なども溜まるため）。
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
 - `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
-  herdr の plugin（`herdr plugin install owner/repo`）は設定ファイルで宣言できないので、新しい環境では入れ直す。
+  herdr の plugin は設定ファイルで宣言できない。自作のもの（`herdr/plugins/`）は `setup.sh` が `herdr plugin link` で登録し、
+  他人のもの（`herdr plugin install owner/repo`）は新しい環境で入れ直す。
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
 - fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。
@@ -274,6 +277,13 @@ git push
   Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
   保存するとスライドも更新される。`Ctrl+C` でサーバーを止める（terminal-browser のペインは自分で閉じる）。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
+- lazygit などを使っている間は入力ソースを英字（ABC）にし、離れたら元の入力ソースに戻す。
+  ペインの移動は herdr のプラグイン `ascii-input-source` が担当する（`pane.focused` のたびに、そのペインで
+  `on-pane-focused.sh` の `ASCII_APPS` に書いたアプリが動いているかを見る）。英字にしたいアプリが増えたらそこに足す。
+  元の入力ソースは `~/.local/state/ascii-input-source/saved` に覚えておく。
+  切り替わるのはペインを移ったときだけで、今いるペインでアプリを起動・終了しても切り替わらない。
+  コミットメッセージなどで日本語を打つときは自分で切り替える（lazygit には入力欄を開いたときに知らせる仕組みがない）。
+  入力ソースの切り替えはプラグインの中の `input-source.js`（JXA で macOS の API を呼ぶ）で、追加のコマンドは入れていない。
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。

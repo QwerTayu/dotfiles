@@ -48,5 +48,11 @@ launchctl bootout "gui/$(id -u)/com.qwertayu.brew-check" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 echo "launchd: com.qwertayu.brew-check"
 
+# herdr のプラグインを登録する（登録は herdr が持つので、新しい環境ではここで登録し直す）
+if command -v herdr >/dev/null; then
+  herdr plugin link "$DOTFILES/herdr/plugins/ascii-input-source" >/dev/null 2>&1 || true
+  echo "herdr plugin: ascii-input-source"
+fi
+
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
