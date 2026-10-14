@@ -1,6 +1,9 @@
 # lazygit の設定（~/Library/Application Support/lazygit/config.yml にリンクされる）
 # 色は VS Code の Dark Modern に合わせている。背景色はターミナルのものがそのまま使われる。
 gui:
+  # diff の長い行は折り返さず、H / L で左右にスクロールして見る。
+  # （左右に並べる表示では delta が欄の中で折り返すので、そちらは折り返したまま）
+  wrapLinesInDiffView: false
   theme:
     activeBorderColor:
       - "#0078D4"
@@ -28,3 +31,61 @@ gui:
       - "#F85149"
     defaultFgColor:
       - "#CCCCCC"
+
+git:
+  # diff の見た目を VS Code の inline の diff に合わせる（delta を使う。Brewfile の git-delta）。
+  # 背景色は VS Code の diffEditor.inserted/removed の Line/TextBackground（20% の半透明）を
+  # Ghostty の背景 #181818 に重ねた色。行全体に Line、変わった文字に Text を重ねた色を使う。
+  # 構文の色は bat の「Visual Studio Dark+」、行番号の色は VS Code の editorLineNumber.foreground。
+  #
+  # 表示は3種類あり、lazygit の中で | を押すと順に切り替わる（最初は auto）。
+  # - auto: diff の欄が 160 桁より広いときだけ左右に並べ、狭いときは上下に並べる
+  # - inline: いつも上下に並べる（VS Code の inline の表示）。長い行は H / L で左右にスクロール
+  # - side-by-side: いつも左右に並べる。長い行は delta が欄の中で折り返す
+  # {{width}} は lazygit が渡す diff の欄の幅。左右に並べるときは delta に渡して折り返させる
+  # （上下に並べる表示では delta は折り返さないので、gui.wrapLinesInDiffView: false で横スクロールにしている）。
+  diffRenderers:
+    - name: auto
+      command: >-
+        delta --dark --paging=never
+        --syntax-theme='Visual Studio Dark+'
+        --plus-style='syntax #323824'
+        --plus-emph-style='syntax #475626'
+        --minus-style='syntax #461313'
+        --minus-emph-style='syntax #6b0f0f'
+        --line-numbers
+        --line-numbers-minus-style='#6e7681'
+        --line-numbers-plus-style='#6e7681'
+        --line-numbers-zero-style='#6e7681'
+        --line-numbers-left-style='#2b2b2b'
+        --line-numbers-right-style='#2b2b2b'
+        {{if gt .width 160}}--side-by-side --width={{width}} --wrap-max-lines=unlimited{{end}}
+    - name: inline
+      command: >-
+        delta --dark --paging=never
+        --syntax-theme='Visual Studio Dark+'
+        --plus-style='syntax #323824'
+        --plus-emph-style='syntax #475626'
+        --minus-style='syntax #461313'
+        --minus-emph-style='syntax #6b0f0f'
+        --line-numbers
+        --line-numbers-minus-style='#6e7681'
+        --line-numbers-plus-style='#6e7681'
+        --line-numbers-zero-style='#6e7681'
+        --line-numbers-left-style='#2b2b2b'
+        --line-numbers-right-style='#2b2b2b'
+    - name: side-by-side
+      command: >-
+        delta --dark --paging=never
+        --syntax-theme='Visual Studio Dark+'
+        --plus-style='syntax #323824'
+        --plus-emph-style='syntax #475626'
+        --minus-style='syntax #461313'
+        --minus-emph-style='syntax #6b0f0f'
+        --line-numbers
+        --line-numbers-minus-style='#6e7681'
+        --line-numbers-plus-style='#6e7681'
+        --line-numbers-zero-style='#6e7681'
+        --line-numbers-left-style='#2b2b2b'
+        --line-numbers-right-style='#2b2b2b'
+        --side-by-side --width={{width}} --wrap-max-lines=unlimited
