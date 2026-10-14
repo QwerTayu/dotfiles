@@ -51,7 +51,13 @@
     "help_fg": [204, 204, 204],
     "inline_code_bg": [43, 43, 43],
     "split_separator_fg": [43, 43, 43],
-    "split_separator_hover_fg": [0, 120, 212]
+    "split_separator_hover_fg": [0, 120, 212],
+    "file_status_added_fg": [129, 184, 139],
+    "file_status_modified_fg": [226, 192, 141],
+    "file_status_deleted_fg": [199, 78, 57],
+    "file_status_renamed_fg": [115, 201, 145],
+    "file_status_untracked_fg": [115, 201, 145],
+    "file_status_conflicted_fg": [228, 103, 107]
   },
   "search": {
     "match_bg": [99, 51, 21],
