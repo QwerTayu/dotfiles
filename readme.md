@@ -12,7 +12,10 @@ dotfiles/
 ├── git/
 │   └── gitconfig           → ~/.gitconfig
 ├── homebrew/
-│   └── Brewfile            アプリ・コマンド・VS Code拡張機能の一覧
+│   ├── Brewfile            アプリ・コマンド・VS Code拡張機能の一覧
+│   └── brew-check.sh       → ~/.local/bin/brew-check（更新があれば通知する。launchd が毎日実行）
+├── launchd/
+│   └── com.qwertayu.brew-check.plist  ~/Library/LaunchAgents/ にコピーして登録する（setup.sh）
 ├── vscode/
 │   ├── settings.json       → ~/Library/Application Support/Code/User/settings.json
 │   ├── keybindings.json    → ~/Library/Application Support/Code/User/keybindings.json
@@ -180,6 +183,12 @@ brew update && brew upgrade
 
 Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
 Chrome は自動アップデートされるので brew では更新されない。
+
+更新があるかは、毎日 10:00 に launchd が `brew-check` を動かして確かめ、古くなったものがあれば macOS の通知で知らせる。
+自動で `brew upgrade` はしないので、通知が来たら上のコマンドで更新する。
+ログは `~/Library/Logs/brew-check.log`。すぐ確かめたいときは `brew-check` を直接実行するか、
+`launchctl kickstart gui/$(id -u)/com.qwertayu.brew-check` で launchd から動かす。
+Chrome や VS Code のように自分で更新するアプリも通知に出る。これはアプリを再起動すると新しい版になる。
 
 Claude Code の skill は別に更新する。
 

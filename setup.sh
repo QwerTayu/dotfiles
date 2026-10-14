@@ -28,6 +28,7 @@ link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json
 link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
+link homebrew/brew-check.sh          .local/bin/brew-check
 
 # 1Password CLI の補完を書き出す（bashrc で毎回 op を動かさないため。op を更新したら setup.sh を実行し直す）
 if command -v op >/dev/null; then
@@ -35,6 +36,15 @@ if command -v op >/dev/null; then
   op completion bash > "$HOME/.local/share/bash-completion/completions/op"
   echo "completion: ~/.local/share/bash-completion/completions/op"
 fi
+
+# 毎日 10:00 に Homebrew の更新を確かめて通知する launchd のジョブを登録する
+# （plist はリンクではなくコピー。plist を変えたら setup.sh を実行し直す）
+PLIST="$HOME/Library/LaunchAgents/com.qwertayu.brew-check.plist"
+mkdir -p "$(dirname "$PLIST")"
+cp "$DOTFILES/launchd/com.qwertayu.brew-check.plist" "$PLIST"
+launchctl bootout "gui/$(id -u)/com.qwertayu.brew-check" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$PLIST"
+echo "launchd: com.qwertayu.brew-check"
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
