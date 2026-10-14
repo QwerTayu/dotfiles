@@ -29,3 +29,25 @@ if [ -f "$list" ] && command -v gh >/dev/null 2>&1; then
     echo "skill: $name ($repo)"
   done < "$list"
 fi
+
+# 自作の skill: 自分のリポジトリを clone して、skills/<名前>/ を ~/.claude/skills/<名前> にリンクする
+# 編集をすぐ反映させたいので、gh skill のコピーではなくリンクにする
+OWN_REPO="QwerTayu/personal-agent-skills"
+OWN_DIR="$HOME/Documents/personal/personal-agent-skills"
+if [ ! -d "$OWN_DIR" ] && command -v gh >/dev/null 2>&1; then
+  mkdir -p "$(dirname "$OWN_DIR")"
+  gh repo clone "$OWN_REPO" "$OWN_DIR"
+fi
+if [ -d "$OWN_DIR/skills" ]; then
+  for dir in "$OWN_DIR"/skills/*/; do
+    [ -f "$dir/SKILL.md" ] || continue
+    name="$(basename "$dir")"
+    target="$SKILLS/$name"
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+      echo "skill: $name (skip: $target は普通のフォルダ)"
+      continue
+    fi
+    ln -sfn "${dir%/}" "$target"
+    echo "skill: $name (link → $OWN_REPO)"
+  done
+fi

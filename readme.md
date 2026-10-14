@@ -309,8 +309,14 @@ git push
     `gh skill` には lockfile も削除コマンドもない。消すときは `claude/skills.txt` の行と `~/.claude/skills/<名前>` を手で消す。
     `gh skill` はまだ preview なので、使い方が変わることがある。
   - brew が入れる skill（terminal-browser など）: brew が自分でリンクを張るので何もしない。
-  - 自作の skill: 自分のリポジトリを clone して、各 skill のフォルダを `~/.claude/skills/` にリンクする予定（未作成）。
-    編集をすぐ反映させたいので `gh skill` のコピーではなくリンクにする。
+  - 自作の skill: [QwerTayu/personal-agent-skills](https://github.com/QwerTayu/personal-agent-skills)（public）に置く。
+    `setup-agent-skills.sh` は次の 2 つを行う。
+    1. `~/Documents/personal/personal-agent-skills` がまだなければ clone する（新しい Mac 用）。
+    2. リポジトリの `skills/` の中で `SKILL.md` があるフォルダごとに、`~/.claude/skills/` へリンクを張る
+       （例: `~/.claude/skills/foo` → `~/Documents/personal/personal-agent-skills/skills/foo`）。
+       `SKILL.md` がないフォルダは飛ばす。
+    リンクなので、リポジトリで編集すればすぐ反映される（`gh skill` のコピーではなくリンクにしている理由）。
+    skill を足したら `./setup-agent-skills.sh` を実行し直す。
 - `claude/settings.json` の `SessionStart` フックは herdr の Claude 連携が書き込んだもので、
   `/Users/icoca/.claude/hooks/herdr-agent-state.sh` を絶対パスで呼んでいる。
   `$HOME` には書き換えない。herdr は文字列の完全一致で自分のフックを見分けるので、
