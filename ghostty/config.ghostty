@@ -9,6 +9,10 @@ font-size = 12
 # Option キーを Meta（Alt）として使う（Terminal.app の「Option キーをメタキーとして使用」と同じ）
 macos-option-as-alt = true
 
+# 自動更新: 裏でダウンロードまでして通知する（インストールは自分で選ぶ）
+# Homebrew の cask は auto_updates なので、brew upgrade では更新されない（--greedy が必要）
+auto-update = download
+
 # 色は VS Code の Dark Modern の統合ターミナルに合わせている。
 # 背景は terminal.background（未指定なので panel.background の #181818）、
 # ANSI の16色は VS Code の terminal.ansi* の標準の値。
