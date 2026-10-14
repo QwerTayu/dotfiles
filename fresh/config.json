@@ -14,5 +14,9 @@
     "custom_ignore_patterns": [
       ".DS_Store"
     ]
+  },
+  "editor": {
+    "auto_save_enabled": true,
+    "auto_save_interval_secs": 1
   }
 }
