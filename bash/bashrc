@@ -17,8 +17,9 @@ GIT_CORE=/Library/Developer/CommandLineTools/usr/share/git-core
 [ -r "$GIT_CORE/git-prompt.sh" ] && source "$GIT_CORE/git-prompt.sh"
 unset GIT_CORE
 
-# 1Password CLI の補完
-type op &>/dev/null && source <(op completion bash)
+# 1Password CLI の補完は setup.sh が ~/.local/share/bash-completion/completions/op に書き出し、
+# bash-completion が op で初めて Tab を押したときに読み込む。
+# シェルの起動のたびに op を動かすと、Ghostty の中では op が止まってプロンプトが出なくなるため。
 
 # プロンプト: [ユーザー@ホスト ディレクトリ] (ブランチ*)$
 GIT_PS1_SHOWDIRTYSTATE=true
