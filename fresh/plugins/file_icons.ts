@@ -139,7 +139,10 @@ const slots = new Map<string, Record<string, unknown>>();
 
 function setIcon(path: string, isDir: boolean) {
   const [glyph, color] = iconFor(editor.pathBasename(path), isDir);
-  slots.set(path, { path, leading: { text: glyph + " ", color, minWidth: 2 }, priority: 10 });
+  const slot: Record<string, unknown> = { path, leading: { text: glyph + " ", color, minWidth: 2 }, priority: 10 };
+  // フォルダ名は標準だと syntax.keyword の青になるので、ファイル名と同じ文字色にそろえる
+  if (isDir) slot.nameColor = "editor.fg";
+  slots.set(path, slot);
 }
 
 let scanToken = 0;
