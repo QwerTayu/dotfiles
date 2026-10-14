@@ -277,7 +277,8 @@ git push
 - Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
   整形して見たいときは別のペインで `glow ファイル.md`。
   Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
-  保存するとスライドも更新される。`Ctrl+C` でサーバーを止める（terminal-browser のペインは自分で閉じる）。
+  保存するとスライドも更新される。`Ctrl+C` でサーバーを止めると、herdr の中なら開いた terminal-browser のペインも閉じる
+  （terminal-browser は Chromium なので、開いたままにするとページ 1 つで 100〜300MB ほどメモリを使い続ける）。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
 - herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
