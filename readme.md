@@ -277,6 +277,8 @@ git push
 - fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
+  lazygit の diff は delta（git-delta）で表示し、背景色・変わった文字の強調・構文の色・行番号を VS Code の inline の diff に合わせている。
+  背景色は VS Code の半透明の色を Ghostty の背景 #181818 に重ねて計算した値なので、Ghostty の背景を変えたら計算し直す。
   lazygit と herdr のペインの背景色はターミナル（Ghostty）の色がそのまま使われるので、
   Ghostty の背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
 - ターミナルは Terminal.app ではなく Ghostty を使う。terminal-browser が kitty graphics protocol で画面を描くため
