@@ -1,0 +1,12 @@
+# 英字で使うアプリ（on-pane-focused.sh の ASCII_APPS）のペインにフォーカスしたら入力ソースを英字にし、
+# ほかのペインに移ったら元に戻す。setup.sh が `herdr plugin link` で登録する。
+id = "qwertayu.ascii-input-source"
+name = "ASCII input source"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Switch to ASCII input while a pane running a listed app is focused"
+platforms = ["macos"]
+
+[[events]]
+on = "pane.focused"
+command = ["./on-pane-focused.sh"]
