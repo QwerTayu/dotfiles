@@ -10,3 +10,7 @@
 
 - メールアドレスも同じで、`~/.gitconfig.local` から gmail のアドレスが読まれる。
 - 名前とメールアドレスは Personal（QwerTayu）、Organization ともに共通。
+
+# herdr
+
+- herdr でワークスペースやタブを作る・並べ替える前に、`~/dotfiles/herdr/readme.md` を読む。名前の付け方、グループの表し方（見出しのワークスペース）、`workspace.move` での並べ替え、`dev-layout` プラグインによるペインの並びが書いてある。
