@@ -21,6 +21,10 @@ unset GIT_CORE
 # bash-completion が op で初めて Tab を押したときに読み込む。
 # シェルの起動のたびに op を動かすと、Ghostty の中では op が止まってプロンプトが出なくなるため。
 
+# herdr はペインのシェルに herdr サーバーの PWD（~）を渡す。起動時に bash が今のディレクトリを
+# 取れないと（再起動後の復元で getcwd が失敗したとき）そのまま残り、プロンプトが ~ になるので合わせ直す
+[ "$PWD" -ef . ] || cd "$(pwd -P)" 2>/dev/null
+
 # プロンプト: [ユーザー@ホスト ディレクトリ] (ブランチ*)$
 GIT_PS1_SHOWDIRTYSTATE=true
 # git-prompt.sh が読めなかったときは空の関数にしてエラーを防ぐ
