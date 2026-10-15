@@ -49,6 +49,7 @@ miruomo-portfolio            ~/Documents/personal/miruomo-portfolio
 `setup.sh` が `herdr plugin link` で登録する。
 
 - `dev-layout/`: 新しいワークスペースを claude / fresh / lazygit / ターミナルの並びにする。既存のタブでは `prefix+shift+l` で同じ並びにする。fresh は `fresh-trusted.sh` 経由で起動するので、初めてのディレクトリでも「このフォルダを信頼しますか」は出ない（claude の確認はそのまま出る）。
+  herdr を起動し直すと（Mac の再起動後など）ペインの並びは戻るが中のプロセスは戻らないので、起動時（`[[startup]]`）にこの並びのタブすべての右上で fresh と lazygit を起動し直す。並びの形（左に 1 つ、右上に 2 つ、右下に 1 つ）だけで見分けるので、右上で別のものを使っていたタブも fresh と lazygit になる。手で起こすときは `dev-layout/apply-layout.sh restore`。claude は herdr の連携が `claude --resume` で戻す。
 - `ascii-input-source/`: lazygit などのペインに移ったとき、入力ソースを英字にする。
 
 skill などからタブを足すときは、`dev-layout/apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]` で同じ並びにする。

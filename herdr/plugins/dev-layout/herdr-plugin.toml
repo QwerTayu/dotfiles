@@ -8,6 +8,7 @@
 # - `apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]` で、渡したペインを左に残してこの並びにし、左でコマンドを起動してタブの名前を変える（skill から使う）
 # - 既存のタブでは prefix+shift+l（herdr/config.toml）で、今いるペインを左に残してこの並びにする
 # - fresh は fresh-trusted.sh で、今のディレクトリを信頼済みにしてから起動する
+# - herdr を起動し直したとき（Mac の再起動後など）は、この並びのタブの右上に fresh と lazygit を起動し直す（中のプロセスは復元されないため）
 # setup.sh が `herdr plugin link` で登録する。
 id = "qwertayu.dev-layout"
 name = "Dev layout"
@@ -25,3 +26,6 @@ command = ["./apply-layout.sh", "current"]
 [[events]]
 on = "workspace.created"
 command = ["./apply-layout.sh", "new-workspace"]
+
+[[startup]]
+command = ["./apply-layout.sh", "restore"]
