@@ -197,6 +197,8 @@ Chrome は自動アップデートされるので brew では更新されない�
 ログは `~/Library/Logs/brew-check.log`。すぐ確かめたいときは `brew-check` を直接実行するか、
 `launchctl kickstart gui/$(id -u)/com.qwertayu.brew-check` で launchd から動かす。
 Chrome や VS Code のように自分で更新するアプリも通知に出る。これはアプリを再起動すると新しい版になる。
+launchd は起動したときのタイムゾーンで時刻を数える。新しい Mac でタイムゾーンを JST に変えたあとは再起動しないと、
+初期設定の太平洋時間の 10:00（JST の 2:00 ごろ）に動いてしまう。ログの時刻がずれていたら再起動する。
 
 Claude Code の skill は別に更新する。
 
