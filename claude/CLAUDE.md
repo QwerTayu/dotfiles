@@ -10,6 +10,7 @@
 
 - メールアドレスも同じで、`~/.gitconfig.local` から gmail のアドレスが読まれる。
 - 名前とメールアドレスは Personal（QwerTayu）、Organization ともに共通。
+- `gh pr create` で PR を作るときは、ほかに指示がなければ `--assignee @me` を付けて自分（QwerTayu）を assign する。
 
 # herdr
 
