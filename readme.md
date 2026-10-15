@@ -14,6 +14,8 @@ dotfiles/
 ├── homebrew/
 │   ├── Brewfile            アプリ・コマンド・VS Code拡張機能の一覧
 │   └── brew-check.sh       → ~/.local/bin/brew-check（更新があれば通知する。launchd が毎日実行）
+├── mise/
+│   └── config.toml         → ~/.config/mise/config.toml（node・java・marp-cli の版）
 ├── marp/
 │   └── marp-preview.sh     → ~/.local/bin/marp-preview（Marp のスライドを terminal-browser で表示する）
 ├── launchd/
@@ -92,6 +94,12 @@ clone 先は `~/dotfiles` でなくてもよい。`setup.sh` は自分が置か�
 
 既存のファイルがある場合は `.backup` を付けて退避される。
 中身を確認して、必要な設定があれば dotfiles 側に移す。
+
+続けて、`mise/config.toml` に書いた node・java・marp-cli を入れる。
+
+```sh
+mise install
+```
 
 ### 4. ログインシェルを Homebrew 版 bash にする
 
@@ -190,6 +198,7 @@ brew update && brew upgrade
 ```
 
 Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
+node・java・marp-cli は mise で入れているので、`mise upgrade` で更新する（`mise/config.toml` に書いた版の範囲で上がる）。
 Chrome は自動アップデートされるので brew では更新されない。
 
 更新があるかは、毎日 10:00 に launchd が `brew-check` を動かして確かめ、古くなったものがあれば macOS の通知で知らせる。
@@ -249,6 +258,7 @@ git push
 |---|---|
 | シェル・git・VS Code・Claude Code の設定 | dotfiles（シンボリックリンク） |
 | アプリ・コマンド・VS Code 拡張機能 | Brewfile |
+| node・java などの言語の版 | mise（`mise/config.toml`。プロジェクトごとの版はそのリポジトリの `mise.toml`） |
 | Finder・Dock・トラックパッドなどの macOS 設定 | macos/macos.sh |
 | アクセシビリティ許可・FileVault・デフォルトブラウザの確認 | 手動（このREADMEに手順を記載） |
 | Raycast の設定・拡張機能 | dotfiles（暗号化した `.rayconfig` を Import） |

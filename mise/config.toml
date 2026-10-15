@@ -1,0 +1,10 @@
+# mise のグローバル設定。setup.sh が ~/.config/mise/config.toml にリンクする。
+# プロジェクトで版を変えたいときは、そのリポジトリに mise.toml を置く。
+# 書き換えたら `mise install` で入れる。
+[tools]
+# Node は LTS の版にする（Homebrew の node は最新のメジャー版に上がってしまうので使わない）
+node = "24"
+# firebase のエミュレータが JDK 21 以上を要る
+java = "temurin-21"
+# marp-preview が使う。brew の marp-cli は brew の node に依存するので、こちらで入れる
+"npm:@marp-team/marp-cli" = "latest"

@@ -1,6 +1,11 @@
 # Homebrewのパスを通す
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# mise で入れた node・java・marp を使う（設定は mise/config.toml）
+# activate ではなく shims にする。shims は実行のたびに今のディレクトリの版を選ぶので、
+# プロンプトを出さないシェル（Claude の Bash ツールなど）でもプロジェクトの mise.toml が効く
+eval "$(/opt/homebrew/bin/mise activate bash --shims)"
+
 # dotfiles のスクリプト（setup.sh が ~/.local/bin にリンクする: brew-check, marp-preview）
 export PATH="$HOME/.local/bin:$PATH"
 

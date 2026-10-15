@@ -24,6 +24,7 @@ link vscode/snippets                 "Library/Application Support/Code/User/snip
 link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
 link herdr/config.toml               .config/herdr/config.toml
+link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json
 link fresh/plugins/file_icons.ts     .config/fresh/plugins/file_icons.ts

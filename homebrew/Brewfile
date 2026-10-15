@@ -20,8 +20,8 @@ brew "herdr"
 brew "hunk"
 # Simple terminal UI for git commands
 brew "lazygit"
-# Easily convert Marp Markdown files into static HTML/CSS, PDF, PPT and images
-brew "marp-cli"
+# Polyglot runtime manager (asdf rust clone)
+brew "mise"
 # Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
 # Port of OpenAI's Whisper model in C/C++
