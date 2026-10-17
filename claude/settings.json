@@ -1,6 +1,4 @@
 {
-  "theme": "dark",
-  "language": "japanese",
   "hooks": {
     "SessionStart": [
       {
@@ -14,5 +12,8 @@
         ]
       }
     ]
-  }
+  },
+  "language": "japanese",
+  "theme": "dark",
+  "agentPushNotifEnabled": true
 }
