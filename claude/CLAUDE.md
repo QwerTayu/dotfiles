@@ -1,6 +1,6 @@
 # Git
 
-- git の名前とメールアドレスは `~/.gitconfig.local` に書いてあり、`~/.gitconfig`（dotfiles の `git/gitconfig`）から `[include]` で読み込んでいる。
+- git の名前とメールアドレスは `~/.gitconfig.local`（非公開の `~/dotfiles-private/git/gitconfig.local` へのリンク）に書いてあり、`~/.gitconfig`（dotfiles の `git/gitconfig`）から `[include]` で読み込んでいる。
 - `git config --global user.name` は include 先を読まないので、未設定のように空で返る。確かめるときは次のどちらかを使う。
 
   ```sh

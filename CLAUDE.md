@@ -16,7 +16,7 @@ macOS 用の個人 dotfiles。ビルド・テスト・lint はない。シェル
   - Finder・Dock などの macOS 設定 → `macos/macos.sh` の `defaults write`
   - VS Code の拡張機能は Brewfile、settings/keybindings/snippets は dotfiles で管理するため、Settings Sync とは競合させない
 - **bash の読み込み順**: macOS のターミナルはログインシェルなので `~/.bash_profile` が読まれる。`bash_profile` は Homebrew の PATH とロケールだけを設定して `~/.bashrc` を source する。設定本体は `bashrc` に書く。
-- **git の個人情報はコミットしない**: `git/gitconfig` は `~/.gitconfig.local`（`*.local` は gitignore 済み）を `[include]` しており、`user.name` / `user.email` はそちらに置く。
+- **git の個人情報はコミットしない**: `git/gitconfig` は `~/.gitconfig.local`（`*.local` は gitignore 済み）を `[include]` しており、`user.name` / `user.email` はそちらに置く。`~/.gitconfig.local` は非公開の `~/dotfiles-private`（`git/gitconfig.local`）からリンクしている。
 
 ## よく使うコマンド
 

@@ -115,7 +115,13 @@ chsh -s /opt/homebrew/bin/bash
 ターミナルを開き直して `echo $BASH_VERSION` が 5.x ならOK。
 `git ` と打って Tab を押し、サブコマンドが補完されれば bash-completion も有効。
 
-### 5. git の個人情報を設定（リポジトリには入れない）
+### 5. git の個人情報を設定（このリポジトリには入れない）
+
+名前とメールアドレスは `~/.gitconfig.local` に置き、`git/gitconfig` から `[include]` で読み込む。
+`~/.gitconfig.local` は非公開の `QwerTayu/dotfiles-private`（`git/gitconfig.local`）で管理していて、
+`~/dotfiles-private` を clone してあれば手順 3 の `setup.sh` がリンクを張る。
+
+dotfiles-private を使わない Mac では、手で作る。
 
 ```sh
 cat > ~/.gitconfig.local << 'EOF'
