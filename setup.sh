@@ -32,6 +32,7 @@ link lazygit/config.yml              "Library/Application Support/lazygit/config
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 link homebrew/brew-check.sh          .local/bin/brew-check
 link marp/marp-preview.sh            .local/bin/marp-preview
+link chrome/chrome-window-names.py   .local/bin/chrome-window-names
 
 # 1Password CLI の補完を書き出す（bashrc で毎回 op を動かさないため。op を更新したら setup.sh を実行し直す）
 if command -v op >/dev/null; then
@@ -40,14 +41,18 @@ if command -v op >/dev/null; then
   echo "completion: ~/.local/share/bash-completion/completions/op"
 fi
 
-# 毎日 10:00 に Homebrew の更新を確かめて通知する launchd のジョブを登録する
+# launchd のジョブを登録する（brew-check: 毎日 10:00 に Homebrew の更新を通知、
+# chrome-window-names: 30 秒ごとに Chrome のウィンドウへ profile 名を付ける）
 # （plist はリンクではなくコピー。plist を変えたら setup.sh を実行し直す）
-PLIST="$HOME/Library/LaunchAgents/com.qwertayu.brew-check.plist"
-mkdir -p "$(dirname "$PLIST")"
-cp "$DOTFILES/launchd/com.qwertayu.brew-check.plist" "$PLIST"
-launchctl bootout "gui/$(id -u)/com.qwertayu.brew-check" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$PLIST"
-echo "launchd: com.qwertayu.brew-check"
+mkdir -p "$HOME/Library/LaunchAgents"
+for src in "$DOTFILES"/launchd/*.plist; do
+  label="$(basename "$src" .plist)"
+  PLIST="$HOME/Library/LaunchAgents/$label.plist"
+  cp "$src" "$PLIST"
+  launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$PLIST"
+  echo "launchd: $label"
+done
 
 # herdr のプラグインを登録する（登録は herdr が持つので、新しい環境ではここで登録し直す）
 if command -v herdr >/dev/null; then

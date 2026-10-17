@@ -18,8 +18,11 @@ dotfiles/
 │   └── config.toml         → ~/.config/mise/config.toml（node・java・marp-cli の版）
 ├── marp/
 │   └── marp-preview.sh     → ~/.local/bin/marp-preview（Marp のスライドを terminal-browser で表示する）
+├── chrome/
+│   └── chrome-window-names.py → ~/.local/bin/chrome-window-names（Chrome のウィンドウに profile 名を付ける。launchd が 30 秒ごとに実行）
 ├── launchd/
-│   └── com.qwertayu.brew-check.plist  ~/Library/LaunchAgents/ にコピーして登録する（setup.sh）
+│   ├── com.qwertayu.brew-check.plist          ~/Library/LaunchAgents/ にコピーして登録する（setup.sh）
+│   └── com.qwertayu.chrome-window-names.plist 同上
 ├── vscode/
 │   ├── settings.json       → ~/Library/Application Support/Code/User/settings.json
 │   ├── keybindings.json    → ~/Library/Application Support/Code/User/keybindings.json
@@ -166,6 +169,10 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
   ウィンドウ管理を使うので、システム設定 → プライバシーとセキュリティ → アクセシビリティ で Raycast を許可する。
 - **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
   マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
+- **Chrome のウィンドウ名**：`setup.sh` のあと、launchd の `chrome-window-names` が Chrome を操作する許可を求めてくるので「許可」する。
+  各ウィンドウに「【profile 名(タブ数)】タブ名」の名前が付き、Raycast の Switch Windows で profile を見分けられる（タブ名は 30 秒ごとに付け直す）。
+  自分で「ウィンドウに名前を付ける」をした名前は残り、前に【profile 名(タブ数)】だけが付く。
+  止めるときは `launchctl bootout gui/$(id -u)/com.qwertayu.chrome-window-names`。
 - **入力ソース**：システム設定 → キーボード → 入力ソース で「ABC」と「日本語 - ローマ字入力」を追加する。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
@@ -291,7 +298,7 @@ git push
   Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
   保存するとスライドも更新される。`Ctrl+C` でサーバーを止めると、herdr の中なら開いた terminal-browser のペインも閉じる
   （terminal-browser は Chromium なので、開いたままにするとページ 1 つで 100〜300MB ほどメモリを使い続ける）。
-- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`）をここにリンクする。
+- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`、`chrome-window-names`）をここにリンクする。
 - herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
   右下 1/4 にターミナル」の並びにし、タブの名前を `main` にする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。

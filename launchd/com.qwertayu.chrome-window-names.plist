@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  30 秒ごとに Chrome のウィンドウへ「【profile 名(タブ数)】タブ名」の名前を付ける（chrome/chrome-window-names.py）。
+  Chrome が起動していなければ何もしない。
+  setup.sh が ~/Library/LaunchAgents/ にコピーして launchd に登録する。
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.qwertayu.chrome-window-names</string>
+  <key>ProgramArguments</key>
+  <array>
+    <!-- plist では ~ や $HOME が使えないので、sh に展開させる -->
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>exec "$HOME/.local/bin/chrome-window-names"</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>30</integer>
+  <key>StandardErrorPath</key>
+  <string>/tmp/chrome-window-names.log</string>
+</dict>
+</plist>
