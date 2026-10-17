@@ -47,8 +47,6 @@ dotfiles/
 │   └── config.yml          → ~/Library/Application Support/lazygit/config.yml
 ├── ghostty/
 │   └── config.ghostty      → ~/.config/ghostty/config.ghostty
-├── raycast/
-│   └── raycast.rayconfig   Raycast の設定（パスワード付きで暗号化。Import で読み込む）
 ├── macos/
 │   └── macos.sh            Finder・Dock・トラックパッドなどのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
@@ -164,7 +162,8 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 
 スクリプト化できない（macOS のセキュリティ上、手動操作が必要な）もの。
 
-- **Raycast**：起動して「Import Settings & Data」を実行し、`raycast/raycast.rayconfig` を読み込む。
+- **Raycast**：非公開のリポジトリ `QwerTayu/dotfiles-private` を `~/dotfiles-private` に clone し、
+  Raycast を起動して「Import Settings & Data」で `~/dotfiles-private/raycast/raycast.rayconfig` を読み込む。
   パスワードは 1Password の「Raycast Export」に保存してある。
   ウィンドウ管理を使うので、システム設定 → プライバシーとセキュリティ → アクセシビリティ で Raycast を許可する。
 - **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
@@ -240,16 +239,20 @@ GUI（システム設定）で変えた設定を取り込みたいときは、`~
 
 ### Raycast の設定を変えたとき
 
-Raycast で「Export Settings & Data」を実行し、保存先に `raycast/` を選ぶ。
+Raycast の設定は、このリポジトリ（public）ではなく非公開の `QwerTayu/dotfiles-private`（`~/dotfiles-private`）に置く。
+書き出す項目は選べず、クリップボード履歴なども全部入るため。
+
+Raycast で「Export Settings & Data」を実行し、保存先に `~/dotfiles-private/raycast/` を選ぶ。
 パスワードは 1Password の「Raycast Export」と同じものにする。
-書き出されたファイル（`Raycast-...rayconfig`）を `raycast/raycast.rayconfig` に上書きで名前を変える。
+書き出されたファイル（`Raycast-...rayconfig`）を `raycast.rayconfig` に上書きで名前を変えて、コミットする。
 
 ```sh
+cd ~/dotfiles-private
 mv raycast/Raycast-*.rayconfig raycast/raycast.rayconfig
+git add raycast/raycast.rayconfig && git commit -m "update raycast settings" && git push
 ```
 
 中身は暗号化されているので git で差分は見られない。
-書き出す項目は選べず全部入るが、暗号化されているのでクリップボード履歴なども外からは読めない。
 
 ### 変更を保存する
 
@@ -268,7 +271,7 @@ git push
 | node・java などの言語の版 | mise（`mise/config.toml`。プロジェクトごとの版はそのリポジトリの `mise.toml`） |
 | Finder・Dock・トラックパッドなどの macOS 設定 | macos/macos.sh |
 | アクセシビリティ許可・FileVault・デフォルトブラウザの確認 | 手動（このREADMEに手順を記載） |
-| Raycast の設定・拡張機能 | dotfiles（暗号化した `.rayconfig` を Import） |
+| Raycast の設定・拡張機能 | dotfiles-private（非公開。暗号化した `.rayconfig` を Import） |
 | Chrome のブックマーク・拡張機能 | Google アカウントの同期 |
 | VS Code の UI 状態 | Settings Sync（または管理しない） |
 | Claude Code のログイン情報・履歴（`~/.claude.json` など） | 管理しない |

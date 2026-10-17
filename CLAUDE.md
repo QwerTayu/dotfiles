@@ -38,3 +38,4 @@ brew bundle dump --file=homebrew/Brewfile --force   # 現状を Brewfile に書�
 - `vscode/snippets/` は空ディレクトリのため git に含まれていない。新しい環境で clone すると `setup.sh` がリンク切れのリンクを作る。スニペットを追加するか `.gitkeep` を置くこと。
 - `.gitignore` の `*.baskup` は `*.backup` のタイポと思われる（`setup.sh` が作るのは `~` 側なので実害は小さい）。
 - SSH 鍵やトークンなどの認証情報はコミットしない。
+- このリポジトリは public。Raycast の書き出し（`.rayconfig`）は非公開の `QwerTayu/dotfiles-private`（`~/dotfiles-private`）に置き、ここには入れない（`.gitignore` 済み）。
