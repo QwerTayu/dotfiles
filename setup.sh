@@ -64,3 +64,8 @@ fi
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
+
+# 非公開の dotfiles（QwerTayu/dotfiles-private）を clone してあれば、そちらのリンクも張る
+if [ -x "$HOME/dotfiles-private/setup.sh" ]; then
+  "$HOME/dotfiles-private/setup.sh"
+fi

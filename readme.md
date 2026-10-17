@@ -96,6 +96,9 @@ clone 先は `~/dotfiles` でなくてもよい。`setup.sh` は自分が置か�
 既存のファイルがある場合は `.backup` を付けて退避される。
 中身を確認して、必要な設定があれば dotfiles 側に移す。
 
+非公開の `QwerTayu/dotfiles-private` を先に `~/dotfiles-private` に clone しておくと、
+`setup.sh` が最後に `~/dotfiles-private/setup.sh` も実行して、そちらのリンクも張る（なければ何もしない）。
+
 続けて、`mise/config.toml` に書いた node・java・marp-cli を入れる。
 
 ```sh
