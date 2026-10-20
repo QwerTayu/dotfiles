@@ -66,6 +66,16 @@ fi
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
 
+# SwiftBar（メニューバーにスクリプトの出力を出すアプリ）のプラグインは ~/.config/swiftbar に置く
+mkdir -p "$HOME/.config/swiftbar"
+defaults write com.ameba.SwiftBar PluginDirectory "$HOME/.config/swiftbar"
+echo "swiftbar: plugins in ~/.config/swiftbar"
+
+# localhost のポート一覧の SwiftBar プラグイン（QwerTayu/swiftbar-ports）を clone してあれば、リンクを張る
+if [ -x "$HOME/Documents/personal/swiftbar-ports/install.sh" ]; then
+  "$HOME/Documents/personal/swiftbar-ports/install.sh"
+fi
+
 # 非公開の dotfiles（QwerTayu/dotfiles-private）を clone してあれば、そちらのリンクも張る
 if [ -x "$HOME/dotfiles-private/setup.sh" ]; then
   "$HOME/dotfiles-private/setup.sh"

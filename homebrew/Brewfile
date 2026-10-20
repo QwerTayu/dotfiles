@@ -12,6 +12,8 @@ brew "fresh-editor"
 brew "gh"
 # Syntax-highlighting pager for git and diff output
 brew "git-delta"
+# Quickly rewrite git repository history
+brew "git-filter-repo"
 # Render markdown on the CLI
 brew "glow"
 # Agent multiplexer that lives in your terminal
@@ -59,6 +61,8 @@ cask "slack"
 cask "spotify"
 # Video game digital distribution service
 cask "steam"
+# Menu bar customization tool
+cask "swiftbar"
 # Terminal-based web browser
 cask "terminal-browser"
 # Open-source code editor
