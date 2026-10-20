@@ -30,6 +30,7 @@ dotfiles/
 ├── claude/
 │   ├── settings.json       → ~/.claude/settings.json
 │   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
+│   ├── statusline.sh       → ~/.claude/statusline.sh（入力欄の下にモデル・effort・組織・利用上限の使用率を出す）
 │   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
 │   ├── readme.md           ワークスペースとタブの分け方

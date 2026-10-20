@@ -23,6 +23,7 @@ link vscode/keybindings.json         "Library/Application Support/Code/User/keyb
 link vscode/snippets                 "Library/Application Support/Code/User/snippets"
 link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
+link claude/statusline.sh            .claude/statusline.sh
 link herdr/config.toml               .config/herdr/config.toml
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json
