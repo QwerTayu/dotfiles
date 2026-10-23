@@ -218,6 +218,10 @@ brew update && brew upgrade
 
 Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
 node・java・marp-cli は mise で入れているので、`mise upgrade` で更新する（`mise/config.toml` に書いた版の範囲で上がる）。
+Python は uv で管理していて、Homebrew の Python は入れない。`python3` は uv の Python（`setup.sh` が `uv python install --default` で `~/.local/bin` に置く）。
+Python 製の CLI（yt-dlp など）は `uv tool install` で入れ、Brewfile には `uv "..."` の行として書き出される。
+更新は `uv python upgrade` と `uv tool upgrade --all`。
+`brew-check` は、何かの依存で Homebrew の Python が入っていると通知する。
 Chrome は自動アップデートされるので brew では更新されない。
 
 更新があるかは、毎日 10:00 に launchd が `brew-check` を動かして確かめ、古くなったものがあれば macOS の通知で知らせる。
