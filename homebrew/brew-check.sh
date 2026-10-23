@@ -33,4 +33,4 @@ echo "$outdated"
 count=$(printf '%s\n' "$outdated" | wc -l | tr -d ' ')
 names=$(printf '%s\n' "$outdated" | head -5 | paste -sd ',' - | sed 's/,/, /g')
 [ "$count" -gt 5 ] && names="$names, ..."
-notify "Homebrew: ${count}件の更新" "$names（brew upgrade で更新）"
+notify "Homebrew: ${count}件の更新" "${names}（brew upgrade で更新）"
