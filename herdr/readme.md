@@ -8,23 +8,27 @@
 - **グループは見出しのワークスペースで表す。** herdr にはワークスペースをフォルダにまとめる機能がないので、
   `絵文字 + グループ名` のワークスペースを見出しにする（グループのフォルダで開く）。そのすぐ下に、グループのリポジトリのワークスペースを並べる。
   見出しのワークスペースは、グループ全体にまたがる作業に使う。
+- **グループの中のリポジトリは、名前の頭に `├─ ` を付ける**（例: `├─ QwerTayu`）。見出しの下に並んでいることを、名前で見えるようにするため。
+- **worktree のワークスペースには `├─ ` を付けない。** 名前はブランチを表す短い名前だけにする（例: `ac-notif`）。
+  herdr が元のリポジトリのワークスペースの下に字下げして並べるので、`├─ ` を付けると見分けにくくなる。
 
 ```
 🛠️ dotfiles                  ~/dotfiles（グループに入らないリポジトリ）
 🥜 NUTMEG                    ~/Documents/nutmeg
-group-manager-2              ~/Documents/nutmeg/group-manager-2
+├─ group-manager-2           ~/Documents/nutmeg/group-manager-2
+gm-2123                      ~/.herdr/worktrees/group-manager-2/<ブランチ>（worktree）
 💻 Personal                  ~/Documents/personal
-QwerTayu                     ~/Documents/personal/QwerTayu
-miruomo-portfolio            ~/Documents/personal/miruomo-portfolio
+├─ QwerTayu                  ~/Documents/personal/QwerTayu
+├─ miruomo-portfolio         ~/Documents/personal/miruomo-portfolio
 …
 ```
 
 ## リポジトリのワークスペースを足すとき
 
-1. リポジトリのフォルダでワークスペースを作る（名前はフォルダ名）。
+1. リポジトリのフォルダでワークスペースを作る（名前はフォルダ名。グループの中なら頭に `├─ ` を付ける）。
 
    ```sh
-   herdr workspace create --cwd ~/Documents/personal/foo --label foo
+   herdr workspace create --cwd ~/Documents/personal/foo --label '├─ foo'
    ```
 
    プラグイン `dev-layout` が、左に claude、右上に fresh と lazygit、右下にターミナルを並べ、タブの名前を `main` にする。
