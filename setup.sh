@@ -71,8 +71,11 @@ fi
 
 # Python は uv で管理する（Homebrew の Python は使わない）。uv の Python 3.15 を ~/.local/bin の python / python3 にする
 # （Python 製の CLI は Brewfile の uv "..." の行で、brew bundle が uv tool install する）
+# ネットワークの不調などで失敗しても、このあとの処理は続ける。
+# uv の管理外の ~/.local/bin/python3 が先にあると、uv は警告を出すだけで置き換えないので、出力の警告を見る
 if command -v uv >/dev/null; then
-  uv python install --default --preview-features python-install-default 3.15
+  uv python install --default --preview-features python-install-default 3.15 \
+    || echo "uv python install に失敗（あとで手で実行する）" >&2
 fi
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）

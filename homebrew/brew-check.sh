@@ -28,7 +28,12 @@ if [ -n "$pythons" ]; then
   for py in $pythons; do
     users=$("$BREW" uses --installed "$py" | paste -sd ',' - | sed 's/,/, /g')
     echo "homebrew python: $py (used by: ${users:-none})"
-    notify "Homebrew の Python が入っています" "${py}（依存元: ${users:-なし}）。uv tool で入れ直せないか確かめる"
+    if [ -n "$users" ]; then
+      notify "Homebrew の Python が入っています" "${py}（依存元: ${users}）。uv tool で入れ直せないか確かめる"
+    else
+      # 依存元がないのは、ビルドのときだけ使われて残ったもの
+      notify "Homebrew の Python が入っています" "${py}（依存元なし）。brew autoremove で消せる"
+    fi
   done
 fi
 

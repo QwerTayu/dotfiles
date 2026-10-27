@@ -179,6 +179,8 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 - **SwiftBar**：`setup.sh` がプラグインのフォルダを `~/.config/swiftbar` に設定する。起動して、設定の「Launch at login」をオンにする。
   localhost のポート一覧のプラグインは別のリポジトリ（`QwerTayu/swiftbar-ports`）。`~/Documents/personal/swiftbar-ports` に clone しておくと、
   `setup.sh` がその `install.sh` を実行してリンクを張る。
+- **herdr の未読の印**：プラグインは別のリポジトリ（`QwerTayu/herdr-marks-as-unread`）。`~/Documents/personal/herdr-marks-as-unread` に clone しておくと、
+  `setup.sh` が herdr に登録する（詳しくは `herdr/readme.md`）。
 - **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
   マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
 - **Chrome のウィンドウ名**：`setup.sh` のあと、launchd の `chrome-window-names` が Chrome を操作する許可を求めてくるので「許可」する。
