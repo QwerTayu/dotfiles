@@ -212,6 +212,10 @@ Settings Sync を使う場合は、dotfiles と競合しないように同期項
 brew bundle dump --file=homebrew/Brewfile --force
 ```
 
+dump すると、末尾に `npm "corepack"` の行ができるので、毎回消す。
+corepack は mise で入れた Node に同梱されているもので、自分で入れたものではない。
+`brew bundle dump` は、Node のグローバルにある npm のパッケージも書き出すため、これも拾ってしまう。
+
 ### アプリを更新するとき
 
 ```sh

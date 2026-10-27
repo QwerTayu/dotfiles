@@ -12,7 +12,7 @@ macOS 用の個人 dotfiles。ビルド・テスト・lint はない。シェル
 - **ファイル名はドットなし**（`bash/bashrc` → `~/.bashrc`）。ツールごとにフォルダを分ける。将来 Nix / home-manager / nix-darwin に移行しやすくするための方針なので守ること。
 - **管理の分担**:
   - シェル・git・VS Code の設定 → このリポジトリ（シンボリックリンク）
-  - アプリ・CLI・VS Code 拡張機能 → `homebrew/Brewfile`（`brew bundle dump --file=homebrew/Brewfile --force` で再生成する。手で編集するより dump を優先）
+  - アプリ・CLI・VS Code 拡張機能 → `homebrew/Brewfile`（`brew bundle dump --file=homebrew/Brewfile --force` で再生成する。手で編集するより dump を優先。dump すると Node 同梱の corepack が `npm "corepack"` として書き出されるので、毎回その行を消す）
   - Finder・Dock などの macOS 設定 → `macos/macos.sh` の `defaults write`
   - VS Code の拡張機能は Brewfile、settings/keybindings/snippets は dotfiles で管理するため、Settings Sync とは競合させない
 - **bash の読み込み順**: macOS のターミナルはログインシェルなので `~/.bash_profile` が読まれる。`bash_profile` は Homebrew の PATH とロケールだけを設定して `~/.bashrc` を source する。設定本体は `bashrc` に書く。
