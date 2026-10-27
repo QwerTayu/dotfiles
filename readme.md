@@ -20,6 +20,9 @@ dotfiles/
 │   └── marp-preview.sh     → ~/.local/bin/marp-preview（Marp のスライドを terminal-browser で表示する）
 ├── chrome/
 │   └── chrome-window-names.py → ~/.local/bin/chrome-window-names（Chrome のウィンドウに profile 名を付ける。launchd が 30 秒ごとに実行）
+├── gws/
+│   ├── readme.md           Google Cloud の準備と、アカウントの足し方
+│   └── gws.sh              → ~/.local/bin/gws（mise exec を通して gws を呼び、ディレクトリの mise.local.toml で Google アカウントを分ける）
 ├── launchd/
 │   ├── com.qwertayu.brew-check.plist          ~/Library/LaunchAgents/ にコピーして登録する（setup.sh）
 │   └── com.qwertayu.chrome-window-names.plist 同上
