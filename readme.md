@@ -179,6 +179,8 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 - **SwiftBar**：`setup.sh` がプラグインのフォルダを `~/.config/swiftbar` に設定する。起動して、設定の「Launch at login」をオンにする。
   localhost のポート一覧のプラグインは別のリポジトリ（`QwerTayu/swiftbar-ports`）。`~/Documents/personal/swiftbar-ports` に clone しておくと、
   `setup.sh` がその `install.sh` を実行してリンクを張る。
+- **herdr の未読の印**：プラグインは別のリポジトリ（`QwerTayu/herdr-marks-as-unread`）。`~/Documents/personal/herdr-marks-as-unread` に clone しておくと、
+  `setup.sh` が herdr に登録する（詳しくは `herdr/readme.md`）。
 - **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
   マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
 - **Chrome のウィンドウ名**：`setup.sh` のあと、launchd の `chrome-window-names` が Chrome を操作する許可を求めてくるので「許可」する。
@@ -218,6 +220,10 @@ brew update && brew upgrade
 
 Claude Code も Homebrew 版なのでこれで更新される（`claude update` ではなく brew で更新する）。
 node・java・marp-cli は mise で入れているので、`mise upgrade` で更新する（`mise/config.toml` に書いた版の範囲で上がる）。
+Python は uv で管理していて、Homebrew の Python は入れない。`python3` は uv の Python（`setup.sh` が `uv python install --default` で `~/.local/bin` に置く）。
+Python 製の CLI（yt-dlp など）は `uv tool install` で入れ、Brewfile には `uv "..."` の行として書き出される。
+更新は `uv python upgrade` と `uv tool upgrade --all`。
+`brew-check` は、何かの依存で Homebrew の Python が入っていると通知する。
 Chrome は自動アップデートされるので brew では更新されない。
 
 更新があるかは、毎日 10:00 に launchd が `brew-check` を動かして確かめ、古くなったものがあれば macOS の通知で知らせる。

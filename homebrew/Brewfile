@@ -28,8 +28,6 @@ brew "mise"
 brew "uv"
 # Port of OpenAI's Whisper model in C/C++
 brew "whisper.cpp"
-# Feature-rich command-line audio/video downloader
-brew "yt-dlp"
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password
@@ -47,8 +45,12 @@ cask "font-hackgen-nerd"
 cask "ghostty"
 # Web browser
 cask "google-chrome"
+# Free cross-platform office suite, fresh version
+cask "libreoffice"
 # Software for Logitech devices
 cask "logi-options+"
+# Tool to control external monitor brightness & volume
+cask "monitorcontrol"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Replacement for Docker Desktop
@@ -124,3 +126,4 @@ vscode "wayou.vscode-todo-highlight"
 vscode "xabikos.javascriptsnippets"
 vscode "yzane.markdown-pdf"
 vscode "yzhang.markdown-all-in-one"
+uv "yt-dlp[default,deno]"

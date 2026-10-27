@@ -22,6 +22,21 @@ if ! "$BREW" update --quiet; then
   exit 1
 fi
 
+# Python は uv で管理しているので、Homebrew の Python（何かの依存で入る）があれば知らせる
+pythons=$("$BREW" list --formula | grep '^python@')
+if [ -n "$pythons" ]; then
+  for py in $pythons; do
+    users=$("$BREW" uses --installed "$py" | paste -sd ',' - | sed 's/,/, /g')
+    echo "homebrew python: $py (used by: ${users:-none})"
+    if [ -n "$users" ]; then
+      notify "Homebrew の Python が入っています" "${py}（依存元: ${users}）。uv tool で入れ直せないか確かめる"
+    else
+      # 依存元がないのは、ビルドのときだけ使われて残ったもの
+      notify "Homebrew の Python が入っています" "${py}（依存元なし）。brew autoremove で消せる"
+    fi
+  done
+fi
+
 outdated=$("$BREW" outdated --quiet)
 if [ -z "$outdated" ]; then
   echo "no updates"
@@ -33,4 +48,4 @@ echo "$outdated"
 count=$(printf '%s\n' "$outdated" | wc -l | tr -d ' ')
 names=$(printf '%s\n' "$outdated" | head -5 | paste -sd ',' - | sed 's/,/, /g')
 [ "$count" -gt 5 ] && names="$names, ..."
-notify "Homebrew: ${count}件の更新" "$names（brew upgrade で更新）"
+notify "Homebrew: ${count}件の更新" "${names}（brew upgrade で更新）"

@@ -4,3 +4,4 @@
 # 例:
 # owner/repo skills/foo
 # owner/repo skills/bar v1.2.0
+nanaism/yomiyasu skills/yomiyasu v2.1.3

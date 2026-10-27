@@ -37,6 +37,21 @@ teal = "#4EC9B0"
 peach = "#CE9178"
 mauve = "#C586C0"
 
+# サイドバーのエージェントの行。デフォルトの並びに、未読の印（herdr-marks-as-unread の $herdr_mark）を足す。
+# 印は state_icon のすぐ後ろに置く（herdr はこの 2 つの間にだけ区切りの「 · 」を入れないため）
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", { token = "$herdr_mark", fg = "#4EC9B0", bold = true, dim = false }, "machine", "workspace", "tab"],
+  ["agent"],
+]
+
+# prefix+m で、今のエージェントに未読の印を付ける・外す（QwerTayu/herdr-marks-as-unread）。そのペインに戻ると消える
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "local.herdr-marks.toggle"
+description = "Toggle agent marker"
+
 # prefix+shift+l で、今のタブを claude / fresh / lazygit / ターミナル の並びにする（herdr/plugins/dev-layout）
 [[keys.command]]
 key = "prefix+shift+l"
