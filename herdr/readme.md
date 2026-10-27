@@ -56,6 +56,13 @@ gm-2123                      ~/.herdr/worktrees/group-manager-2/<ブランチ>�
   herdr を起動し直すと（Mac の再起動後など）ペインの並びは戻るが中のプロセスは戻らないので、起動時（`[[startup]]`）にこの並びのタブすべての右上で fresh と lazygit を起動し直す。並びの形（左に 1 つ、右上に 2 つ、右下に 1 つ）だけで見分けるので、右上で別のものを使っていたタブも fresh と lazygit になる。手で起こすときは `dev-layout/apply-layout.sh restore`。claude は herdr の連携が `claude --resume` で戻す。
 - `ascii-input-source/`: lazygit などのペインに移ったとき、入力ソースを英字にする。
 
+dotfiles の外のプラグイン:
+
+- **herdr-marks-as-unread**（`QwerTayu/herdr-marks-as-unread`。sachin-philip/herdr-marks-as-unread の fork）: `prefix+m` で、今のエージェントのサイドバーの行に緑の `●`（未読の印）を付ける・外す。
+  そのペインに戻ると消える。herdr の done / idle の状態は変えない（herdr には「未読に戻す」機能がないための代わり）。
+  `~/Documents/personal/herdr-marks-as-unread` に clone しておくと `setup.sh` が登録する。印の行（`$herdr_mark`）とキーの割り当ては `config.toml` に書いてある。
+  付属のセットアップ（`local.herdr-marks.setup`）は使わない。
+
 skill などからタブを足すときは、`dev-layout/apply-layout.sh tab <ペイン ID> <タブ名> [<コマンド>]` で同じ並びにする。
 渡したペインを左に残し、左で `<コマンド>` を起動して、タブの名前を `<タブ名>` にする（`<コマンド>` を省くと何も起動しない）。
 

@@ -61,6 +61,12 @@ if command -v herdr >/dev/null; then
     herdr plugin link "$plugin" >/dev/null 2>&1 || true
     echo "herdr plugin: $(basename "$plugin")"
   done
+  # 未読の印のプラグイン（QwerTayu/herdr-marks-as-unread。他人のプラグインの fork）を clone してあれば登録する
+  marks="$HOME/Documents/personal/herdr-marks-as-unread"
+  if [ -f "$marks/herdr-plugin.toml" ]; then
+    herdr plugin link "$marks" >/dev/null 2>&1 || true
+    echo "herdr plugin: herdr-marks-as-unread"
+  fi
 fi
 
 # Python は uv で管理する（Homebrew の Python は使わない）。uv の Python 3.15 を ~/.local/bin の python / python3 にする
