@@ -19,6 +19,9 @@ Google 公式のサポート対象ではない（README に「not an officially 
 - **`gws.sh` を通して呼ぶ。** mise は `--shims` で有効にしているので（`bash/bash_profile`）、brew で入れた gws には `[env]` が渡らない。
   `gws.sh` を `~/.local/bin/gws` にリンクし（`setup.sh`）、`mise exec -- /opt/homebrew/bin/gws` で呼ぶ。
   `~/.local/bin` は PATH の先頭なので、ターミナルでも Claude の Bash でも、`gws` と打てばこれが使われる。
+- **アカウントは gws を実行したときのカレントディレクトリで決まる。** Claude を起動したディレクトリではない。
+  Claude が scratchpad や `/tmp` に移動してから実行すると既定のアカウントになり、検索が空になる（実際に起きた）。
+  そのため `claude/CLAUDE.md` に、リポジトリの中で実行するよう書いてある。
 - **ログイン情報は暗号化される。** 設定ディレクトリの `credentials.enc` に入り、鍵は macOS のキーチェーンに入る。
   アカウントを増やしても、キーチェーンで混ざらないことを確かめてある。
 - **Claude Code の権限**（`claude/settings.json` の `permissions`）

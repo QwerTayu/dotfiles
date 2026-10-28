@@ -18,6 +18,10 @@
 - Python 製の CLI は `uv tool install` で入れる。`brew bundle dump` で Brewfile に `uv "..."` の行として書き出され、新しい Mac では `brew bundle` が入れる。
 - `brew install` する前に `brew deps <名前> | grep '^python@'` で確かめる。Homebrew の Python が依存で入るなら、入れる前にユーザーに伝え、uv tool で入れられないかを提案する。
 
+# gws
+
+- `gws`（`~/.local/bin/gws`）は、実行したときのカレントディレクトリの `mise.local.toml` で Google アカウントを切り替える。scratchpad や `/tmp` に移動して実行すると既定のアカウントになり、検索が空になったり別のアカウントのデータを読んだりする。`gws` はリポジトリの中で実行し、ファイルを scratchpad に保存したいときは `--output` に scratchpad のパスを渡す。どのアカウントかは `gws auth status` の `user` で確かめられる。詳しくは `~/dotfiles/gws/readme.md`。
+
 # herdr
 
 - herdr でワークスペースやタブを作る・並べ替える前に、`~/dotfiles/herdr/readme.md` を読む。名前の付け方、グループの表し方（見出しのワークスペース）、`workspace.move` での並べ替え、`dev-layout` プラグインによるペインの並びが書いてある。
