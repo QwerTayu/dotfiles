@@ -6,3 +6,6 @@ todo.md
 
 # Raycast の書き出しは public に置かない（~/dotfiles-private に置く）
 *.rayconfig
+
+# Karabiner-Elements が自動で作るバックアップ
+karabiner/automatic_backups/

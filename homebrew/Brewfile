@@ -47,6 +47,8 @@ cask "font-hackgen-nerd"
 cask "ghostty"
 # Web browser
 cask "google-chrome"
+# Keyboard customiser
+cask "karabiner-elements"
 # Free cross-platform office suite, fresh version
 cask "libreoffice"
 # Software for Logitech devices

@@ -51,6 +51,8 @@ dotfiles/
 │   └── config.yml          → ~/Library/Application Support/lazygit/config.yml
 ├── ghostty/
 │   └── config.ghostty      → ~/.config/ghostty/config.ghostty
+├── karabiner/              → ~/.config/karabiner（フォルダごとリンク）
+│   └── karabiner.json      Karabiner-Elements の設定（⌘ 単押しで英数・かな）
 ├── macos/
 │   └── macos.sh            Finder・Dock・トラックパッドなどのmacOS設定
 ├── setup.sh                シンボリックリンクを貼るスクリプト
@@ -190,6 +192,9 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
   各ウィンドウに「【profile 名(タブ数)】タブ名」の名前が付き、Raycast の Switch Windows で profile を見分けられる（タブ名は 30 秒ごとに付け直す）。
   自分で「ウィンドウに名前を付ける」をした名前は残り、前に【profile 名(タブ数)】だけが付く。
   止めるときは `launchctl bootout gui/$(id -u)/com.qwertayu.chrome-window-names`。
+- **Karabiner-Elements**：初回起動時に、ドライバ（システム拡張）と入力監視を許可する。
+  設定は `setup.sh` がリンクする `karabiner/karabiner.json` にあり、左 ⌘ の単押しで英数、右 ⌘ の単押しでかなになる（ほかのキーと一緒に押せば普通の ⌘）。
+  効かないときは、Karabiner の Devices でキーボードの「Modify events」がオンかを確かめる。
 - **入力ソース**：システム設定 → キーボード → 入力ソース で「ABC」と「日本語 - ローマ字入力」を追加する。
 - **FileVault**：システム設定 → プライバシーとセキュリティ → FileVault がオンか確認する。
 
