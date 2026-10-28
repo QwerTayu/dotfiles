@@ -11,8 +11,11 @@
 - **グループの中のリポジトリは、名前の頭に `├─ ` を付ける**（例: `├─ QwerTayu`）。見出しの下に並んでいることを、名前で見えるようにするため。
 - **worktree のワークスペースには `├─ ` を付けない。** 名前はブランチを表す短い名前だけにする（例: `ac-notif`）。
   herdr が元のリポジトリのワークスペースの下に字下げして並べるので、`├─ ` を付けると見分けにくくなる。
+- **`📁 Documents` は一覧のいちばん上に置く。** すべてのグループにまたがる作業（やることと作業ログの管理）に使う。
+  作業フォルダは `~/Documents/task-management-data`（QwerTayu/task-management-data。private）で、そこから `~/Documents` 全体を読める。
 
 ```
+📁 Documents                 ~/Documents/task-management-data（グループをまたぐ作業）
 🛠️ dotfiles                  ~/dotfiles（グループに入らないリポジトリ）
 🥜 NUTMEG                    ~/Documents/nutmeg
 ├─ group-manager-2           ~/Documents/nutmeg/group-manager-2
