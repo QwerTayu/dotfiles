@@ -43,12 +43,16 @@ cask "claude-code"
 # Voice and text chat software
 cask "discord"
 cask "font-hackgen-nerd"
+# 3D parametric modeller
+cask "freecad"
 # Terminal emulator that uses platform-native UI and GPU acceleration
 cask "ghostty"
 # Web browser
 cask "google-chrome"
 # Keyboard customiser
 cask "karabiner-elements"
+# Electronics design automation suite
+cask "kicad"
 # Free cross-platform office suite, fresh version
 cask "libreoffice"
 # Software for Logitech devices
