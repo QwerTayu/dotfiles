@@ -61,7 +61,7 @@ gm-2123                      ~/.herdr/worktrees/group-manager-2/<ブランチ>�
 
 dotfiles の外のプラグイン:
 
-- **herdr-marks-as-unread**（`QwerTayu/herdr-marks-as-unread`。sachin-philip/herdr-marks-as-unread の fork）: `prefix+m` で、今のエージェントのサイドバーの行に緑の `●`（未読の印）を付ける・外す。
+- **herdr-marks-as-unread**（`QwerTayu/herdr-marks-as-unread`。sachin-philip/herdr-marks-as-unread の fork）: `prefix+m` で、今のエージェントのサイドバーの 2 行目の先頭に、水色の `unread`（未読の印）を付ける・外す。
   そのペインに戻ると消える。herdr の done / idle の状態は変えない（herdr には「未読に戻す」機能がないための代わり）。
   `~/Documents/personal/herdr-marks-as-unread` に clone しておくと `setup.sh` が登録する。印の行（`$herdr_mark`）とキーの割り当ては `config.toml` に書いてある。
   付属のセットアップ（`local.herdr-marks.setup`）は使わない。

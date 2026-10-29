@@ -38,11 +38,11 @@ peach = "#CE9178"
 mauve = "#C586C0"
 
 # サイドバーのエージェントの行。デフォルトの並びに、未読の印（herdr-marks-as-unread の $herdr_mark）を足す。
-# 印は state_icon のすぐ後ろに置く（herdr はこの 2 つの間にだけ区切りの「 · 」を入れないため）
+# 印は水色（入力待ちの丸と同じ色）の「unread」の文字で、2 行目の先頭に置く（プラグインの既定と同じ形）
 [ui.sidebar.agents]
 rows = [
-  ["state_icon", { token = "$herdr_mark", fg = "#4EC9B0", bold = true, dim = false }, "machine", "workspace", "tab"],
-  ["agent"],
+  ["state_icon", "machine", "workspace", "tab"],
+  [{ token = "$herdr_mark", fg = "#4EC9B0", bold = true, dim = false }, "agent"],
 ]
 
 # prefix+m で、今のエージェントに未読の印を付ける・外す（QwerTayu/herdr-marks-as-unread）。そのペインに戻ると消える
