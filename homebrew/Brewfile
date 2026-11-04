@@ -75,6 +75,8 @@ cask "steam"
 cask "swiftbar"
 # Terminal-based web browser
 cask "terminal-browser"
+# Web browser
+cask "thebrowsercompany-dia"
 # Open-source code editor
 cask "visual-studio-code"
 vscode "anthropic.claude-code"
