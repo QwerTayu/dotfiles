@@ -1,6 +1,9 @@
 # Homebrewのパスを通す
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# ffmpeg は drawtext（文字入れ）が使える ffmpeg-full を使う。keg-only でリンクされないので、自分でパスを通す
+export PATH="/opt/homebrew/opt/ffmpeg-full/bin:$PATH"
+
 # mise で入れた node・java・marp を使う（設定は mise/config.toml）
 # activate ではなく shims にする。shims は実行のたびに今のディレクトリの版を選ぶので、
 # プロンプトを出さないシェル（Claude の Bash ツールなど）でもプロジェクトの mise.toml が効く

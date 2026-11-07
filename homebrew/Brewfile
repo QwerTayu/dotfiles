@@ -4,8 +4,10 @@ brew "bash"
 brew "bash-completion@2"
 # Command-line tool for getting & setting the default browser
 brew "defaultbrowser"
-# Play, record, convert, and stream select audio and video codecs
-brew "ffmpeg"
+# Port of OpenAI's Whisper model in C/C++
+brew "whisper.cpp"
+# Play, record, convert, and stream many audio and video codecs
+brew "ffmpeg-full"
 # Text editor for your terminal: easy, powerful and fast
 brew "fresh-editor"
 # GitHub command-line tool
@@ -28,8 +30,6 @@ brew "lazygit"
 brew "mise"
 # Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
-# Port of OpenAI's Whisper model in C/C++
-brew "whisper.cpp"
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password
