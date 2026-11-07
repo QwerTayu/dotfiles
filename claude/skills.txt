@@ -5,3 +5,4 @@
 # owner/repo skills/foo
 # owner/repo skills/bar v1.2.0
 nanaism/yomiyasu skills/yomiyasu v2.1.3
+anthropics/skills skills/frontend-design 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f
