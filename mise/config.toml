@@ -10,3 +10,5 @@ java = "temurin-21"
 "npm:@marp-team/marp-cli" = "latest"
 # Vite+ の vp。brew の vite-plus は brew の node に依存し、curl 版は node の shim を作って mise とぶつかるので、こちらで入れる
 "npm:vite-plus" = "latest"
+# Vercel CLI。npm install -g だと node の版を上げたときに消えるので、こちらで入れる
+"npm:vercel" = "latest"
