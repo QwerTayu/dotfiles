@@ -17,7 +17,8 @@
     "deny": [
       "Bash(*gws auth export*)",
       "Read(~/.config/gws*/**)",
-      "Read(**/client_secret*.json)"
+      "Read(**/client_secret*.json)",
+      "Bash(*share.py submit*)"
     ],
     "ask": [
       "Bash(*gws * send*)",
