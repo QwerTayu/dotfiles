@@ -28,6 +28,14 @@
 - herdr の中でブランチを切るときは、main のチェックアウトで `git switch -c` せず、git worktree も一緒に切る。`herdr worktree create --workspace <元 repo のワークスペース ID> --branch <ブランチ名> --base main --label <短い名前> --no-focus` で worktree とワークスペースを作る（worktree は `~/.herdr/worktrees/<repo>/<branch>` にできる）。`--label` には `├─ ` を付けない（herdr が元のワークスペースの下に字下げして並べるため）。作ったワークスペースは、`workspace.move` で今アクティブなワークスペースのすぐ下に動かす。
 - セルフレビューや敵対的評価を頼まれたとき、code-review / security-review を使う前に、skill `review-in-tab` に従う。
 
+# cctag
+
+- [cctag](https://github.com/TMLlaboratory/cctag) は Slack と手元の Claude Code / Codex CLI をつなぐツールで、この Mac では Spoke（`~/.local/bin/cctag-spoke`）を動かす。Hub は `wss://cctag.kumoi.net`。
+- 設定は `~/.config/cctag/config.env`（`CCTAG_HUB_URL`・`CCTAG_SPOKE_TOKEN`・`CCTAG_OWNER_USER_ID`・`CCTAG_HERDR_BIN`）にあり、`cctag-spoke` は起動時にこれを自動で読む。環境変数が空でも設定が無いとは判断せず、まずこのファイルを見る。トークンをほかの場所（`.env` など）に複製しない。
+- 使えるかを確かめるときは、`ps aux | grep '[c]ctag-spoke'` で Spoke が動いているかを見る。`cctag-spoke --help` はヘルプを出さずに Spoke として起動してしまうので打たない。
+- Spoke は 1 つしか動かせない（`~/.cctag/spoke-*.lock` で排他）。起動する前に、ほかで動いていないかを確かめる。
+- 起動したら、Slack のスレッドで `@cctag connect` を送って Claude Code が動いているターミナルにつなぐ。
+
 # stack-diagram
 
 - stack-diagram で図を作ったあと、ギャラリーへの共有（Step 7）は提案しない。図は手元で使うだけにする（`share.py submit` は settings.json の `permissions.deny` でも止めている）。
