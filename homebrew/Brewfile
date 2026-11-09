@@ -36,6 +36,8 @@ cask "1password"
 cask "1password-cli"
 # Image editing and design software
 cask "affinity"
+# Integrated CAD, CAM, CAE, and PCB software
+cask "autodesk-fusion"
 # Anthropic's official Claude AI desktop app
 cask "claude"
 # Terminal-based AI coding assistant
