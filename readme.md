@@ -154,6 +154,26 @@ claude
 ブラウザが開くので Claude アカウント（有料プラン）でログインする。
 ユーザー全体で使う MCP サーバーがあれば `claude mcp add --scope user ...` で追加する。
 
+#### Slack の MCP をワークスペースごとに追加する
+
+Slack 公式の MCP（`https://mcp.slack.com/mcp`）を、ワークスペースごとに別の名前で追加する。
+名前ごとに認証するので、切り替えなしで、どのワークスペースも同時に使える。
+登録は `~/.claude.json` に、トークンはキーチェーンに入るので、このリポジトリには何も入らない。
+本物のワークスペース名はここに書かない（このリポジトリは public のため）。下の `sample-space` は例。
+
+1. ワークスペースごとに、`slack-<短い名前>` で追加する。`clientId` は Slack 公式の Claude Code 用プラグイン（`slackapi/slack-skills-plugin`）と同じ値。
+
+   ```sh
+   claude mcp add-json --scope user slack-sample-space \
+     '{"type":"http","url":"https://mcp.slack.com/mcp","oauth":{"clientId":"1601185624273.8899143856786","callbackPort":3118}}'
+   ```
+
+2. claude を起動して `/mcp` を開き、追加した名前を 1 つずつ選んで認証する。
+   Slack の許可の画面の右上で、名前に合ったワークスペース（例: `sample-space.slack.com`）を選んでから「許可する」を押す。
+   「承認をリクエスト」と出たら、そのワークスペースではアプリが承認制なので、管理者に承認してもらう。
+3. `claude mcp list` で、全部が `✔ Connected` になっていることを確かめる。
+   それぞれに「最近のメッセージを 1 つ見せて」などと頼み、別々のワークスペースの中身が返ることも確かめる。
+
 ### 8. macOS の設定
 
 ```sh
