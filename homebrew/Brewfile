@@ -44,6 +44,8 @@ cask "claude"
 cask "claude-code"
 # Voice and text chat software
 cask "discord"
+# Web browser
+cask "firefox", args: { language: "ja" }
 cask "font-hackgen-nerd"
 # 3D parametric modeller
 cask "freecad"
