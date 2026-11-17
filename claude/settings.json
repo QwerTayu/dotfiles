@@ -1,18 +1,4 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "^(startup|resume|clear|compact|fork)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '/Users/icoca/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "deny": [
       "Bash(*gws auth export*)",
@@ -31,11 +17,25 @@
       "Bash(*gws auth logout*)"
     ]
   },
-  "language": "japanese",
-  "theme": "dark",
-  "agentPushNotifEnabled": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/icoca/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
-  }
+  },
+  "language": "japanese",
+  "theme": "dark",
+  "agentPushNotifEnabled": true
 }
