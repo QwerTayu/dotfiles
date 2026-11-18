@@ -14,7 +14,19 @@
       "Bash(*gws * delete*)",
       "Bash(*gws * trash*)",
       "Bash(*gws * remove*)",
-      "Bash(*gws auth logout*)"
+      "Bash(*gws auth logout*)",
+      "mcp__figma-console__figma_execute",
+      "mcp__figma-console__figma_execute_across_files",
+      "mcp__figma-console__figma_ds_analyze",
+      "mcp__figma-console__figma_ds_extract_component",
+      "mcp__figma-console__figma_ds_extract_tokens",
+      "mcp__figma-console__figma_ds_scaffold",
+      "mcp__figma-console__figma_ds_setup_storybook",
+      "mcp__figma-console__figma_ds_status",
+      "mcp__figma-console__figma_ds_verify",
+      "mcp__figma-console__figma_export_tokens",
+      "mcp__figma-console__figma_import_tokens",
+      "mcp__figma-console__figma_export_animation"
     ]
   },
   "hooks": {
