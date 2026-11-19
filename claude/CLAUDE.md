@@ -36,6 +36,12 @@
 - Spoke は 1 つしか動かせない（`~/.cctag/spoke-*.lock` で排他）。起動する前に、ほかで動いていないかを確かめる。
 - 起動したら、Slack のスレッドで `@cctag connect` を送って Claude Code が動いているターミナルにつなぐ。
 
+# Claude in Chrome
+
+- Claude in Chrome（`mcp__claude-in-chrome__*`）は、Dia ではなく Google Chrome で使う（Dia の拡張機能は調子が悪いため、当分のあいだ）。
+- 拡張機能は Dia にも入っているので、つながっているブラウザが複数あることがある。初めてブラウザを使うときは `list_connected_browsers` で一覧を見て、名前が `Google Chrome` のものを `select_browser` で選ぶ。
+- `Google Chrome` という名前のものがなければ、`switch_browser` を呼び、Google Chrome の拡張機能で「Connect」を押して名前を `Google Chrome` にしてもらうよう、ユーザーに伝える。Dia（ほかの名前のブラウザ）は選ばない。
+
 # stack-diagram
 
 - stack-diagram で図を作ったあと、ギャラリーへの共有（Step 7）は提案しない。図は手元で使うだけにする（`share.py submit` は settings.json の `permissions.deny` でも止めている）。
