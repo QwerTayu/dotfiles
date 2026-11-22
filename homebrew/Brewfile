@@ -38,6 +38,8 @@ cask "1password-cli"
 cask "affinity"
 # Integrated CAD, CAM, CAE, and PCB software
 cask "autodesk-fusion"
+# Remotely access another computer through the Google Chrome browser
+cask "chrome-remote-desktop-host"
 # Anthropic's official Claude AI desktop app
 cask "claude"
 # Terminal-based AI coding assistant
