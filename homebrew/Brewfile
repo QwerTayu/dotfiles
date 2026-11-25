@@ -44,6 +44,8 @@ cask "chrome-remote-desktop-host"
 cask "claude"
 # Terminal-based AI coding assistant
 cask "claude-code"
+# Free app that makes your Internet safer
+cask "cloudflare-warp"
 # Voice and text chat software
 cask "discord"
 # Collaborative team software
