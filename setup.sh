@@ -80,6 +80,13 @@ if command -v uv >/dev/null; then
     || echo "uv python install に失敗（あとで手で実行する）" >&2
 fi
 
+# herdr-core（hc。Herdr アプリが使うターミナルの本体）は Homebrew にないので、公式のインストーラで ~/.local/bin に入れる。
+# アプリは Brewfile の cask "herdr-app"。更新するときは、同じインストーラをもう一度実行する。失敗しても、このあとの処理は続ける
+if ! command -v herdr-core >/dev/null 2>&1; then
+  curl -fsSL https://releases.herdr.dev/core/install.sh | sh \
+    || echo "herdr-core のインストールに失敗（あとで手で実行する）" >&2
+fi
+
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
 

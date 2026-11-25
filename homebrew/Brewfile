@@ -57,6 +57,8 @@ cask "freecad"
 cask "ghostty"
 # Web browser
 cask "google-chrome"
+# Desktop app for terminals and coding agents
+cask "herdr-app"
 # Keyboard customiser
 cask "karabiner-elements"
 # Electronics design automation suite

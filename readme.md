@@ -256,6 +256,7 @@ Python は uv で管理していて、Homebrew の Python は入れない。`pyt
 Python 製の CLI（yt-dlp など）は `uv tool install` で入れ、Brewfile には `uv "..."` の行として書き出される。
 更新は `uv python upgrade` と `uv tool upgrade --all`。
 `brew-check` は、何かの依存で Homebrew の Python が入っていると通知する。
+herdr-core（`hc`）は Homebrew にないので、`setup.sh` が公式のインストーラ（`curl -fsSL https://releases.herdr.dev/core/install.sh | sh`）で `~/.local/bin` に入れる。brew では更新されないので、同じインストーラをもう一度実行して上げる（動いているターミナルは残る）。Herdr アプリ（cask `herdr-app`）は自分で更新し、古くて使えない core があれば入れ直しを手伝う。
 Chrome は自動アップデートされるので brew では更新されない。
 
 更新があるかは、毎日 10:00 に launchd が `brew-check` を動かして確かめ、古くなったものがあれば macOS の通知で知らせる。
