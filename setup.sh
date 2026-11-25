@@ -39,6 +39,7 @@ link herdr-app/mods/git-graph/mod.json .config/herdr-app/mods/git-graph/mod.json
 # 自作の mod: Markdown Preview（Marp のスライドも。コマンドパレットの「Markdown Preview」、またはターミナルで mdview）
 link herdr-app/mods/md-preview/main.js  .config/herdr-app/mods/md-preview/main.js
 link herdr-app/mods/md-preview/mod.json .config/herdr-app/mods/md-preview/mod.json
+link herdr-app/mods/md-preview/icons   .config/herdr-app/mods/md-preview/icons   # アラートのアイコン（svg だけなので、フォルダごとリンクする）
 link herdr-app/mdview.sh             .local/bin/mdview
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json

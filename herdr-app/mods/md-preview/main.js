@@ -2,7 +2,7 @@
 // marp-cli で 1 枚ずつ PNG にして見せ、「1 枚ずつめくる」と「縦に並べてスクロール」を切り替えられる。
 // 開き方: コマンドパレットの「Markdown Preview」（ファイルを選ぶ）、またはターミナルで `mdview <ファイル>`（props.file）。
 // ファイルを保存すると、表示も更新する。
-import { View, div, image } from "gpui-kit";
+import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
 import { props, readTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
 
@@ -17,13 +17,47 @@ const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
 // image() は ~/.config/herdr-app からの相対パスしか読まないので、画像はそこにコピーする（http の画像は curl で落とす）。
 const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])?\s*\)|<img\s[^>]*src=["']([^"']+)["'][^>]*>)\s*$/i;
+// GitHub のアラート（> [!NOTE] など）。表示の部品はただの引用として描くので、mod が色付きの枠で描く。
+const ALERT_START = /^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i;
+const ALERTS = {
+  NOTE: { label: "Note", color: "#4493f8" },
+  TIP: { label: "Tip", color: "#3fb950" },
+  IMPORTANT: { label: "Important", color: "#ab7df8" },
+  WARNING: { label: "Warning", color: "#d29922" },
+  CAUTION: { label: "Caution", color: "#f85149" },
+};
+// <details> と <summary>。表示の部品は開け閉めせずに中身まで出すので、mod が ▶ で開け閉めするブロックとして描く。
+const DETAILS_START = /^\s*<details(\s+open)?\s*>\s*(.*)$/i;
+const SUMMARY = /<summary>([\s\S]*?)<\/summary>/i;
 function splitBlocks(text) {
   const blocks = [];
   let buf = [];
   let fence = false;
   const flush = () => { if (buf.join("").trim()) blocks.push({ kind: "md", text: buf.join("\n") }); buf = []; };
-  for (const line of text.split("\n")) {
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    const details = !fence && line.match(DETAILS_START);
+    if (details) {
+      flush();
+      const body = [details[2]];
+      while (i + 1 < lines.length && !/<\/details>/i.test(lines[i + 1])) body.push(lines[++i]);
+      if (i + 1 < lines.length) body.push(lines[++i].replace(/<\/details>.*$/i, ""));
+      let inner = body.join("\n");
+      const summary = inner.match(SUMMARY);
+      inner = inner.replace(SUMMARY, "").trim();
+      blocks.push({ kind: "details", summary: summary ? summary[1].trim() : "Details", text: inner, open: Boolean(details[1]) });
+      continue;
+    }
+    const alert = !fence && line.match(ALERT_START);
+    if (alert) {
+      flush();
+      const body = [];
+      while (i + 1 < lines.length && /^\s*>/.test(lines[i + 1])) body.push(lines[++i].replace(/^\s*>\s?/, ""));
+      blocks.push({ kind: "alert", type: alert[1].toUpperCase(), text: body.join("\n") });
+      continue;
+    }
     const m = !fence && line.match(IMAGE_LINE);
     if (m) { flush(); blocks.push({ kind: "img", alt: m[1] ?? "", src: m[2] ?? m[3] }); }
     else buf.push(line);
@@ -51,6 +85,7 @@ export default class MdPreview extends View {
     this.blocks = [];
     this.images = new Map(); // src -> { path, w, h } または { error }
     this.imageDir = null;
+    this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
     // mod の読み直しや落ちたときは close() が呼ばれず、PNG が残る。開くたびに 1 日より古いものを消す
     exec("/usr/bin/find", [`${appHome()}/${CACHE_REL}`, "-mindepth", "1", "-maxdepth", "1", "-mtime", "+0", "-exec", "/bin/rm", "-rf", "{}", "+"]).catch(() => {});
     if (this.file) this.load(cx);
@@ -233,6 +268,24 @@ export default class MdPreview extends View {
     body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
       .children(this.blocks.map((b, i) => {
         if (b.kind === "md") return TextView.markdown(`md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground);
+        if (b.kind === "details") {
+          const open = this.opened.get(i) ?? b.open;
+          return v_flex().id(`details-${i}`).my(6).gap(6)
+            .child(h_flex().id(`summary-${i}`).gap(6).px(6).py(2).ml(-6).rounded(5).items_center().cursor_pointer().text_size(14).text_color(t.foreground)
+              .hover((s) => s.bg(t.hover))
+              .on_click((_e, cx) => { this.opened.set(i, !open); cx.notify(); })
+              .child(div().w(12).flex_none().text_size(11).text_color(t.muted).child(open ? "\u25bc" : "\u25b6"))
+              .child(b.summary))
+            .when(open && Boolean(b.text), (e) => e.child(div().pl(18).child(TextView.markdown(`details-md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground))));
+        }
+        if (b.kind === "alert") {
+          const a = ALERTS[b.type];
+          return v_flex().id(`alert-${i}`).my(8).pl(14).py(4).gap(6).border_l(3).border_color(a.color)
+            .child(h_flex().gap(7).items_center().text_size(14).font_semibold().text_color(a.color)
+              .child(svg(`mods/md-preview/icons/${b.type.toLowerCase()}.svg`).size(15).text_color(a.color))
+              .child(a.label))
+            .child(TextView.markdown(`alert-md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground));
+        }
         const img = this.images.get(b.src);
         if (!img?.path) {
           return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(t.border).text_size(12).text_color(t.dim)
