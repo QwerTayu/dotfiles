@@ -1,0 +1,7 @@
+{
+  "place": "none",
+  "title": "Git Graph",
+  "palette": [
+    { "title": "Git Graph", "command": "tab.new", "args": { "mod": "git-graph", "name": "Git Graph" }, "words": "git log history commits branches" }
+  ]
+}

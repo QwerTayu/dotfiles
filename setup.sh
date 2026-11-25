@@ -33,6 +33,9 @@ link herdr-app/AGENTS.local.md       .config/herdr-app/AGENTS.local.md
 link herdr-app/mods/spaces-qt/main.js  .config/herdr-app/mods/spaces-qt/main.js
 link herdr-app/mods/spaces-qt/mod.json .config/herdr-app/mods/spaces-qt/mod.json
 link herdr-app/layouts/qt.json       .config/herdr-app/layouts/qt.json
+# 自作の mod: Git Graph（コマンドパレットの「Git Graph」でタブとして開く）
+link herdr-app/mods/git-graph/main.js  .config/herdr-app/mods/git-graph/main.js
+link herdr-app/mods/git-graph/mod.json .config/herdr-app/mods/git-graph/mod.json
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json

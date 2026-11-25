@@ -45,6 +45,7 @@ dotfiles/
 │   │   └── dark-modern.json → ~/.config/herdr-app/themes/dark-modern.json（VS Code の Dark Modern の色）
 │   ├── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
 │   ├── mods/spaces-qt/     → ~/.config/herdr-app/mods/spaces-qt/（同梱の spaces を複製し、アバターの色と文字を名前で決める）
+│   ├── mods/git-graph/     → ~/.config/herdr-app/mods/git-graph/（コミットの履歴を枝の線つきで出す。コマンドパレットの「Git Graph」）
 │   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt にしたもの）
 │   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
 │   └── check-upstream.sh   複製した元がアプリの更新で変わったら通知する（brew-check が毎日呼ぶ）
