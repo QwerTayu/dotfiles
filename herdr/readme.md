@@ -73,3 +73,17 @@ skill などからタブを足すときは、`dev-layout/apply-layout.sh tab <�
 pane=$(herdr tab create --workspace wM --cwd ~/Documents/personal/foo --label Review --no-focus | grep -o '"pane_id": *"[^"]*"' | head -1 | cut -d'"' -f4)
 ~/dotfiles/herdr/plugins/dev-layout/apply-layout.sh tab "$pane" Review "claude --name review-foo"
 ```
+
+## Herdr アプリでは
+
+TUI から Herdr アプリ（`herdr-app` と herdr-core の `hc`）へ乗り換え中。名前の付け方は上と同じにする。
+
+- **space 1 つ = git リポジトリ 1 つ。** TUI のワークスペースと同じ。名前の付け方（見出しの space、グループの中の `├─ `、`📁 Documents` をいちばん上）もそのまま使う。
+  アプリにも space をフォルダにまとめる機能はない（サイドバーでまとまるのはマシンごとだけ）ので、見出しの space で表す。
+- **space を足す**: `herdr-app do space.new --name '├─ foo' --folder ~/Documents/personal/foo --focus false`。新しい space は一覧の最後に入るので、
+  `herdr-app do space.move '{"id":"<space の ID>","index":<1 から数えた位置>}'` で動かす（ID と今の並びは `herdr-app ls`）。サイドバーのドラッグでも並べ替えられる。
+- **worktree**: `git worktree add ~/.herdr/worktrees/<repo>/<branch> -b <branch> origin/main` で作り、`herdr-app do space.new --name <短い名前> --folder <worktree> --focus false` で space にする。
+  アプリは worktree だとわかり、サイドバーにリポジトリ名を出す（元のリポジトリの space の下に字下げして並べる）。名前に `├─ ` を付けない。
+  アプリの space のメニューの「New worktree」でも作れる（作り先は TUI と同じ `~/.herdr/worktrees/<repo>/<branch>`）。
+- **ペインの並び**: TUI の `dev-layout` は作り直さない。ソースの管理は標準の Changes パネルを使う。
+- アプリの設定は `~/dotfiles/herdr-app/`（`readme.md` の構成図）。agent への決まりは `herdr-app/AGENTS.local.md`。

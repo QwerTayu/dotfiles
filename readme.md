@@ -383,6 +383,8 @@ git push
   ペインの中で kitty graphics protocol の画像を出すための設定（Terminal.app は対応していない）。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
+  - Herdr アプリと herdr-core の skill: `herdr-app --skill` と `hc --skill` の出力を、`~/.claude/skills/herdr-app/SKILL.md` と
+    `~/.claude/skills/herdr-core/SKILL.md` に書き出す。出力に skill の名前と説明（frontmatter）がないので、`setup-agent-skills.sh` が先頭に足す。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
     リポジトリは clone されず、その skill のフォルダだけがコピーされる。
     `--agent` と `--scope` を省くと別のエージェント向けに今のディレクトリへ入れようとするので、必ず付ける。

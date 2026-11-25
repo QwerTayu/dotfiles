@@ -14,6 +14,22 @@ if command -v herdr >/dev/null 2>&1; then
   echo "skill: herdr (herdr --skill)"
 fi
 
+# Herdr アプリと herdr-core: 公式の説明書を本体が出力する。出力に frontmatter がないので、名前と説明を先頭に足して skill にする
+# （core が止まっているときに hc --skill が core を起動するかは確かめていない。claude の中から実行するときは、先に Herdr アプリを開いておく）
+write_skill() {  # 使い方: write_skill <名前> <説明> <コマンド...>
+  local name="$1" desc="$2"
+  shift 2
+  mkdir -p "$SKILLS/$name"
+  { printf -- '---\nname: %s\ndescription: "%s"\n---\n\n' "$name" "$desc"; "$@"; } > "$SKILLS/$name/SKILL.md"
+  echo "skill: $name ($*)"
+}
+if command -v herdr-app >/dev/null 2>&1; then
+  write_skill herdr-app "Drive the Herdr desktop app window: spaces, tabs, panes, layouts, keys and mods. Use when the user mentions the Herdr app or asks to change what the Herdr window shows. For starting, reading or messaging terminals and agents, use the herdr-core skill (hc). Not for the older herdr TUI (the herdr skill)." herdr-app --skill
+fi
+if command -v hc >/dev/null 2>&1; then
+  write_skill herdr-core "Run and control persistent terminals and coding agents with hc (herdr-core), the core behind the Herdr app: run, ls, get, read, send, wait, keys, attach. Use when the user mentions hc, herdr-core or the Herdr app's terminals and agents. Not for the older herdr TUI (the herdr skill)." hc --skill
+fi
+
 # 他人の skill: claude/skills.txt の各行を gh skill install で入れる
 # 非対話の既定は --scope project / --agent github-copilot なので、必ず両方を指定する
 list="$DOTFILES/claude/skills.txt"
