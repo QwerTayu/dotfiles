@@ -25,6 +25,10 @@ link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
 link claude/statusline.sh            .claude/statusline.sh
 link herdr/config.toml               .config/herdr/config.toml
+# Herdr アプリは、自分で書くファイルだけをリンクする（同じフォルダに状態のファイルが溜まるため）
+link herdr-app/settings.json         .config/herdr-app/settings.json
+link herdr-app/themes/dark-modern.json .config/herdr-app/themes/dark-modern.json
+link herdr-app/AGENTS.local.md       .config/herdr-app/AGENTS.local.md
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json

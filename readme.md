@@ -41,6 +41,11 @@ dotfiles/
 │   └── plugins/
 │       ├── ascii-input-source/  英字で使うアプリのペインで入力ソースを英字にする
 │       └── dev-layout/          タブを claude / fresh / lazygit / ターミナル に並べる
+├── herdr-app/
+│   ├── settings.json       → ~/.config/herdr-app/settings.json（テーマ・フォント・利用状況の送信を切る）
+│   ├── themes/
+│   │   └── dark-modern.json → ~/.config/herdr-app/themes/dark-modern.json（VS Code の Dark Modern の色）
+│   └── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
 ├── fresh/
 │   ├── config.json         → ~/.config/fresh/config.json
 │   ├── themes/
@@ -340,6 +345,10 @@ git push
 - `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
   herdr の plugin は設定ファイルで宣言できない。自作のもの（`herdr/plugins/`）は `setup.sh` が `herdr plugin link` で登録し、
   他人のもの（`herdr plugin install owner/repo`）は新しい環境で入れ直す。
+- `~/.config/herdr-app/` もフォルダごとリンクせず、`settings.json`・`themes/dark-modern.json`・`AGENTS.local.md` だけをリンクする
+  （同じフォルダに、アプリが書く状態のファイルや同梱の mod が溜まるため）。アプリの Settings で変えても、リンクは切れずに dotfiles の
+  `settings.json` が書き換わる（ズームを変えたときも書き換わるので、差分が出たらコミットするか戻す）。
+  `keys.json` はリンクしない（一度でも書き換えると、アプリを更新したときに新しい既定のキーが入らなくなるため）。
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
 - fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。
@@ -366,7 +375,8 @@ git push
   切り替わるのはペインを移ったときだけで、今いるペインでアプリを起動・終了しても切り替わらない。
   コミットメッセージなどで日本語を打つときは自分で切り替える（lazygit には入力欄を開いたときに知らせる仕組みがない）。
   入力ソースの切り替えはプラグインの中の `input-source.js`（JXA で macOS の API を呼ぶ）で、追加のコマンドは入れていない。
-- fresh・lazygit・herdr の色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
+- fresh・lazygit・herdr・Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
+  Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
   lazygit の diff は delta（git-delta）で表示し、背景色・変わった文字の強調・構文の色・行番号を VS Code の inline の diff に合わせている。
