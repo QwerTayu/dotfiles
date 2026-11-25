@@ -33,7 +33,7 @@
 - TUI の herdr から Herdr アプリへ乗り換え中。アプリの中（`HC_TERMINAL_ID` がある、`HERDR_ENV` がない）では、TUI の `herdr` コマンドは使わない。画面（space・タブ・layout・mod）は skill `herdr-app`、ターミナルと agent は skill `herdr-core`（`hc`）に従う。
 - space を作る・並べ替える前に、`~/dotfiles/herdr/readme.md` の「Herdr アプリでは」を読む。名前の付け方は TUI と同じ。
 - アプリの中でブランチを切るときも、main のチェックアウトで `git switch -c` せず、`git worktree add ~/.herdr/worktrees/<repo>/<branch> -b <branch> origin/main` で worktree を切り、`herdr-app do space.new --name <短い名前> --folder <worktree> --focus false` で space にする。
-- `hc` を打つ前に、core が動いているかを `pgrep -f 'herdr-core hold'` で確かめる。止まっていたら自分では起動せず、ユーザーに Herdr アプリを開いてもらう（claude の中から起動した core は claude の環境変数を持ち、アプリで開く claude の会話が保存されなくなる）。
+- `hc` を打つ前に、core が動いているかを `ps -axo command | grep -q '[h]erdr-core hold'` で確かめる（アプリの中では `pgrep` が core を見つけられない）。止まっていたら自分では起動せず、ユーザーに Herdr アプリを開いてもらう（claude の中から起動した core は claude の環境変数を持ち、アプリで開く claude の会話が保存されなくなる）。
 - アプリの設定ファイルを変えるときは、`~/.config/herdr-app/AGENTS.local.md` を先に読む（dotfiles でリンクしているファイルと、していないファイルがある）。
 
 # cctag
