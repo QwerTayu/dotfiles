@@ -1,0 +1,8 @@
+{
+  "place": "none",
+  "title": "Markdown Preview",
+  "focusable": true,
+  "palette": [
+    { "title": "Markdown Preview", "command": "tab.new", "args": { "mod": "md-preview", "name": "Markdown" }, "words": "markdown md marp slides preview" }
+  ]
+}

@@ -1,0 +1,273 @@
+// Markdown Preview: Markdown のファイルを整形して表示する。Marp のスライド（frontmatter に marp: true）は、
+// marp-cli で 1 枚ずつ PNG にして見せ、「1 枚ずつめくる」と「縦に並べてスクロール」を切り替えられる。
+// 開き方: コマンドパレットの「Markdown Preview」（ファイルを選ぶ）、またはターミナルで `mdview <ファイル>`（props.file）。
+// ファイルを保存すると、表示も更新する。
+import { View, div, image } from "gpui-kit";
+import { v_flex, h_flex, TextView } from "gpui-base";
+import { props, readTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
+
+// image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
+const CACHE_REL = "cache/md-preview";
+const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
+
+const isMarp = (text) => /^---\s*\n[\s\S]*?^marp:\s*true\s*$[\s\S]*?^---\s*$/m.test(text);
+const dirname = (p) => p.slice(0, p.lastIndexOf("/")) || "/";
+const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
+
+// Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
+// image() は ~/.config/herdr-app からの相対パスしか読まないので、画像はそこにコピーする（http の画像は curl で落とす）。
+const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])?\s*\)|<img\s[^>]*src=["']([^"']+)["'][^>]*>)\s*$/i;
+function splitBlocks(text) {
+  const blocks = [];
+  let buf = [];
+  let fence = false;
+  const flush = () => { if (buf.join("").trim()) blocks.push({ kind: "md", text: buf.join("\n") }); buf = []; };
+  for (const line of text.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    const m = !fence && line.match(IMAGE_LINE);
+    if (m) { flush(); blocks.push({ kind: "img", alt: m[1] ?? "", src: m[2] ?? m[3] }); }
+    else buf.push(line);
+  }
+  flush();
+  return blocks;
+}
+
+export default class MdPreview extends View {
+  init(_props, cx) {
+    this.file = props()?.file ?? null;
+    this.text = "";
+    this.error = null;
+    this.marp = false;
+    this.slides = []; // PNG のパス（~/.config/herdr-app からの相対）
+    this.ratio = 9 / 16;
+    this.page = 0;
+    this.rendering = false;
+    this.again = false;
+    this.mode = "slides";
+    try { this.mode = localStorage.getItem("marpMode") || "slides"; } catch {}
+    this.width = 800;
+    this.handle = cx.focus_handle();
+    this.watch = null;
+    this.blocks = [];
+    this.images = new Map(); // src -> { path, w, h } または { error }
+    this.imageDir = null;
+    // mod の読み直しや落ちたときは close() が呼ばれず、PNG が残る。開くたびに 1 日より古いものを消す
+    exec("/usr/bin/find", [`${appHome()}/${CACHE_REL}`, "-mindepth", "1", "-maxdepth", "1", "-mtime", "+0", "-exec", "/bin/rm", "-rf", "{}", "+"]).catch(() => {});
+    if (this.file) this.load(cx);
+  }
+
+  async close() {
+    this.watch?.cancel();
+    if (this.imageDir) await exec("/bin/rm", ["-rf", `${appHome()}/${this.imageDir}`]);
+    if (this.slides.length) await exec("/bin/rm", ["-rf", `${appHome()}/${dirname(this.slides[0])}`]);
+  }
+
+  open(cx) {
+    cx.spawn(async (cx) => {
+      const picked = await pickFiles({ prompt: "Markdown のファイルを選ぶ", multiple: false });
+      if (!picked?.length) return;
+      this.file = picked[0];
+      this.page = 0;
+      this.load(cx);
+    });
+  }
+
+  load(cx) {
+    const file = this.file;
+    cx.spawn(async (cx) => {
+      try {
+        this.text = await readTextFile(file);
+        this.error = null;
+      } catch (e) {
+        this.error = `読めませんでした: ${file}\n${e}`;
+        cx.notify();
+        return;
+      }
+      this.marp = isMarp(this.text);
+      if (!this.marp) this.prepare(cx);
+      cx.notify();
+      if (this.marp) this.build(cx);
+      this.follow(cx);
+    });
+  }
+
+  // ファイルのあるフォルダを見張り、このファイルが変わったら読み直す。
+  follow(cx) {
+    this.watch?.cancel();
+    const file = this.file;
+    cx.spawn(async (cx) => {
+      while (this.file === file) {
+        let changed;
+        try {
+          this.watch = watchFolder(dirname(file));
+          changed = await this.watch;
+        } catch {
+          await cx.sleep(2000);
+          changed = [file];
+        }
+        if (this.file !== file) return;
+        if (!changed.length) return; // cancel された
+        if (changed.some((p) => p === file || p === dirname(file))) {
+          await cx.sleep(150);
+          try { this.text = await readTextFile(file); } catch { continue; }
+          this.marp = isMarp(this.text);
+          if (this.marp) this.build(cx);
+          else this.prepare(cx);
+          cx.notify();
+        }
+      }
+    });
+  }
+
+  // marp-cli でスライドを PNG にする。描いている途中に保存されたら、終わってからもう一度描く。
+  build(cx) {
+    if (this.rendering) { this.again = true; return; }
+    this.rendering = true;
+    const file = this.file;
+    const rel = `${CACHE_REL}/${Date.now()}`;
+    const out = `${appHome()}/${rel}`;
+    cx.spawn(async (cx) => {
+      try {
+        const r = await exec(MARP(), ["--images", "png", "--allow-local-files", file, "-o", `${out}/slide.png`], { cwd: dirname(file), timeout: 120000 });
+        if (r.code !== 0) throw new Error(r.stderr.trim() || "marp に失敗しました");
+        const ls = await exec("/bin/ls", [out]);
+        const slides = ls.stdout.split("\n").filter((n) => /^slide\.\d+\.png$/.test(n)).sort().map((n) => `${rel}/${n}`);
+        if (slides.length) {
+          const size = await exec("/usr/bin/sips", ["-g", "pixelWidth", "-g", "pixelHeight", `${appHome()}/${slides[0]}`]);
+          const w = Number(size.stdout.match(/pixelWidth: (\d+)/)?.[1]), h = Number(size.stdout.match(/pixelHeight: (\d+)/)?.[1]);
+          if (w && h) this.ratio = h / w;
+        }
+        const old = this.slides.length ? dirname(this.slides[0]) : null;
+        this.slides = slides;
+        this.page = Math.min(this.page, Math.max(0, slides.length - 1));
+        this.error = null;
+        if (old) exec("/bin/rm", ["-rf", `${appHome()}/${old}`]);
+      } catch (e) {
+        this.error = String(e);
+      } finally {
+        this.rendering = false;
+        cx.notify();
+        if (this.again && this.file === file) { this.again = false; this.build(cx); }
+      }
+    });
+  }
+
+  // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
+  prepare(cx) {
+    this.blocks = splitBlocks(this.text);
+    const file = this.file;
+    if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
+    const dir = `${appHome()}/${this.imageDir}`;
+    const todo = this.blocks.filter((b) => b.kind === "img" && !this.images.has(b.src));
+    if (!todo.length) return;
+    for (const b of todo) this.images.set(b.src, { loading: true });
+    cx.spawn(async (cx) => {
+      await exec("/bin/mkdir", ["-p", dir]);
+      for (const [i, b] of todo.entries()) {
+        const ext = (b.src.match(/\.(png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i)?.[1] ?? "png").toLowerCase();
+        const name = `${Date.now()}-${i}.${ext}`;
+        const dest = `${dir}/${name}`;
+        try {
+          if (/^https?:\/\//.test(b.src)) {
+            const r = await exec("/usr/bin/curl", ["-fsSL", "--max-time", "20", "-o", dest, b.src], { timeout: 30000 });
+            if (r.code !== 0) throw new Error(r.stderr.trim() || "download failed");
+          } else {
+            const src = decodeURI(b.src.replace(/^file:\/\//, ""));
+            const abs = src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(file)}/${src}`;
+            const r = await exec("/bin/cp", [abs, dest]);
+            if (r.code !== 0) throw new Error(r.stderr.trim() || "not found");
+          }
+          let w = 0, h = 0;
+          if (ext !== "svg") {
+            const size = await exec("/usr/bin/sips", ["-g", "pixelWidth", "-g", "pixelHeight", dest]);
+            w = Number(size.stdout.match(/pixelWidth: (\d+)/)?.[1]) || 0;
+            h = Number(size.stdout.match(/pixelHeight: (\d+)/)?.[1]) || 0;
+          }
+          this.images.set(b.src, { path: `${this.imageDir}/${name}`, w: w || 800, h: h || 450 });
+        } catch (e) {
+          this.images.set(b.src, { error: String(e.message ?? e) });
+        }
+        if (this.file === file) cx.notify();
+      }
+    });
+  }
+
+  go(delta, cx) {
+    this.page = Math.min(this.slides.length - 1, Math.max(0, this.page + delta));
+    cx.notify();
+  }
+
+  setMode(mode, cx) {
+    this.mode = mode;
+    try { localStorage.setItem("marpMode", mode); } catch {}
+    cx.notify();
+  }
+
+  slideImage(path, w) {
+    return image(path).w(w).h(Math.round(w * this.ratio)).flex_none().rounded(4);
+  }
+
+  render(_cx) {
+  const t = theme();
+  const mono = settings().font_family ?? settings().font ?? "JetBrains Mono";
+  const button = (id, label, onClick, active = false) => div().id(id).h(24).px(8).flex().items_center().rounded(5).text_size(12)
+    .cursor_pointer().bg(active ? t.selected : t.chrome).text_color(active ? t.foreground : t.muted)
+    .hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click((_e, cx) => onClick(cx)).child(label);
+  const header = h_flex().h(34).flex_none().px(12).gap(8).items_center().border_b(1).border_color(t.border).bg(t.chrome)
+    .child(div().flex_none().text_size(12.5).font_semibold().text_color(t.foreground).child(this.file ? basename(this.file) : "Markdown Preview"))
+    .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.dim).child(this.file ? dirname(this.file) : ""))
+    .when(this.marp, (el) => el
+      .child(div().flex_none().text_size(11.5).text_color(t.dim).child(this.rendering ? "rendering…" : `${this.slides.length} slides`))
+      .child(button("mode-slides", "Slides", (cx) => this.setMode("slides", cx), this.mode === "slides"))
+      .child(button("mode-scroll", "Scroll", (cx) => this.setMode("scroll", cx), this.mode === "scroll")))
+    .child(button("open", "Open…", (cx) => this.open(cx)));
+
+  let body;
+  if (!this.file) {
+    body = v_flex().flex_1().items_center().justify_center().gap(10).text_color(t.muted).text_size(13)
+      .child("Markdown のファイルを選んでください")
+      .child(button("open-center", "Open…", (cx) => this.open(cx)));
+  } else if (this.error) {
+    body = div().p(14).font_family(mono).text_size(12).text_color(t.ansi1).child(this.error);
+  } else if (!this.marp) {
+    body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
+      .children(this.blocks.map((b, i) => {
+        if (b.kind === "md") return TextView.markdown(`md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground);
+        const img = this.images.get(b.src);
+        if (!img?.path) {
+          return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(t.border).text_size(12).text_color(t.dim)
+            .child(img?.error ? `画像を読めませんでした: ${b.src}（${img.error}）` : `読み込み中: ${b.src}`);
+        }
+        const w = Math.min(img.w, Math.max(100, this.width - 56));
+        return v_flex().id(`img-${i}`).my(8).gap(3).child(image(img.path).w(w).h(Math.round((w * img.h) / img.w)).rounded(4))
+          .when(Boolean(b.alt), (e) => e.child(div().text_size(11.5).text_color(t.dim).child(b.alt)));
+      }));
+  } else if (!this.slides.length) {
+    body = v_flex().flex_1().items_center().justify_center().text_color(t.muted).text_size(13).child(this.rendering ? "rendering…" : "スライドがありません");
+  } else if (this.mode === "scroll") {
+    const w = Math.max(200, Math.min(1280, this.width - 56));
+    body = v_flex().id("scroll").flex_1().min_h(0).overflow_y_scrollbar().items_center().py(20).gap(16)
+      .children(this.slides.map((p, i) => v_flex().id(`s-${i}`).flex_none().items_center().gap(4)
+        .child(this.slideImage(p, w))
+        .child(div().text_size(11).text_color(t.dim).child(`${i + 1} / ${this.slides.length}`))));
+  } else {
+    const w = Math.max(200, Math.min(1600, this.width - 56));
+    body = v_flex().flex_1().min_h(0).items_center().justify_center().gap(10).py(12)
+      .child(this.slideImage(this.slides[this.page], w))
+      .child(h_flex().gap(10).items_center()
+        .child(button("prev", "←", (cx) => this.go(-1, cx)))
+        .child(div().text_size(12).text_color(t.muted).child(`${this.page + 1} / ${this.slides.length}`))
+        .child(button("next", "→", (cx) => this.go(1, cx))));
+  }
+
+  return v_flex().id("root").size_full().bg(t.background).track_focus(this.handle)
+    .on_size_change((size, cx) => { const w = size.width / (settings().zoom || 1); if (Math.abs(w - this.width) > 4) { this.width = w; cx.notify(); } })
+    .on_mouse_down("left", () => this.handle.focus())
+    .on_key_down((e, cx) => {
+      if (!this.marp || this.mode !== "slides") return;
+      if (["right", "down", "space", "pagedown"].includes(e.key)) { this.go(1, cx); cx.stop_propagation(); }
+      if (["left", "up", "pageup"].includes(e.key)) { this.go(-1, cx); cx.stop_propagation(); }
+    })
+    .child(header).child(body);
+  }
+}

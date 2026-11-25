@@ -45,6 +45,8 @@ dotfiles/
 │   │   └── dark-modern.json → ~/.config/herdr-app/themes/dark-modern.json（VS Code の Dark Modern の色）
 │   ├── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
 │   ├── mods/spaces-qt/     → ~/.config/herdr-app/mods/spaces-qt/（同梱の spaces を複製し、アバターの色と文字を名前で決める）
+│   ├── mods/md-preview/    → ~/.config/herdr-app/mods/md-preview/（Markdown を整形して出す。Marp は 1 枚ずつめくる・縦に並べるを切り替え）
+│   ├── mdview.sh           → ~/.local/bin/mdview（Markdown Preview を今のペインの右に開く）
 │   ├── mods/git-graph/     → ~/.config/herdr-app/mods/git-graph/（コミットの履歴を枝の線つきで出す。コマンドパレットの「Git Graph」）
 │   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt にしたもの）
 │   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
@@ -370,7 +372,11 @@ git push
   フォルダ名も標準の青（`syntax.keyword` の色）ではなく、ファイル名と同じ文字色にしている。
 - Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
   整形して見たいときは別のペインで `glow ファイル.md`。
-  Marp のスライドは VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview`（mise の marp-cli）で見る。
+  Herdr アプリの中では、`mdview ファイル.md` で右のペインに整形して開く（コマンドパレットの「Markdown Preview」でも開ける）。
+  Marp のスライド（frontmatter に `marp: true`）は、mise の marp-cli で 1 枚ずつ PNG にして見せる。「Slides」で 1 枚ずつ（←→ でめくる）、
+  「Scroll」で縦に並べる。保存すると表示も更新される。PNG は `~/.config/herdr-app/cache/md-preview/` に作り、ペインを閉じると消す（残ったものは 1 日たつと消す）。
+  Markdown の中の画像（画像だけの行の `![](...)` と `<img src>`）は、同じ所にコピーして表示する（表示の部品が画像を描かないため）。
+  Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
 - herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
