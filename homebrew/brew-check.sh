@@ -37,6 +37,9 @@ if [ -n "$pythons" ]; then
   done
 fi
 
+# Herdr アプリ同梱の mod・layout で、複製して直したものの元が変わっていないか（アプリは brew ではなく自分で更新する）
+"$HOME/dotfiles/herdr-app/check-upstream.sh"
+
 outdated=$("$BREW" outdated --quiet)
 if [ -z "$outdated" ]; then
   echo "no updates"

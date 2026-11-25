@@ -4,6 +4,10 @@
   - `settings.json` → `~/dotfiles/herdr-app/settings.json`
   - `themes/dark-modern.json` → `~/dotfiles/herdr-app/themes/dark-modern.json`
   - `AGENTS.local.md`（このファイル）→ `~/dotfiles/herdr-app/AGENTS.local.md`
+  - `mods/spaces-qt/main.js`・`mod.json` → `~/dotfiles/herdr-app/mods/spaces-qt/`（同梱の `spaces` の複製。`├─ ` で始まる space はグレーに頭文字、それ以外は見出しとして青の 📂 をアバターにする。見出しの space の名前には絵文字を付けない）
+  - `layouts/qt.json` → `~/dotfiles/herdr-app/layouts/qt.json`（同梱の `main` の複製で、サイドバーを `spaces-qt` にしたもの。ふだん使う layout）
+- リンクした mod のファイルを dotfiles 側で書き換えても、アプリは読み直さない（リンク先の変更に気づかない）。書き換えたら `touch -h ~/.config/herdr-app/mods/<名前>/main.js` でリンクの時刻を変えて読み直させる（2026-11-26 に確かめた）。
+- 同梱の `spaces` と `main` は直接いじらない。直すときは `spaces-qt` と `qt` を直す。複製した元の版は `~/dotfiles/herdr-app/upstream.json` に控えてあり、`~/dotfiles/herdr-app/check-upstream.sh` が毎日比べて、変わったら通知する。
 - リンクしたファイルは、そのまま書き換えてよい（リンク先の dotfiles が変わる）。Herdr がアプリから書き換えても、リンクは切れない（2026-11-26 に確かめた）。
 - 新しく設定のファイル（`layouts/<name>.json`、`mods/<name>/`、`keys.json` など）を作ったり書き換えたりするときは、dotfiles に置いて `setup.sh` にリンクを足すかを、ユーザーに確かめる。
 - `keys.json` はリンクしていない。一度でも書き換えると、アプリを更新したときに新しい既定のキーが入らなくなるため。

@@ -43,7 +43,11 @@ dotfiles/
 │   ├── settings.json       → ~/.config/herdr-app/settings.json（テーマ・フォント・利用状況の送信を切る）
 │   ├── themes/
 │   │   └── dark-modern.json → ~/.config/herdr-app/themes/dark-modern.json（VS Code の Dark Modern の色）
-│   └── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
+│   ├── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
+│   ├── mods/spaces-qt/     → ~/.config/herdr-app/mods/spaces-qt/（同梱の spaces を複製し、アバターの色と文字を名前で決める）
+│   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt にしたもの）
+│   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
+│   └── check-upstream.sh   複製した元がアプリの更新で変わったら通知する（brew-check が毎日呼ぶ）
 ├── fresh/
 │   ├── config.json         → ~/.config/fresh/config.json
 │   ├── themes/
@@ -347,6 +351,14 @@ git push
   （同じフォルダに、アプリが書く状態のファイルや同梱の mod が溜まるため）。アプリの Settings で変えても、リンクは切れずに dotfiles の
   `settings.json` が書き換わる（ズームを変えたときも書き換わるので、差分が出たらコミットするか戻す）。
   `keys.json` はリンクしない（一度でも書き換えると、アプリを更新したときに新しい既定のキーが入らなくなるため）。
+- Herdr アプリの mod を複製して直したもの: 同梱の `spaces`（サイドバーの space の一覧）を `spaces-qt` に、layout の `main` を `qt` に複製した。
+  `spaces-qt` は、`├─ ` で始まる space（グループの中のリポジトリ）と、それ以外の space（見出し。名前に絵文字を付けない）でアバターを分ける。
+  見出しは青の 📂、`├─ ` の space はグレーに名前の頭文字（`├` ではなく）を出す（`main.js` の先頭の `QT_HEADING_COLOR`・`QT_HEADING_AVATAR`・`QT_REPO_COLOR`）。
+  `main.js` を書き換えても、リンクなのでアプリは読み直さない。`touch -h ~/.config/herdr-app/mods/spaces-qt/main.js` で読み直させる。
+  新しい Mac では、アプリの layout を `qt` に切り替える（コマンドパレットの layout の切り替え、または `herdr-app do layout.switch qt`）。
+  複製したものには、アプリを更新しても同梱の版の直しが入らない。`check-upstream.sh` が、アプリの `installed.json` に記録された同梱のファイルの
+  ハッシュを `upstream.json` と比べ、変わっていたら通知する。そのときは `~/.config/herdr-app/mods/spaces/main.js`（新しい版）と
+  `spaces-qt/main.js` の差を見て取り込み、`upstream.json` を今の `installed.json` の値に書き直す。
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
 - fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。

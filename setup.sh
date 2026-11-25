@@ -29,6 +29,10 @@ link herdr/config.toml               .config/herdr/config.toml
 link herdr-app/settings.json         .config/herdr-app/settings.json
 link herdr-app/themes/dark-modern.json .config/herdr-app/themes/dark-modern.json
 link herdr-app/AGENTS.local.md       .config/herdr-app/AGENTS.local.md
+# 同梱の spaces を複製して直した mod と、それを使う layout（アプリが書く jsconfig.json などが混ざらないよう、ファイルごとにリンクする）
+link herdr-app/mods/spaces-qt/main.js  .config/herdr-app/mods/spaces-qt/main.js
+link herdr-app/mods/spaces-qt/mod.json .config/herdr-app/mods/spaces-qt/mod.json
+link herdr-app/layouts/qt.json       .config/herdr-app/layouts/qt.json
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json
 link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json

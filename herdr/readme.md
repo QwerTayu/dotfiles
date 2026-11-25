@@ -78,7 +78,9 @@ pane=$(herdr tab create --workspace wM --cwd ~/Documents/personal/foo --label Re
 
 TUI から Herdr アプリ（`herdr-app` と herdr-core の `hc`）へ乗り換え中。名前の付け方は上と同じにする。
 
-- **space 1 つ = git リポジトリ 1 つ。** TUI のワークスペースと同じ。名前の付け方（見出しの space、グループの中の `├─ `、`📁 Documents` をいちばん上）もそのまま使う。
+- **space 1 つ = git リポジトリ 1 つ。** TUI のワークスペースと同じ。並べ方（見出しの space、グループの中の `├─ `、`Documents` をいちばん上）もそのまま使う。
+- **見出しの space の名前には絵文字を付けない**（TUI との違い。例: `NUTMEG`、`dotfiles`）。サイドバーの mod `spaces-qt` が、`├─ ` で始まらない space を見出しとして、
+  アバターを青の 📂 にする。`├─ ` の space はグレーのアバターに名前の頭文字を出す。worktree の space にはアバターがない。
   アプリにも space をフォルダにまとめる機能はない（サイドバーでまとまるのはマシンごとだけ）ので、見出しの space で表す。
 - **space を足す**: `herdr-app do space.new --name '├─ foo' --folder ~/Documents/personal/foo --focus false`。新しい space は一覧の最後に入るので、
   `herdr-app do space.move '{"id":"<space の ID>","index":<1 から数えた位置>}'` で動かす（ID と今の並びは `herdr-app ls`）。サイドバーのドラッグでも並べ替えられる。
