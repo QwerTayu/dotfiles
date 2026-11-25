@@ -6,7 +6,7 @@
 node = "24"
 # firebase のエミュレータが JDK 21 以上を要る
 java = "temurin-21"
-# marp-preview が使う。brew の marp-cli は brew の node に依存するので、こちらで入れる
+# Marp のスライドを書き出す・見る（`marp --preview`）。brew の marp-cli は brew の node に依存するので、こちらで入れる
 "npm:@marp-team/marp-cli" = "latest"
 # Vite+ の vp。brew の vite-plus は brew の node に依存し、curl 版は node の shim を作って mise とぶつかるので、こちらで入れる
 "npm:vite-plus" = "latest"

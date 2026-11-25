@@ -37,7 +37,6 @@ link lazygit/config.yml              "Library/Application Support/lazygit/config
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 link karabiner                       .config/karabiner   # フォルダごとリンクする（Karabiner はファイルを置き換えて保存するので、ファイルのリンクは切れる）
 link homebrew/brew-check.sh          .local/bin/brew-check
-link marp/marp-preview.sh            .local/bin/marp-preview
 link chrome/chrome-window-names.py   .local/bin/chrome-window-names
 link gws/gws.sh                      .local/bin/gws
 

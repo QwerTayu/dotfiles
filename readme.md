@@ -16,8 +16,6 @@ dotfiles/
 │   └── brew-check.sh       → ~/.local/bin/brew-check（更新があれば通知する。launchd が毎日実行）
 ├── mise/
 │   └── config.toml         → ~/.config/mise/config.toml（node・java・marp-cli の版）
-├── marp/
-│   └── marp-preview.sh     → ~/.local/bin/marp-preview（Marp のスライドを terminal-browser で表示する）
 ├── chrome/
 │   └── chrome-window-names.py → ~/.local/bin/chrome-window-names（Chrome のウィンドウに profile 名を付ける。launchd が 30 秒ごとに実行）
 ├── gws/
@@ -359,10 +357,8 @@ git push
   フォルダ名も標準の青（`syntax.keyword` の色）ではなく、ファイル名と同じ文字色にしている。
 - Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
   整形して見たいときは別のペインで `glow ファイル.md`。
-  Marp のスライドは `marp-preview スライド.md`（フォルダでもよい）で、marp のサーバーを立てて右のペインに terminal-browser で開く。
-  保存するとスライドも更新される。`Ctrl+C` でサーバーを止めると、herdr の中なら開いた terminal-browser のペインも閉じる
-  （terminal-browser は Chromium なので、開いたままにするとページ 1 つで 100〜300MB ほどメモリを使い続ける）。
-- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`marp-preview`、`chrome-window-names`）をここにリンクする。
+  Marp のスライドは VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview`（mise の marp-cli）で見る。
+- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
 - herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
   右下 1/4 にターミナル」の並びにし、タブの名前を `main` にする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。
@@ -383,9 +379,8 @@ git push
   背景色は VS Code の半透明の色を Ghostty の背景 #181818 に重ねて計算した値なので、Ghostty の背景を変えたら計算し直す。
   lazygit と herdr のペインの背景色はターミナル（Ghostty）の色がそのまま使われるので、
   Ghostty の背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
-- ターミナルは Terminal.app ではなく Ghostty を使う。terminal-browser が kitty graphics protocol で画面を描くため
-  （Terminal.app は対応していない）。herdr の `[experimental] kitty_graphics = true` もこのための設定。
-  Terminal.app の中で herdr と terminal-browser を使うと、画像のデータが文字のまま出て herdr がとても重くなる。
+- ターミナルは Terminal.app ではなく Ghostty を使う（herdr の TUI を動かすため）。herdr の `[experimental] kitty_graphics = true` は、
+  ペインの中で kitty graphics protocol の画像を出すための設定（Terminal.app は対応していない）。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
@@ -393,7 +388,6 @@ git push
     `--agent` と `--scope` を省くと別のエージェント向けに今のディレクトリへ入れようとするので、必ず付ける。
     `gh skill` には lockfile も削除コマンドもない。消すときは `claude/skills.txt` の行と `~/.claude/skills/<名前>` を手で消す。
     `gh skill` はまだ preview なので、使い方が変わることがある。
-  - brew が入れる skill（terminal-browser など）: brew が自分でリンクを張るので何もしない。
   - 自作の skill: [QwerTayu/personal-agent-skills](https://github.com/QwerTayu/personal-agent-skills)（public）に置く。
     `setup-agent-skills.sh` は次の 2 つを行う。
     1. `~/Documents/personal/personal-agent-skills` がまだなければ clone する（新しい Mac 用）。

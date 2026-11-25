@@ -85,8 +85,6 @@ cask "spotify"
 cask "steam"
 # Menu bar customization tool
 cask "swiftbar"
-# Terminal-based web browser
-cask "terminal-browser"
 # Web browser
 cask "thebrowsercompany-dia"
 # Open-source code editor

@@ -9,7 +9,7 @@ export PATH="/opt/homebrew/opt/ffmpeg-full/bin:$PATH"
 # プロンプトを出さないシェル（Claude の Bash ツールなど）でもプロジェクトの mise.toml が効く
 eval "$(/opt/homebrew/bin/mise activate bash --shims)"
 
-# dotfiles のスクリプト（setup.sh が ~/.local/bin にリンクする: brew-check, marp-preview）
+# dotfiles のスクリプト（setup.sh が ~/.local/bin にリンクする: brew-check, chrome-window-names, gws）
 export PATH="$HOME/.local/bin:$PATH"
 
 # ロケール設定（setlocale警告の対策）
