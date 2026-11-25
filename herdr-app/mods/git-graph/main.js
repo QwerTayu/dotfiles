@@ -1,9 +1,10 @@
 // Git Graph: 今の space のリポジトリのコミットの履歴を、枝の線つきで一覧にする（VS Code の Git Graph の代わり）。
 // コマンドパレットの「Git Graph」でタブとして開く。行を押すと、下に変わったファイルの一覧を出し、ファイルを押すとその差分に切り替える（← で一覧に戻る）。
+// 一番上に、まだコミットしていない変更の行を出す。ブランチで絞り込み、メッセージ・作った人・ハッシュ・ブランチ名で検索できる。
 // 読むだけで、git の状態は変えない（--no-optional-locks）。
 // 枝の線は git log --graph の文字を使わず、各コミットの親から列（lane）を計算して、行ごとに曲線で描く。
 import { View, div, PathBuilder } from "gpui-kit";
-import { v_flex, h_flex } from "gpui-base";
+import { v_flex, h_flex, InputState, Input, ScrollHandle } from "gpui-base";
 import { spaces, exec, theme, settings, window as appWindow } from "herdr";
 
 const SEP = "\x1f";
@@ -16,6 +17,7 @@ const DETAIL = 360; // コミットの詳細の欄の高さ（既定）。境界
 const DETAIL_MIN = 120;
 const COLORS = ["ansi12", "ansi13", "ansi10", "ansi11", "ansi14", "ansi9", "ansi4", "ansi5", "ansi2", "ansi3", "ansi6", "ansi1"];
 const READ = ["--no-optional-locks", "-c", "core.fsmonitor=false"];
+const WIP = "*uncommitted*"; // まだコミットしていない変更の行のハッシュの代わり
 
 function activeSpace() {
   return spaces().find((s) => s.active) ?? null;
@@ -71,7 +73,7 @@ function layout(commits) {
     });
     bottom.push(...outs);
     const width = Math.max(lane + 1, ...top.map((s) => Math.max(s[0], s[1]) + 1), ...bottom.map((s) => Math.max(s[0], s[1]) + 1));
-    return { ...c, lane, color, top, bottom, width, merge: c.parents.length > 1 };
+    return { ...c, lane, color, top, bottom, width, merge: c.parents.length > 1, wip: c.hash === WIP };
   });
 }
 
@@ -101,6 +103,15 @@ export default class GitGraph extends View {
     this.files = [];
     this.file = null;
     this.diff = [];
+    this.branch = null; // null: すべてのブランチ
+    this.branches = [];
+    this.menu = false;
+    this.q = "";
+    this.matchAt = -1;
+    this.scroll = ScrollHandle.new();
+    this.search = InputState.new({ placeholder: "Search (message, author, hash, branch)" });
+    this.search.on("change", (_e, cx) => { this.q = this.search.value().trim().toLowerCase(); this.matchAt = -1; cx.notify(); });
+    this.search.on("submit", (_e, cx) => this.jump(1, cx));
     cx.timer.every(5000, (cx) => {
       if (appWindow()?.visible === false) return;
       this.refresh(cx);
@@ -120,25 +131,43 @@ export default class GitGraph extends View {
           this.key = key;
           this.selected = null;
           this.raw = null;
+          this.branch = null;
+          this.menu = false;
         }
         if (top.code !== 0) {
           this.root = null;
           this.rows = [];
-          this.error = `git のリポジトリではありません: ${s.folder}`;
+          this.error = `Not a git repository: ${s.folder}`;
           return;
         }
         this.root = top.stdout.trim();
         this.on = s.machine;
-        const r = await exec("git", [...READ, "log", "--all", "--date-order", `--max-count=${MAX}`, "--date=format:%Y-%m-%d %H:%M",
-          `--format=%H${SEP}%P${SEP}%h${SEP}%D${SEP}%s${SEP}%an${SEP}%ad`], { cwd: this.root, on: this.on });
+        const opt = { cwd: this.root, on: this.on };
+        const [r, status, head, current, refs] = await Promise.all([
+          exec("git", [...READ, "log", ...(this.branch ? [this.branch] : ["--all"]), "--date-order", `--max-count=${MAX}`, "--date=format:%Y-%m-%d %H:%M",
+            `--format=%H${SEP}%P${SEP}%h${SEP}%D${SEP}%s${SEP}%an${SEP}%ad`, "--"], opt),
+          exec("git", [...READ, "status", "--porcelain=v1", "--untracked-files=all"], opt),
+          exec("git", ["rev-parse", "--verify", "-q", "HEAD"], opt),
+          exec("git", ["branch", "--show-current"], opt),
+          exec("git", ["for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"], opt),
+        ]);
+        this.branches = refs.stdout.split("\n").filter((x) => x && !x.endsWith("/HEAD"))
+          .map((x) => x.replace(/^refs\/(heads|remotes)\//, ""));
+        if (this.branch && !this.branches.includes(this.branch)) this.branch = null;
         if (r.code !== 0) {
-          this.error = r.stderr.trim() || "git log に失敗しました";
+          this.error = r.stderr.trim() || "git log failed";
           return;
         }
         this.error = null;
-        if (r.stdout !== this.raw) {
-          this.raw = r.stdout;
-          this.rows = layout(parse(r.stdout));
+        const dirty = status.stdout.split("\n").filter(Boolean).length;
+        const headHash = head.stdout.trim();
+        const showWip = dirty > 0 && headHash && (!this.branch || this.branch === current.stdout.trim());
+        const raw = `${this.branch}\n${showWip ? dirty : 0}\n${headHash}\n${r.stdout}`;
+        if (raw !== this.raw) {
+          this.raw = raw;
+          const commits = parse(r.stdout);
+          if (showWip) commits.unshift({ hash: WIP, parents: [headHash], short: "", refs: [], subject: `Uncommitted Changes (${dirty})`, author: "", date: "" });
+          this.rows = layout(commits);
           this.width = Math.max(1, ...this.rows.map((row) => row.width));
         }
       } catch (e) {
@@ -164,6 +193,22 @@ export default class GitGraph extends View {
     this.diff = [];
     cx.notify();
     const root = this.root, on = this.on;
+    if (hash === WIP) {
+      cx.spawn(async (cx) => {
+        const opt = { cwd: root, on };
+        const [status, stat, untracked] = await Promise.all([
+          exec("git", [...READ, "diff", "HEAD", "--name-status", "--no-renames"], opt),
+          exec("git", [...READ, "diff", "HEAD", "--numstat", "--no-renames"], opt),
+          exec("git", [...READ, "ls-files", "--others", "--exclude-standard"], opt),
+        ]);
+        if (this.selected !== hash) return;
+        this.info = { full: "", author: "Working tree vs HEAD", date: "", message: "Uncommitted Changes" };
+        this.files = [...this.fileList(status.stdout, stat.stdout),
+          ...untracked.stdout.split("\n").filter(Boolean).map((path) => ({ status: "U", path, add: "", del: "", untracked: true }))];
+        cx.notify();
+      });
+      return;
+    }
     cx.spawn(async (cx) => {
       const [info, status, stat] = await Promise.all([
         exec("git", [...READ, "show", "-s", "--date=format:%Y-%m-%d %H:%M", "--format=%H%n%an <%ae>%n%ad%n%B", hash], { cwd: root, on }),
@@ -173,16 +218,21 @@ export default class GitGraph extends View {
       if (this.selected !== hash) return;
       const [full, author, date, ...message] = info.stdout.split("\n");
       this.info = { full, author, date, message: message.join("\n").trim() };
-      const counts = new Map(stat.stdout.split("\n").filter(Boolean).map((l) => {
-        const [add, del, ...path] = l.split("\t");
-        return [path.join("\t"), { add, del }];
-      }));
-      this.files = status.stdout.split("\n").filter(Boolean).map((l) => {
-        const [st, ...path] = l.split("\t");
-        const name = path.join("\t");
-        return { status: st, path: name, ...(counts.get(name) ?? { add: "-", del: "-" }) };
-      });
+      this.files = this.fileList(status.stdout, stat.stdout);
       cx.notify();
+    });
+  }
+
+  // --name-status と --numstat の出力を合わせて、ファイルの一覧にする。
+  fileList(statusText, statText) {
+    const counts = new Map(statText.split("\n").filter(Boolean).map((l) => {
+      const [add, del, ...path] = l.split("\t");
+      return [path.join("\t"), { add, del }];
+    }));
+    return statusText.split("\n").filter(Boolean).map((l) => {
+      const [st, ...path] = l.split("\t");
+      const name = path.join("\t");
+      return { status: st, path: name, ...(counts.get(name) ?? { add: "-", del: "-" }) };
     });
   }
 
@@ -193,11 +243,15 @@ export default class GitGraph extends View {
     cx.notify();
     const hash = this.selected, root = this.root, on = this.on;
     cx.spawn(async (cx) => {
-      const r = await exec("git", [...READ, "show", "-m", "--first-parent", "--format=", "--no-renames", "--no-color", hash, "--", path], { cwd: root, on });
+      const untracked = hash === WIP && this.files.find((f) => f.path === path)?.untracked;
+      const args = hash !== WIP ? [...READ, "show", "-m", "--first-parent", "--format=", "--no-renames", "--no-color", hash, "--", path]
+        : untracked ? [...READ, "diff", "--no-index", "--no-color", "--", "/dev/null", path]
+        : [...READ, "diff", "HEAD", "--no-renames", "--no-color", "--", path];
+      const r = await exec("git", args, { cwd: root, on });
       if (this.selected !== hash || this.file !== path) return;
       const lines = r.stdout.split("\n");
       const at = lines.findIndex((l) => l.startsWith("@@"));
-      this.diff = at < 0 ? [r.stdout.trim() || "（差分なし。バイナリのファイルかもしれない）"] : lines.slice(at);
+      this.diff = at < 0 ? [r.stdout.trim() || "(No diff. The file may be binary.)"] : lines.slice(at);
       cx.notify();
     });
   }
@@ -206,7 +260,7 @@ export default class GitGraph extends View {
     const info = this.info;
     const fileRow = (f, i) => {
       const on = f.path === this.file;
-      const color = f.status === "A" ? t.ansi2 : f.status === "D" ? t.ansi1 : t.ansi3;
+      const color = f.status === "A" || f.status === "U" ? t.ansi2 : f.status === "D" ? t.ansi1 : t.ansi3;
       const slash = f.path.lastIndexOf("/");
       return h_flex().id(`f-${i}`).h(22).flex_none().px(10).gap(6).items_center().cursor_pointer().text_size(12)
         .bg(on ? t.selected : t.surface).hover((s) => s.bg(on ? t.selected : t.hover))
@@ -214,8 +268,8 @@ export default class GitGraph extends View {
         .child(div().w(12).flex_none().text_color(color).child(f.status[0]))
         .child(div().flex_none().text_color(t.foreground).child(f.path.slice(slash + 1)))
         .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(slash > 0 ? f.path.slice(0, slash) : ""))
-        .child(div().flex_none().text_size(11).text_color(t.ansi2).child(`+${f.add}`))
-        .child(div().flex_none().text_size(11).text_color(t.ansi1).child(`\u2212${f.del}`));
+        .when(!f.untracked, (e) => e.child(div().flex_none().text_size(11).text_color(t.ansi2).child(`+${f.add}`))
+          .child(div().flex_none().text_size(11).text_color(t.ansi1).child(`\u2212${f.del}`)));
     };
     const diffLine = (line, i) => {
       const kind = line[0];
@@ -238,7 +292,7 @@ export default class GitGraph extends View {
     }
     return v_flex().id("detail").h(this.detailH).flex_none().border_t(1).border_color(t.border).bg(t.background)
       .child(v_flex().flex_none().p(10).gap(3).border_b(1).border_color(t.border)
-        .child(div().text_size(12.5).text_color(t.foreground).child(info?.message ?? "読み込み中…"))
+        .child(div().text_size(12.5).text_color(t.foreground).child(info?.message ?? "Loading…"))
         .child(div().text_size(11.5).text_color(t.dim).child(info ? `${info.author} · ${info.date}` : ""))
         .child(div().text_size(11).font_family(mono).text_color(t.dim).child(info?.full ?? "")))
       .child(v_flex().id("files").flex_1().min_h(0).overflow_y_scrollbar().children(this.files.map(fileRow)));
@@ -260,7 +314,11 @@ export default class GitGraph extends View {
       ...row.bottom.map((s) => segment(s, mid, ROW)),
       window.paint_path(dot.build(), row.merge ? t.surface : color(row.color)).absolute().top(0).left(0).size_full(),
     ];
-    if (row.merge) {
+    if (row.wip) {
+      parts.splice(parts.length - 1, 1);
+      const ring = PathBuilder.stroke(1.5).dash_array([2, 2]).move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
+      parts.push(window.paint_path(ring.build(), t.muted).absolute().top(0).left(0).size_full());
+    } else if (row.merge) {
       const ring = PathBuilder.stroke(2).move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
       parts.push(window.paint_path(ring.build(), color(row.color)).absolute().top(0).left(0).size_full());
     }
@@ -280,15 +338,33 @@ export default class GitGraph extends View {
       .child(tag ? `🏷 ${label}` : label);
   }
 
+  matches(r) {
+    if (!this.q) return true;
+    return [r.subject, r.author, r.hash, r.short, ...r.refs].some((v) => v && v.toLowerCase().includes(this.q));
+  }
+
+  // 検索に合う行へ順に移る（dir: 1 で次、-1 で前）。
+  jump(dir, cx) {
+    if (!this.q) return;
+    const hits = this.rows.map((r, i) => (this.matches(r) ? i : -1)).filter((i) => i >= 0);
+    if (!hits.length) return;
+    const at = hits.indexOf(this.matchAt);
+    this.matchAt = hits[(at < 0 ? (dir > 0 ? 0 : hits.length - 1) : (at + dir + hits.length) % hits.length)];
+    this.scroll.scroll_to_item(this.matchAt);
+    cx.notify();
+  }
+
   row(r, i, t) {
     const on = r.hash === this.selected;
+    const hit = this.q && this.matches(r);
     const laneColor = t[COLORS[r.color % COLORS.length]];
     return h_flex().id(`row-${i}`).h(ROW).flex_none().items_center().gap(6).pr(10).text_size(12.5).cursor_pointer()
-      .bg(on ? t.selected : t.surface).hover((s) => s.bg(on ? t.selected : t.hover))
+      .bg(on ? t.selected : i === this.matchAt ? t.accent + "40" : hit ? t.accent + "1c" : t.surface).hover((s) => s.bg(on ? t.selected : t.hover))
+      .when(Boolean(this.q) && !hit, (e) => e.opacity(0.35))
       .on_click((_e, cx) => this.select(r.hash, cx))
       .child(this.graph(r, t))
       .child(h_flex().flex_none().gap(4).children(r.refs.map((ref) => this.refBadge(ref, t, laneColor))))
-      .child(div().flex_1().min_w(0).truncate().text_color(r.merge ? t.muted : t.foreground).child(r.subject))
+      .child(div().flex_1().min_w(0).truncate().text_color(r.merge || r.wip ? t.muted : t.foreground).when(r.wip, (e) => e.italic()).child(r.subject))
       .child(div().w(110).flex_none().truncate().text_color(t.muted).child(r.author))
       .child(div().w(112).flex_none().text_color(t.dim).child(r.date))
       .child(div().w(62).flex_none().font_family(settings().font_family ?? settings().font ?? "JetBrains Mono").text_color(t.dim).child(r.short));
@@ -301,19 +377,43 @@ export default class GitGraph extends View {
     if (s && JSON.stringify([s.machine, s.folder]) !== this.key && !this.loading) this.refresh(cx);
     const header = h_flex().h(34).flex_none().px(12).gap(8).items_center().border_b(1).border_color(t.border).bg(t.chrome)
       .child(div().text_size(12.5).font_semibold().text_color(t.foreground).child("Git Graph"))
+      .child(div().id("branch").flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(t.border)
+        .text_size(12).text_color(this.branch ? t.foreground : t.muted).cursor_pointer().hover((st) => st.bg(t.hover))
+        .on_click((_e, cx) => { this.menu = !this.menu; cx.notify(); })
+        .child(`${this.branch ?? "All branches"}  \u25be`))
+      .child(div().id("search").w(280).flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(this.q ? t.accent : t.border)
+        .cursor_text().on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .child(Input.new(this.search).h_full().text_size(12).text_color(t.foreground)))
+      .when(Boolean(this.q), (el) => {
+        const n = this.rows.filter((r) => this.matches(r)).length;
+        const nav = (id, label, dir) => div().id(id).px(5).rounded(4).text_color(t.muted).cursor_pointer()
+          .hover((st) => st.bg(t.hover).text_color(t.foreground)).on_click((_e, cx) => this.jump(dir, cx)).child(label);
+        return el.child(div().flex_none().text_size(11.5).text_color(t.dim).child(`${n} found`))
+          .child(nav("prev", "\u2191", -1)).child(nav("next", "\u2193", 1));
+      })
       .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.dim).child(this.root ?? s?.folder ?? ""))
       .child(div().id("refresh").px(8).py(2).rounded(5).text_size(12).text_color(t.muted).cursor_pointer()
         .hover((st) => st.bg(t.hover).text_color(t.foreground))
         .on_click((_e, cx) => this.refresh(cx)).child(this.loading ? "…" : "↻"));
     const body = this.error
       ? div().p(12).text_size(12.5).text_color(t.muted).child(this.error)
-      : v_flex().id("list").flex_1().min_h(0).overflow_y_scrollbar().children(this.rows.map((r, i) => this.row(r, i, t)));
+      : v_flex().id("list").flex_1().min_h(0).overflow_y_scrollbar().track_scroll(this.scroll).children(this.rows.map((r, i) => this.row(r, i, t)));
+    const menuItem = (name, label) => div().id(`b-${label}`).h(24).flex_none().px(10).flex().items_center().text_size(12)
+      .text_color(name === this.branch ? t.foreground : t.muted).bg(name === this.branch ? t.selected : t.popover)
+      .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
+      .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.selected = null; this.matchAt = -1; this.refresh(cx); cx.notify(); })
+      .child(label);
+    const menu = v_flex().id("branch-menu").absolute().top(34).left(90).w(320).max_h(360).overflow_y_scrollbar().py(4)
+      .rounded(6).border_1().border_color(t.border).bg(t.popover)
+      .on_mouse_down_out((_e, cx) => { this.menu = false; cx.notify(); })
+      .child(menuItem(null, "All branches"))
+      .children(this.branches.map((b) => menuItem(b, b)));
     const detail = this.selected ? this.detailView(t, mono) : null;
     // 一覧と詳細の境界。上下にドラッグすると詳細の欄の高さが変わる
     const splitter = div().id("splitter").h(5).flex_none().mt(-2).cursor_row_resize()
       .bg(this.drag ? t.accent : t.surface).hover((st) => st.bg(t.accent))
       .on_mouse_down("left", (e) => { this.drag = { y: e.position.y, h: this.detailH }; });
-    return v_flex().id("root").size_full().bg(t.surface)
+    return v_flex().id("root").relative().size_full().bg(t.surface)
       .on_size_change((size, cx) => { this.size = size; cx.notify(); })
       .on_window_mouse_move((e, cx) => {
         if (!this.drag) return;
@@ -325,7 +425,8 @@ export default class GitGraph extends View {
       })
       .on_window_mouse_up("left", (_e, cx) => this.endDrag(cx))
       .child(header).child(body)
-      .when(Boolean(detail), (el) => el.child(splitter).child(detail));
+      .when(Boolean(detail), (el) => el.child(splitter).child(detail))
+      .when(this.menu, (el) => el.child(menu));
   }
 
   endDrag(cx) {
