@@ -48,6 +48,10 @@ link herdr-app/mods/md-preview/icons   .config/herdr-app/mods/md-preview/icons  
 link herdr-app/mods/md-preview/mermaid-png.sh .config/herdr-app/mods/md-preview/mermaid-png.sh
 # link.js（.md のパスを Cmd+クリックで開く）は、リンクにするとアプリが「mod のフォルダの外」として読まないので、コピーする。書き換えたら setup.sh を実行し直す
 mkdir -p "$HOME/.config/herdr-app/mods/md-preview" && cp "$DOTFILES/herdr-app/mods/md-preview/link.js" "$HOME/.config/herdr-app/mods/md-preview/link.js" && echo "copy: md-preview/link.js"
+# 自作の mod: open-choice（ローカルのパスを Cmd+クリックしたとき、既定のアプリで開くか Finder で場所を開くかを選ぶ）。link.js は同じ理由でコピー
+link herdr-app/mods/open-choice/main.js  .config/herdr-app/mods/open-choice/main.js
+link herdr-app/mods/open-choice/mod.json .config/herdr-app/mods/open-choice/mod.json
+cp "$DOTFILES/herdr-app/mods/open-choice/link.js" "$HOME/.config/herdr-app/mods/open-choice/link.js" && echo "copy: open-choice/link.js"
 link herdr-app/mdview.sh             .local/bin/mdview
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json

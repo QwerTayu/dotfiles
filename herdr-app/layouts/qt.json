@@ -192,6 +192,7 @@
     16
   ],
   "link_handlers": [
-    "md-preview"
+    "md-preview",
+    "open-choice"
   ]
 }

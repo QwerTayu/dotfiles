@@ -47,6 +47,7 @@ dotfiles/
 │   ├── mods/spaces-qt/     → ~/.config/herdr-app/mods/spaces-qt/（同梱の spaces を複製し、アバターの色と文字を名前で決める）
 │   ├── mods/md-preview/    → ~/.config/herdr-app/mods/md-preview/（Markdown を整形して出す。Marp は 1 枚ずつめくる・縦に並べるを切り替え）
 │   ├── mdview.sh           → ~/.local/bin/mdview（Markdown Preview を今のペインの右に開く）
+│   ├── mods/open-choice/   → ~/.config/herdr-app/mods/open-choice/（ローカルのパスを Cmd+クリックで、既定のアプリか Finder かを選ぶ）
 │   ├── mods/git-graph/     → ~/.config/herdr-app/mods/git-graph/（コミットの履歴を枝の線つきで出す。コマンドパレットの「Git Graph」）
 │   ├── mods/files-qt/      → ~/.config/herdr-app/mods/files-qt/（同梱の files を複製し、VS Code の Material Icon Theme のアイコンを付ける。アイコンは install-icons.sh が落とす）
 │   ├── mods/tabs-qt/       → ~/.config/herdr-app/mods/tabs-qt/（同梱の tabs を複製し、右上に Git Graph のパネルのボタン「Graph」を足す）
@@ -379,7 +380,8 @@ git push
   整形して見たいときは別のペインで `glow ファイル.md`。
   Herdr アプリの中では、`mdview ファイル.md` で右のペインに整形して開く（コマンドパレットの「Markdown Preview」でも開ける）。
   ターミナルに出た `.md` のパスを Cmd を押しながらクリックすると、ダイアログで開く（`link.js`。リンクにすると読まれないので `setup.sh` がコピーする）。
-  `.html`・画像・PDF・URL は、mac の普通の開き方（既定のブラウザやプレビュー）で開く。
+  ほかのローカルのパス（`.html`・画像・PDF・フォルダなど）は、Cmd を押しながらクリックすると、既定のアプリで開くか Finder で場所を開くかを選ぶダイアログが出る（mod の `open-choice`）。
+  URL は、mac の普通の開き方（既定のブラウザ）で開く。
   Marp のスライド（frontmatter に `marp: true`）は、mise の marp-cli で 1 枚ずつ PNG にして見せる。「Slides」で 1 枚ずつ（←→ でめくる）、
   「Scroll」で縦に並べる。保存すると表示も更新される。PNG は `~/.config/herdr-app/cache/md-preview/` に作り、ペインを閉じると消す（残ったものは 1 日たつと消す）。
   Markdown の中の画像（画像だけの行の `![](...)` と `<img src>`）は、同じ所にコピーして表示する（表示の部品が画像を描かないため）。

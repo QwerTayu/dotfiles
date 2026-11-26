@@ -9,6 +9,8 @@
   - `mods/md-preview/main.js`・`mod.json` → `~/dotfiles/herdr-app/mods/md-preview/`（自作。Markdown を整形して出す。Marp は marp-cli で PNG にして、1 枚ずつ／縦に並べて見せる。ターミナルからは `mdview <ファイル>`）
   - `mods/files-qt/main.js`・`mod.json` → `~/dotfiles/herdr-app/mods/files-qt/`（同梱の `files` の複製。Material Icon Theme のアイコンを付ける。アイコンと表は `install-icons.sh` が入れ、dotfiles には入れない）
   - `mods/tabs-qt/main.js`・`mod.json` → `~/dotfiles/herdr-app/mods/tabs-qt/`（同梱の `tabs` の複製。右上に Git Graph のパネルのボタン「Graph」を足す）
+  - `mods/open-choice/main.js`・`mod.json` → `~/dotfiles/herdr-app/mods/open-choice/`（自作。ローカルのパスを Cmd+クリックしたとき、既定のアプリで開くか Finder で場所を開くかを選ぶダイアログ）
+  - `link.js`（md-preview と open-choice）は、リンクにすると mod のフォルダの外として読まれないので、`setup.sh` がコピーする。書き換えたら `setup.sh` を実行し直す。
   - `layouts/qt.json` → `~/dotfiles/herdr-app/layouts/qt.json`（同梱の `main` の複製で、サイドバーを `spaces-qt`、タブバーを `tabs-qt` にし、右のパネルに Git Graph を足したもの。ふだん使う layout）
 - リンクした mod のファイルを dotfiles 側で書き換えても、アプリは読み直さない（リンク先の変更に気づかない）。書き換えたら `touch -h ~/.config/herdr-app/mods/<名前>/main.js` でリンクの時刻を変えて読み直させる（2026-11-26 に確かめた）。
 - 同梱の `spaces`・`tabs`・`files`・`main` は直接いじらない。直すときは `spaces-qt`・`tabs-qt`・`files-qt`・`qt` を直す。複製した元の版は `~/dotfiles/herdr-app/upstream.json` に控えてあり、`~/dotfiles/herdr-app/check-upstream.sh` が毎日比べて、変わったら通知する。
