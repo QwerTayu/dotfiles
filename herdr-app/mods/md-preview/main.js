@@ -310,6 +310,13 @@ export default class MdPreview extends View {
     exec("/usr/bin/open", [url]);
   }
 
+  copyAll(cx) {
+    cx.write_to_clipboard(this.text);
+    this.copiedAll = true;
+    cx.notify();
+    cx.spawn(async (cx) => { await cx.sleep(1500); this.copiedAll = false; cx.notify(); });
+  }
+
   go(delta, cx) {
     this.page = Math.min(this.slides.length - 1, Math.max(0, this.page + delta));
     cx.notify();
@@ -440,7 +447,14 @@ export default class MdPreview extends View {
       if (["right", "down", "space", "pagedown"].includes(e.key)) { this.go(1, cx); cx.stop_propagation(); }
       if (["left", "up", "pageup"].includes(e.key)) { this.go(-1, cx); cx.stop_propagation(); }
     })
-    .child(header).child(body)
+    .child(header)
+    // ファイルを出している欄の右上に、ファイルの中身（Markdown のまま）をクリップボードに入れるボタンを置く。スクロールしても動かない
+    .child(v_flex().relative().flex_1().min_h(0).child(body)
+      .when(Boolean(this.file && this.text && !this.error), (el) => el.child(h_flex().id("copy-all").absolute().top(10).right(16).h(24).px(9)
+        .items_center().rounded(5).bg(t.raised).border_1().border_color(t.border).text_size(12)
+        .text_color(this.copiedAll ? t.ansi2 : t.muted).cursor_pointer().hover((s) => s.text_color(t.foreground))
+        .on_click((_e, cx) => this.copyAll(cx))
+        .child(this.copiedAll ? "Copied" : "Copy"))))
     .when(Boolean(popup), (el) => el.child(popup));
   }
 }
