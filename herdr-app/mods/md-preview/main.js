@@ -3,8 +3,8 @@
 // 開き方: コマンドパレットの「Markdown Preview」（ファイルを選ぶ）、またはターミナルで `mdview <ファイル>`（props.file）。
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex, TextView, EditorState, Editor } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay } from "herdr";
+import { v_flex, h_flex, TextView } from "gpui-base";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, panes } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
@@ -20,15 +20,11 @@ const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
 // image() は ~/.config/herdr-app からの相対パスしか読まないので、画像はそこにコピーする（http の画像は curl で落とす）。
 const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])?\s*\)|<img\s[^>]*src=["']([^"']+)["'][^>]*>)\s*$/i;
-// コードブロックの色付け。言語の別名をそろえ、色は VS Code の Dark Modern（Dark+）に合わせる
-const LANG_ALIAS = { js: "javascript", jsx: "javascript", mjs: "javascript", cjs: "javascript", ts: "typescript", tsx: "tsx",
-  sh: "bash", shell: "bash", zsh: "bash", console: "bash", py: "python", rb: "ruby", rs: "rust", yml: "yaml", md: "markdown",
-  "c++": "cpp", "c#": "csharp", cs: "csharp", kt: "kotlin", golang: "go", htm: "html", jsonc: "json" };
-const SYNTAX = { keyword: "#569cd6", string: "#ce9178", "string.escape": "#d7ba7d", comment: "#6a9955", function: "#dcdcaa",
-  type: "#4ec9b0", number: "#b5cea8", constant: "#4fc1ff", variable: "#9cdcfe", operator: "#d4d4d4", punctuation: "#d4d4d4",
-  boolean: "#569cd6", heading: "#569cd6", strong: "#569cd6", code: "#ce9178", quote: "#6a9955", list: "#6796e6", link: "#3794ff" };
+// コードブロックの色付けは Shiki（VS Code と同じ文法の定義）に任せる。highlight.mjs を mise の Node で動かし、
+// 返ってきた「文字と色」の並びを、mod が普通の文字として描く（コードエディタの部品は、最後の行の下に余白を取って
+// 中でスクロールしてしまうので使わない）。Shiki は install-shiki.sh が入れる
+const SHIKI_VERSION = "4.6.0";
 const CODE_FONT_SIZE = 13;
-const CODE_LINE = 20; // コードの 1 行の高さ（px）。部品は自分の高さを決めないので、行数から高さを出す
 
 // ```mermaid のブロックは mermaid-png.sh（mermaid.js を Google Chrome の headless で動かす）で PNG にして、画像と同じように出す。
 // GitHub のアラート（> [!NOTE] など）。表示の部品はただの引用として描くので、mod が色付きの枠で描く。
@@ -121,7 +117,9 @@ export default class MdPreview extends View {
     this.images = new Map(); // src -> { path, w, h } または { error }
     this.imageDir = null;
     this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
-    this.editors = new Map(); // コードブロックの部品（言語と中身 -> EditorState）。同じ中身なら作り直さない
+    this.tokens = new Map(); // コードブロックの色付けの結果（言語と中身 -> 行ごとの [{t, c, s}]）。同じ中身なら色付けし直さない
+    this.highlighting = false;
+    this.wasFocused = false; // md-preview のペインにフォーカスが移ったら、ファイルを読み直して色付けする
     this.copied = null; // コピーしたばかりのコードブロックの番号（「Copied」を出す）
     this.popup = null; // リンクの URL のポップアップ { url, x, y }
     this.pointer = null; // ペインの中のマウスの位置（ウィンドウの px）
@@ -230,22 +228,8 @@ export default class MdPreview extends View {
   // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
   prepare(cx) {
     this.blocks = splitBlocks(this.text);
-    // コードブロックの部品を作る（作るのは描く前の、ここでだけ）。使わなくなったものは捨てる
-    const keep = new Set();
-    for (const b of this.blocks) {
-      if (b.kind !== "code") continue;
-      b.key = `${b.lang}\n${b.code}`;
-      keep.add(b.key);
-      if (this.editors.has(b.key)) continue;
-      const lang = LANG_ALIAS[b.lang] ?? b.lang;
-      const opts = { value: b.code, readonly: true, line_numbers: false, folding: false, soft_wrap: false,
-        font_family: TEXT_FONT, font_size: CODE_FONT_SIZE, syntax: SYNTAX };
-      let state;
-      try { state = EditorState.new(lang ? { ...opts, language: lang } : opts); }
-      catch { state = EditorState.new(opts); } // 知らない言語は色を付けずに出す
-      this.editors.set(b.key, state);
-    }
-    for (const [key, state] of this.editors) if (!keep.has(key)) { state.release(); this.editors.delete(key); }
+    for (const b of this.blocks) if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
+    this.highlight(cx);
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
@@ -310,6 +294,53 @@ export default class MdPreview extends View {
     exec("/usr/bin/open", [url]);
   }
 
+  // まだ色付けしていないコードブロックを、まとめて Shiki に色付けしてもらう。失敗したブロックは、色なしで出したまま
+  highlight(cx) {
+    const todo = this.blocks.filter((b) => b.kind === "code" && !this.tokens.has(b.key));
+    if (!todo.length || this.highlighting) return;
+    this.highlighting = true;
+    cx.spawn(async (cx) => {
+      try {
+        const dir = `${appHome()}/${CACHE_REL}/hl-${Date.now()}`;
+        await exec("/bin/mkdir", ["-p", dir]);
+        await writeTextFile(`${dir}/in.json`, JSON.stringify(todo.map((b) => ({ lang: b.lang, code: b.code }))), null);
+        const r = await exec(`${home()}/.local/share/mise/shims/node`,
+          [`${appHome()}/mods/md-preview/highlight.mjs`, `${dir}/in.json`, `${dir}/out.json`, `${home()}/.local/share/herdr-md-preview/shiki-${SHIKI_VERSION}`],
+          { timeout: 60000 });
+        if (r.code === 0) {
+          const out = JSON.parse(await readTextFile(`${dir}/out.json`));
+          todo.forEach((b, i) => this.tokens.set(b.key, out[i]));
+          // 使わなくなった結果は捨てる
+          const keep = new Set(this.blocks.filter((b) => b.kind === "code").map((b) => b.key));
+          for (const k of [...this.tokens.keys()]) if (!keep.has(k)) this.tokens.delete(k);
+        }
+        exec("/bin/rm", ["-rf", dir]);
+      } catch {} finally {
+        this.highlighting = false;
+        cx.notify();
+        if (this.blocks.some((b) => b.kind === "code" && !this.tokens.has(b.key))) {} // 失敗したものは、次に読み直したときにもう一度試す
+      }
+    });
+  }
+
+  // md-preview のペインにフォーカスが移ったとき: ファイルを読み直し、変わっていれば描き直す（色付けも、変わったブロックだけし直す）
+  recheck(cx) {
+    const file = this.file;
+    if (!file) return;
+    cx.spawn(async (cx) => {
+      let text;
+      try { text = await readTextFile(file); } catch { return; }
+      if (this.file !== file) return;
+      if (text !== this.text) {
+        this.text = text;
+        this.marp = isMarp(text);
+        if (this.marp) this.build(cx);
+        else this.prepare(cx);
+      } else if (!this.marp) this.highlight(cx);
+      cx.notify();
+    });
+  }
+
   copyAll(cx) {
     cx.write_to_clipboard(this.text);
     this.copiedAll = true;
@@ -332,7 +363,11 @@ export default class MdPreview extends View {
     return image(path).w(w).h(Math.round(w * this.ratio)).flex_none().rounded(4);
   }
 
-  render(_cx) {
+  render(cx) {
+    // ペインにフォーカスが移ったら読み直す（同じタブで横に並べて、別のペインで書き換えている使い方のため）
+    const focusedNow = panes().some((p) => p.mod === "md-preview" && p.focused);
+    if (focusedNow && !this.wasFocused) this.recheck(cx);
+    this.wasFocused = focusedNow;
   const t = theme();
   const mono = settings().font_family ?? settings().font ?? "JetBrains Mono";
   const button = (id, label, onClick, active = false) => div().id(id).h(24).px(8).flex().items_center().rounded(5).text_size(12)
@@ -361,11 +396,18 @@ export default class MdPreview extends View {
       .children(this.blocks.map((b, i) => {
         if (b.kind === "md") return this.markdown(`md-${i}`, b.text, t);
         if (b.kind === "code") {
-          const state = this.editors.get(b.key);
-          const lines = Math.max(1, b.code.split("\n").length);
           const copied = this.copied === i;
-          return div().id(`code-${i}`).relative().my(8).rounded(6).border_1().border_color(t.border).bg(t.background).overflow_hidden()
-            .child(div().h(lines * CODE_LINE + 20).py(10).px(4).when(Boolean(state), (e) => e.child(Editor.new(state))))
+          const toks = this.tokens.get(b.key);
+          // 色付けの結果があれば行ごとに色の付いた文字を並べ、なければ色なしで出す。長い行は文字のかたまりの切れ目で折り返す
+          const lines = toks ?? b.code.split("\n").map((l) => [{ t: l, c: null, s: 0 }]);
+          const lineEl = (spans, n) => h_flex().id(`code-${i}-l${n}`).flex_wrap().min_h(CODE_FONT_SIZE * 1.6)
+            .children(spans.map((sp, k) => div().id(`code-${i}-l${n}-${k}`).whitespace_nowrap().text_color(sp.c ?? t.foreground)
+              .when(Boolean(sp.s & 1), (e) => e.italic()).when(Boolean(sp.s & 2), (e) => e.font_semibold())
+              .when(Boolean(sp.s & 4), (e) => e.underline()).child(sp.t)));
+          // flex_none: ファイルが長いとき、縦に並べたブロックが押し縮められないようにする
+          return div().id(`code-${i}`).relative().flex_none().my(8).rounded(6).border_1().border_color(t.border).bg(t.background)
+            .child(v_flex().px(14).py(12).pr(110).font_family(TEXT_FONT).text_size(CODE_FONT_SIZE)
+              .children(lines.map((spans, n) => lineEl(spans, n))))
             .child(h_flex().id(`copy-${i}`).absolute().top(6).right(6).h(22).px(8).gap(5).items_center().rounded(5)
               .bg(t.raised).border_1().border_color(t.border).text_size(11.5).text_color(copied ? t.ansi2 : t.muted).cursor_pointer()
               .hover((s) => s.text_color(t.foreground))
@@ -380,7 +422,7 @@ export default class MdPreview extends View {
         }
         if (b.kind === "details") {
           const open = this.opened.get(i) ?? b.open;
-          return v_flex().id(`details-${i}`).my(6).gap(6)
+          return v_flex().id(`details-${i}`).flex_none().my(6).gap(6)
             .child(h_flex().id(`summary-${i}`).gap(6).px(6).py(2).ml(-6).rounded(5).items_center().cursor_pointer().text_size(14).text_color(t.foreground)
               .hover((s) => s.bg(t.hover))
               .on_click((_e, cx) => { this.opened.set(i, !open); cx.notify(); })
@@ -390,7 +432,7 @@ export default class MdPreview extends View {
         }
         if (b.kind === "alert") {
           const a = ALERTS[b.type];
-          return v_flex().id(`alert-${i}`).my(8).pl(14).py(4).gap(6).border_l(3).border_color(a.color)
+          return v_flex().id(`alert-${i}`).flex_none().my(8).pl(14).py(4).gap(6).border_l(3).border_color(a.color)
             .child(h_flex().gap(7).items_center().text_size(14).font_semibold().text_color(a.color)
               .child(svg(`mods/md-preview/icons/${b.type.toLowerCase()}.svg`).size(15).text_color(a.color))
               .child(a.label))
@@ -404,7 +446,7 @@ export default class MdPreview extends View {
             .child(img?.error ? `${b.kind === "mermaid" ? "Mermaid の図を描けませんでした" : `画像を読めませんでした: ${b.src}`}\n${img.error}` : `読み込み中: ${what}`);
         }
         const w = Math.min(img.w, Math.max(100, this.width - 56));
-        return v_flex().id(`img-${i}`).my(8).gap(3).child(image(img.path).w(w).h(Math.round((w * img.h) / img.w)).rounded(4))
+        return v_flex().id(`img-${i}`).flex_none().my(8).gap(3).child(image(img.path).w(w).h(Math.round((w * img.h) / img.w)).rounded(4))
           .when(Boolean(b.alt), (e) => e.child(div().text_size(11.5).text_color(t.dim).child(b.alt)));
       }));
   } else if (!this.slides.length) {

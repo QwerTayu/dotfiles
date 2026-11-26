@@ -46,6 +46,7 @@ link herdr-app/mods/md-preview/main.js  .config/herdr-app/mods/md-preview/main.j
 link herdr-app/mods/md-preview/mod.json .config/herdr-app/mods/md-preview/mod.json
 link herdr-app/mods/md-preview/icons   .config/herdr-app/mods/md-preview/icons   # アラートのアイコン（svg だけなので、フォルダごとリンクする）
 link herdr-app/mods/md-preview/mermaid-png.sh .config/herdr-app/mods/md-preview/mermaid-png.sh
+link herdr-app/mods/md-preview/highlight.mjs  .config/herdr-app/mods/md-preview/highlight.mjs
 # link.js（.md のパスを Cmd+クリックで開く）は、リンクにするとアプリが「mod のフォルダの外」として読まないので、コピーする。書き換えたら setup.sh を実行し直す
 mkdir -p "$HOME/.config/herdr-app/mods/md-preview" && cp "$DOTFILES/herdr-app/mods/md-preview/link.js" "$HOME/.config/herdr-app/mods/md-preview/link.js" && echo "copy: md-preview/link.js"
 # 自作の mod: open-choice（ローカルのパスを Cmd+クリックしたとき、既定のアプリで開くか Finder で場所を開くかを選ぶ）。link.js は同じ理由でコピー
@@ -116,6 +117,9 @@ fi
 
 # files-qt の mod が使う Material Icon Theme のアイコン（約 1,200 個）を落として置く。dotfiles には入れない。失敗しても、このあとの処理は続ける
 "$DOTFILES/herdr-app/mods/files-qt/install-icons.sh" || echo "files-qt のアイコンを入れられなかった（あとで手で実行する）" >&2
+
+# md-preview のコードブロックの色付けに使う Shiki を、版を決めて ~/.local/share/herdr-md-preview/ に入れる（mise の Node と npm を使う）。失敗しても続ける
+"$DOTFILES/herdr-app/mods/md-preview/install-shiki.sh" || echo "Shiki を入れられなかった（mise install のあとで手で実行する）" >&2
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"

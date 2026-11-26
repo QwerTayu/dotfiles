@@ -385,7 +385,9 @@ git push
   Marp のスライド（frontmatter に `marp: true`）は、mise の marp-cli で 1 枚ずつ PNG にして見せる。「Slides」で 1 枚ずつ（←→ でめくる）、
   「Scroll」で縦に並べる。保存すると表示も更新される。PNG は `~/.config/herdr-app/cache/md-preview/` に作り、ペインを閉じると消す（残ったものは 1 日たつと消す）。
   Markdown の中の画像（画像だけの行の `![](...)` と `<img src>`）は、同じ所にコピーして表示する（表示の部品が画像を描かないため）。
-  言語を書いたコードブロックは、読み取り専用のコードの部品で色を付けて出し、右上に「Copy」のボタンを置く。
+  言語を書いたコードブロックは、Shiki（VS Code と同じ文法の定義。`install-shiki.sh` が `~/.local/share/herdr-md-preview/` に入れる）で色を付け、
+  右上に「Copy」のボタンを置く。アプリのコードエディタの部品は、最後の行の下に余白を取って中でスクロールしてしまうので使わない。
+  色付けは、ファイルを開いたとき・保存したときと、md-preview のペインにフォーカスが移ったときにする。
   GitHub のアラート（`> [!NOTE]` など 5 種）と `<details>` も、表示の部品が対応していないので mod が描く（アラートのアイコンは `icons/` の自作の SVG）。
   ` ```mermaid ` のブロックは `mermaid-png.sh` が PNG にして出す。mermaid-cli は依存（chromium-bidi）が mise の trust policy で止まったので使わず、
   mermaid.js（版を決めて npm から 1 度だけ落とし、sha512 で確かめて `~/.local/share/herdr-md-preview/` に置く）を Google Chrome の headless で動かす。
