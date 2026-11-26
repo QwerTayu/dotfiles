@@ -3,7 +3,7 @@
 // 一番上に、まだコミットしていない変更の行を出す。ブランチで絞り込み、メッセージ・作った人・ハッシュ・ブランチ名で検索できる。
 // 読むだけで、git の状態は変えない（--no-optional-locks）。
 // 枝の線は git log --graph の文字を使わず、各コミットの親から列（lane）を計算して、行ごとに曲線で描く。
-import { View, div, PathBuilder } from "gpui-kit";
+import { View, div, svg, PathBuilder } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input, ScrollHandle } from "gpui-base";
 import { spaces, exec, theme, settings, window as appWindow } from "herdr";
 
@@ -151,8 +151,11 @@ export default class GitGraph extends View {
           exec("git", ["branch", "--show-current"], opt),
           exec("git", ["for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"], opt),
         ]);
-        this.branches = refs.stdout.split("\n").filter((x) => x && !x.endsWith("/HEAD"))
-          .map((x) => x.replace(/^refs\/(heads|remotes)\//, ""));
+        const refNames = refs.stdout.split("\n").filter((x) => x && !x.endsWith("/HEAD"));
+        // ローカルとリモートのブランチを分けて覚える（名前に / を含むローカルのブランチもあるので、名前では見分けない）
+        this.locals = new Set(refNames.filter((x) => x.startsWith("refs/heads/")).map((x) => x.slice(11)));
+        this.remotes = new Set(refNames.filter((x) => x.startsWith("refs/remotes/")).map((x) => x.slice(13)));
+        this.branches = [...this.locals, ...this.remotes];
         if (this.branch && !this.branches.includes(this.branch)) this.branch = null;
         if (r.code !== 0) {
           this.error = r.stderr.trim() || "git log failed";
@@ -325,17 +328,44 @@ export default class GitGraph extends View {
     return div().relative().flex_none().w(PAD + this.width * LANE + 6).h(ROW).children(parts);
   }
 
-  refBadge(ref, t, laneColor) {
-    const head = ref.startsWith("HEAD -> ");
-    const tag = ref.startsWith("tag: ");
-    const remote = !head && !tag && ref.includes("/");
-    const label = head ? ref.slice(8) : tag ? ref.slice(5) : ref;
-    const color = tag ? t.ansi3 : laneColor;
-    return h_flex().flex_none().h(18).px(6).gap(4).items_center().rounded(4).text_size(11.5)
-      .when(!remote, (el) => el.bg(color).text_color("#ffffff"))
-      .when(remote, (el) => el.border_1().border_color(color).text_color(color).italic())
-      .when(head, (el) => el.font_semibold().child(div().text_color("#ffffff").child("●")))
-      .child(tag ? `🏷 ${label}` : label);
+  // コミットに付いた ref（git log の %D）を、表示するチップに分ける。
+  // ローカルのブランチと、同じコミットにある同じ名前のリモートのブランチは、1 つのチップにまとめる（main | origin）。
+  chips(refs) {
+    const locals = this.locals ?? new Set(), remotes = this.remotes ?? new Set();
+    const names = refs.filter((r) => !r.endsWith("/HEAD") && r !== "HEAD");
+    const used = new Set();
+    const out = [];
+    for (const r of names) {
+      if (!r.startsWith("HEAD -> ") && !locals.has(r)) continue;
+      const name = r.startsWith("HEAD -> ") ? r.slice(8) : r;
+      const with_ = [...remotes].filter((x) => names.includes(x) && x.slice(x.indexOf("/") + 1) === name);
+      with_.forEach((x) => used.add(x));
+      out.push({ kind: "branch", head: r.startsWith("HEAD -> "), text: name, remotes: with_.map((x) => x.slice(0, x.indexOf("/"))) });
+    }
+    for (const r of names) {
+      if (r.startsWith("tag: ")) out.push({ kind: "tag", text: r.slice(5) });
+      else if (!r.startsWith("HEAD -> ") && !locals.has(r) && !used.has(r)) out.push({ kind: "remote", text: r });
+    }
+    return out;
+  }
+
+  // チップ: 枠と左のアイコンで種類を出す（今のブランチ ✓ は塗りつぶし、ローカルは枝、リモートは雲、タグは札）。
+  // 参考: rabeeh-ta/herdr-git-graph の見た目。コードとアイコンは自分で書いた。
+  chip(c, t, laneColor, mono) {
+    const edge = c.kind === "tag" ? t.ansi3 : laneColor;
+    const fg = c.head ? t.background : c.kind === "tag" ? edge : c.kind === "remote" ? t.muted : t.foreground;
+    const icon = c.kind === "tag" ? "tag" : c.kind === "remote" ? "cloud" : c.head ? "check" : "branch";
+    // アイコンは枠と同じ色。今のブランチのチップは枠の色で塗りつぶすので、アイコンも文字と同じ色にする
+    const iconColor = c.head ? t.background : edge;
+    const part = (id, iconName, text, color, extra) => h_flex().id(id).h_full().flex_none().px(5).gap(4).items_center()
+      .when(Boolean(extra), extra)
+      .child(svg(`mods/git-graph/icons/${iconName}.svg`).size(10).flex_none().text_color(iconColor))
+      .child(div().font_family(mono).text_size(11).text_color(color).when(c.head, (e) => e.font_semibold()).child(text));
+    return h_flex().flex_none().h(18).rounded(5).border_1().border_color(edge).overflow_hidden()
+      .when(c.head, (e) => e.bg(laneColor))
+      .child(part(`chip-${c.kind}-${c.text}`, icon, c.text, fg))
+      .children((c.remotes ?? []).map((r) => part(`chip-r-${c.text}-${r}`, "cloud", r, c.head ? t.background : t.muted,
+        (e) => e.border_l(1).border_color(edge).bg(c.head ? t.background + "33" : edge + "1f"))));
   }
 
   matches(r) {
@@ -358,12 +388,13 @@ export default class GitGraph extends View {
     const on = r.hash === this.selected;
     const hit = this.q && this.matches(r);
     const laneColor = t[COLORS[r.color % COLORS.length]];
+    const mono = settings().font_family ?? settings().font ?? "JetBrains Mono";
     return h_flex().id(`row-${i}`).h(ROW).flex_none().items_center().gap(6).pr(10).text_size(12.5).cursor_pointer()
       .bg(on ? t.selected : i === this.matchAt ? t.accent + "40" : hit ? t.accent + "1c" : t.surface).hover((s) => s.bg(on ? t.selected : t.hover))
       .when(Boolean(this.q) && !hit, (e) => e.opacity(0.35))
       .on_click((_e, cx) => this.select(r.hash, cx))
       .child(this.graph(r, t))
-      .child(h_flex().flex_none().gap(4).children(r.refs.map((ref) => this.refBadge(ref, t, laneColor))))
+      .child(h_flex().flex_none().gap(4).children(this.chips(r.refs).map((c) => this.chip(c, t, laneColor, mono))))
       .child(div().flex_1().min_w(0).truncate().text_color(r.merge || r.wip ? t.muted : t.foreground).when(r.wip, (e) => e.italic()).child(r.subject))
       .child(div().w(110).flex_none().truncate().text_color(t.muted).child(r.author))
       .child(div().w(112).flex_none().text_color(t.dim).child(r.date))

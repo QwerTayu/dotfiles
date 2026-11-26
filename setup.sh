@@ -36,6 +36,7 @@ link herdr-app/layouts/qt.json       .config/herdr-app/layouts/qt.json
 # 自作の mod: Git Graph（コマンドパレットの「Git Graph」でタブとして開く）
 link herdr-app/mods/git-graph/main.js  .config/herdr-app/mods/git-graph/main.js
 link herdr-app/mods/git-graph/mod.json .config/herdr-app/mods/git-graph/mod.json
+link herdr-app/mods/git-graph/icons    .config/herdr-app/mods/git-graph/icons    # ブランチの印のアイコン（svg だけなので、フォルダごとリンクする）
 # 自作の mod: Markdown Preview（Marp のスライドも。コマンドパレットの「Markdown Preview」、またはターミナルで mdview）
 link herdr-app/mods/md-preview/main.js  .config/herdr-app/mods/md-preview/main.js
 link herdr-app/mods/md-preview/mod.json .config/herdr-app/mods/md-preview/mod.json
