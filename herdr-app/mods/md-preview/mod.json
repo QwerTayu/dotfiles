@@ -3,6 +3,20 @@
   "title": "Markdown Preview",
   "focusable": true,
   "palette": [
-    { "title": "Markdown Preview", "command": "tab.new", "args": { "mod": "md-preview", "name": "Markdown" }, "words": "markdown md marp slides preview" }
+    {
+      "title": "Markdown Preview",
+      "command": "tab.new",
+      "args": {
+        "mod": "md-preview",
+        "name": "Markdown"
+      },
+      "words": "markdown md marp slides preview"
+    }
+  ],
+  "link_handlers": [
+    {
+      "kind": "file",
+      "pattern": "(?i)\\.(md|markdown)$"
+    }
   ]
 }

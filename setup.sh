@@ -46,6 +46,8 @@ link herdr-app/mods/md-preview/main.js  .config/herdr-app/mods/md-preview/main.j
 link herdr-app/mods/md-preview/mod.json .config/herdr-app/mods/md-preview/mod.json
 link herdr-app/mods/md-preview/icons   .config/herdr-app/mods/md-preview/icons   # アラートのアイコン（svg だけなので、フォルダごとリンクする）
 link herdr-app/mods/md-preview/mermaid-png.sh .config/herdr-app/mods/md-preview/mermaid-png.sh
+# link.js（.md のパスを Cmd+クリックで開く）は、リンクにするとアプリが「mod のフォルダの外」として読まないので、コピーする。書き換えたら setup.sh を実行し直す
+mkdir -p "$HOME/.config/herdr-app/mods/md-preview" && cp "$DOTFILES/herdr-app/mods/md-preview/link.js" "$HOME/.config/herdr-app/mods/md-preview/link.js" && echo "copy: md-preview/link.js"
 link herdr-app/mdview.sh             .local/bin/mdview
 link mise/config.toml                .config/mise/config.toml
 link fresh/config.json               .config/fresh/config.json

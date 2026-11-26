@@ -4,7 +4,7 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView, EditorState, Editor } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
@@ -338,7 +338,9 @@ export default class MdPreview extends View {
       .child(div().flex_none().text_size(11.5).text_color(t.dim).child(this.rendering ? "rendering…" : `${this.slides.length} slides`))
       .child(button("mode-slides", "Slides", (cx) => this.setMode("slides", cx), this.mode === "slides"))
       .child(button("mode-scroll", "Scroll", (cx) => this.setMode("scroll", cx), this.mode === "scroll")))
-    .child(button("open", "Open…", (cx) => this.open(cx)));
+    .child(button("open", "Open…", (cx) => this.open(cx)))
+    // ダイアログで開いたとき（.md のパスを Cmd+クリック）は、閉じるボタンも出す（Esc でも閉じる）
+    .when(Boolean(props()?.overlay), (el) => el.child(button("close", "\u00d7", () => closeOverlay(props().overlay))));
 
   let body;
   if (!this.file) {

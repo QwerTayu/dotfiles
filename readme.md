@@ -378,6 +378,8 @@ git push
 - Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
   整形して見たいときは別のペインで `glow ファイル.md`。
   Herdr アプリの中では、`mdview ファイル.md` で右のペインに整形して開く（コマンドパレットの「Markdown Preview」でも開ける）。
+  ターミナルに出た `.md` のパスを Cmd を押しながらクリックすると、ダイアログで開く（`link.js`。リンクにすると読まれないので `setup.sh` がコピーする）。
+  `.html`・画像・PDF・URL は、mac の普通の開き方（既定のブラウザやプレビュー）で開く。
   Marp のスライド（frontmatter に `marp: true`）は、mise の marp-cli で 1 枚ずつ PNG にして見せる。「Slides」で 1 枚ずつ（←→ でめくる）、
   「Scroll」で縦に並べる。保存すると表示も更新される。PNG は `~/.config/herdr-app/cache/md-preview/` に作り、ペインを閉じると消す（残ったものは 1 日たつと消す）。
   Markdown の中の画像（画像だけの行の `![](...)` と `<img src>`）は、同じ所にコピーして表示する（表示の部品が画像を描かないため）。
