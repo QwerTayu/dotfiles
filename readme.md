@@ -48,6 +48,7 @@ dotfiles/
 │   ├── mods/md-preview/    → ~/.config/herdr-app/mods/md-preview/（Markdown を整形して出す。Marp は 1 枚ずつめくる・縦に並べるを切り替え）
 │   ├── mdview.sh           → ~/.local/bin/mdview（Markdown Preview を今のペインの右に開く）
 │   ├── mods/git-graph/     → ~/.config/herdr-app/mods/git-graph/（コミットの履歴を枝の線つきで出す。コマンドパレットの「Git Graph」）
+│   ├── mods/files-qt/      → ~/.config/herdr-app/mods/files-qt/（同梱の files を複製し、VS Code の Material Icon Theme のアイコンを付ける。アイコンは install-icons.sh が落とす）
 │   ├── mods/tabs-qt/       → ~/.config/herdr-app/mods/tabs-qt/（同梱の tabs を複製し、右上に Git Graph のパネルのボタン「Graph」を足す）
 │   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt、タブバーを tabs-qt にして、右のパネルに Git Graph を足したもの）
 │   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
@@ -357,6 +358,8 @@ git push
   `keys.json` はリンクしない（一度でも書き換えると、アプリを更新したときに新しい既定のキーが入らなくなるため）。
 - Herdr アプリの mod を複製して直したもの: 同梱の `spaces`（サイドバーの space の一覧）を `spaces-qt` に、`tabs`（タブバー）を `tabs-qt` に、layout の `main` を `qt` に複製した。
   `tabs-qt` は、右上の Files・Changes のボタンの右に「Graph」を足し、右のパネルで自作の Git Graph を開けるようにしたもの。
+  `files-qt` は同梱の `files`（Files のパネル）の複製で、ファイルとフォルダに VS Code の Material Icon Theme の色付きのアイコンを付ける（cybertron288/herdr-mods の file-icons を参考に、自分で書いた）。
+  アイコン（npm の material-icon-theme。MIT）は `install-icons.sh` が版を決めて落とし、sha512 で確かめて `~/.config/herdr-app/mods/files-qt/icons/` に置く。
   `spaces-qt` は、`├─ ` で始まる space（グループの中のリポジトリ）と、それ以外の space（見出し。名前に絵文字を付けない）でアバターを分ける。
   見出しは青の 📂、`├─ ` の space はグレーに名前の頭文字（`├` ではなく）を出す（`main.js` の先頭の `QT_HEADING_COLOR`・`QT_HEADING_AVATAR`・`QT_REPO_COLOR`）。
   `main.js` を書き換えても、リンクなのでアプリは読み直さない。`touch -h ~/.config/herdr-app/mods/spaces-qt/main.js` で読み直させる。

@@ -13,5 +13,13 @@
     "win-max.svg": "4bbb4fb6a79ab51d",
     "win-min.svg": "b86a99b42001e95f",
     "win-restore.svg": "188630362d9549bf"
+  },
+  "files": {
+    "chevron-down.svg": "43b9f11a785c8653",
+    "chevron-right.svg": "7867764fc431794c",
+    "file.svg": "316c5ba4beaebfe1",
+    "folder.svg": "64e7b5165472b129",
+    "main.js": "8e4488e3fac5776c",
+    "mod.json": "433fbf9dfa3e359a"
   }
 }

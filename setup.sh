@@ -34,6 +34,8 @@ link herdr-app/mods/spaces-qt/main.js  .config/herdr-app/mods/spaces-qt/main.js
 link herdr-app/mods/spaces-qt/mod.json .config/herdr-app/mods/spaces-qt/mod.json
 link herdr-app/mods/tabs-qt/main.js    .config/herdr-app/mods/tabs-qt/main.js    # 同梱の tabs の複製（右上に Graph のボタンを足す）
 link herdr-app/mods/tabs-qt/mod.json   .config/herdr-app/mods/tabs-qt/mod.json
+link herdr-app/mods/files-qt/main.js   .config/herdr-app/mods/files-qt/main.js   # 同梱の files の複製（Material Icon Theme のアイコンを付ける）
+link herdr-app/mods/files-qt/mod.json  .config/herdr-app/mods/files-qt/mod.json
 link herdr-app/layouts/qt.json       .config/herdr-app/layouts/qt.json
 # 自作の mod: Git Graph（コマンドパレットの「Git Graph」でタブとして開く）
 link herdr-app/mods/git-graph/main.js  .config/herdr-app/mods/git-graph/main.js
@@ -105,6 +107,9 @@ if ! command -v herdr-core >/dev/null 2>&1; then
   curl -fsSL https://releases.herdr.dev/core/install.sh | sh \
     || echo "herdr-core のインストールに失敗（あとで手で実行する）" >&2
 fi
+
+# files-qt の mod が使う Material Icon Theme のアイコン（約 1,200 個）を落として置く。dotfiles には入れない。失敗しても、このあとの処理は続ける
+"$DOTFILES/herdr-app/mods/files-qt/install-icons.sh" || echo "files-qt のアイコンを入れられなかった（あとで手で実行する）" >&2
 
 # Claude Code の skill を入れる（~/.claude/skills/ の中身は dotfiles に入れない）
 "$DOTFILES/setup-agent-skills.sh"
