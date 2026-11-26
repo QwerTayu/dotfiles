@@ -4,7 +4,7 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import { props, readTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
@@ -17,6 +17,7 @@ const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
 // image() は ~/.config/herdr-app からの相対パスしか読まないので、画像はそこにコピーする（http の画像は curl で落とす）。
 const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])?\s*\)|<img\s[^>]*src=["']([^"']+)["'][^>]*>)\s*$/i;
+// ```mermaid のブロックは mermaid-png.sh（mermaid.js を Google Chrome の headless で動かす）で PNG にして、画像と同じように出す。
 // GitHub のアラート（> [!NOTE] など）。表示の部品はただの引用として描くので、mod が色付きの枠で描く。
 const ALERT_START = /^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i;
 const ALERTS = {
@@ -37,6 +38,16 @@ function splitBlocks(text) {
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    // ```mermaid のブロックは、mermaid-png.sh で PNG にして図として出す
+    const mermaid = !fence && line.match(/^\s*(```|~~~)\s*mermaid\s*$/i);
+    if (mermaid) {
+      flush();
+      const code = [];
+      while (i + 1 < lines.length && !new RegExp(`^\\s*${mermaid[1]}\\s*$`).test(lines[i + 1])) code.push(lines[++i]);
+      i++;
+      blocks.push({ kind: "mermaid", src: `mermaid:${code.join("\n")}`, code: code.join("\n") });
+      continue;
+    }
     if (/^\s*(```|~~~)/.test(line)) fence = !fence;
     const details = !fence && line.match(DETAILS_START);
     if (details) {
@@ -193,7 +204,7 @@ export default class MdPreview extends View {
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
-    const todo = this.blocks.filter((b) => b.kind === "img" && !this.images.has(b.src));
+    const todo = this.blocks.filter((b) => (b.kind === "img" || b.kind === "mermaid") && !this.images.has(b.src));
     if (!todo.length) return;
     for (const b of todo) this.images.set(b.src, { loading: true });
     cx.spawn(async (cx) => {
@@ -203,6 +214,17 @@ export default class MdPreview extends View {
         const name = `${Date.now()}-${i}.${ext}`;
         const dest = `${dir}/${name}`;
         try {
+          if (b.kind === "mermaid") {
+            const srcFile = `${dir}/${Date.now()}-${i}.mmd`;
+            const png = `${dir}/${Date.now()}-${i}.png`;
+            await writeTextFile(srcFile, b.code, null);
+            const r = await exec(`${appHome()}/mods/md-preview/mermaid-png.sh`, [srcFile, png], { timeout: 120000 });
+            if (r.code !== 0) throw new Error(r.stderr.trim() || "Mermaid の図を描けませんでした");
+            const [w, h] = r.stdout.trim().split(" ").map(Number);
+            this.images.set(b.src, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
+            if (this.file === file) cx.notify();
+            continue;
+          }
           if (/^https?:\/\//.test(b.src)) {
             const r = await exec("/usr/bin/curl", ["-fsSL", "--max-time", "20", "-o", dest, b.src], { timeout: 30000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "download failed");
@@ -288,8 +310,10 @@ export default class MdPreview extends View {
         }
         const img = this.images.get(b.src);
         if (!img?.path) {
-          return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(t.border).text_size(12).text_color(t.dim)
-            .child(img?.error ? `画像を読めませんでした: ${b.src}（${img.error}）` : `読み込み中: ${b.src}`);
+          const what = b.kind === "mermaid" ? "Mermaid の図" : b.src;
+          return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(img?.error ? t.ansi1 : t.border).text_size(12)
+            .font_family(settings().font_family ?? settings().font ?? "JetBrains Mono").text_color(img?.error ? t.ansi1 : t.dim)
+            .child(img?.error ? `${b.kind === "mermaid" ? "Mermaid の図を描けませんでした" : `画像を読めませんでした: ${b.src}`}\n${img.error}` : `読み込み中: ${what}`);
         }
         const w = Math.min(img.w, Math.max(100, this.width - 56));
         return v_flex().id(`img-${i}`).my(8).gap(3).child(image(img.path).w(w).h(Math.round((w * img.h) / img.w)).rounded(4))

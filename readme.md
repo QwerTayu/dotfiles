@@ -377,6 +377,9 @@ git push
   「Scroll」で縦に並べる。保存すると表示も更新される。PNG は `~/.config/herdr-app/cache/md-preview/` に作り、ペインを閉じると消す（残ったものは 1 日たつと消す）。
   Markdown の中の画像（画像だけの行の `![](...)` と `<img src>`）は、同じ所にコピーして表示する（表示の部品が画像を描かないため）。
   GitHub のアラート（`> [!NOTE]` など 5 種）と `<details>` も、表示の部品が対応していないので mod が描く（アラートのアイコンは `icons/` の自作の SVG）。
+  ` ```mermaid ` のブロックは `mermaid-png.sh` が PNG にして出す。mermaid-cli は依存（chromium-bidi）が mise の trust policy で止まったので使わず、
+  mermaid.js（版を決めて npm から 1 度だけ落とし、sha512 で確かめて `~/.local/share/herdr-md-preview/` に置く）を Google Chrome の headless で動かす。
+  Marp のスライドの中の Mermaid は、まだ図にならない。
   Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
 - herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
