@@ -45,8 +45,19 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
+  "extraKnownMarketplaces": {
+    "obsidian-skills": {
+      "source": {
+        "source": "github",
+        "repo": "obsidianmd/obsidian-skills"
+      }
+    }
+  },
   "language": "japanese",
   "theme": "dark",
+  "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "remoteControlAtStartup": true
+  "enabledPlugins": {
+    "obsidian@obsidian-skills": true
+  }
 }
