@@ -57,6 +57,9 @@ const key = () => JSON.stringify(location());
 const LANG = { ts: "js", tsx: "js", mts: "js", cts: "js", jsx: "js", mjs: "js", toml: "yaml", jsonc: "json", svelte: "html", vue: "html" };
 const PER_FOLDER = 500, TOTAL = 5000;
 
+// files-qt: ignore したものの名前の色。テーマの dim（#6e7681）より暗くして、ほかのファイルと見分けやすくする
+const IGNORED_COLOR = "#4f555c";
+
 async function directory(path, on) {
   const windowsDirectory = async () => {
     // Windows PowerShell otherwise uses the console code page; exec decodes UTF-8.
@@ -89,6 +92,9 @@ export default class Files extends View {
     this.refresh(cx);
     cx.timer.every(500, cx => this.refreshIfDue(cx));
     this.iconMap = null;
+    // files-qt: git で ignore したファイルとフォルダの名前を灰色にする（一覧には元から出ている）
+    this.ignored = new Set(); this.ignoredRoot = null; this.ignoredAt = 0;
+    cx.timer.every(5000, cx => this.refreshIgnored(cx));
     cx.spawn(async (cx) => {
       try { this.iconMap = JSON.parse(await readTextFile(`${appHome()}/mods/files-qt/icon-map.json`)); cx.notify(); } catch {}
     });
@@ -253,6 +259,32 @@ export default class Files extends View {
     });
   }
 
+  // ignore したものの一覧を git に聞く。--directory で、ignore したフォルダは中身ではなくフォルダ 1 つとして返る（node_modules などでも軽い）。
+  // Changes のパネルと共有している git status の結果には混ぜない（混ぜると、ignore したものが変更として出てしまう）。
+  refreshIgnored(cx) {
+    const root = this.root, on = this.on;
+    if (!root || this.ignoring || window()?.visible === false) return;
+    if (root === this.ignoredRoot && Date.now() - this.ignoredAt < 4000) return;
+    this.ignoring = true;
+    cx.spawn(async (cx) => {
+      try {
+        const r = await exec("git", ["--no-optional-locks", "-c", "core.fsmonitor=false", "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z"], { cwd: root, on });
+        if (this.root !== root) return;
+        const next = new Set(r.code === 0 ? r.stdout.split("\0").filter(Boolean).map(p => p.replace(/\/$/, "")) : []);
+        const changed = next.size !== this.ignored.size || [...next].some(p => !this.ignored.has(p));
+        this.ignored = next; this.ignoredRoot = root; this.ignoredAt = Date.now();
+        if (changed) cx.notify();
+      } catch {} finally { this.ignoring = false; }
+    });
+  }
+
+  // パスそのものか、その上のどれかのフォルダが ignore されていれば true（パスはリポジトリの一番上からの相対）
+  isIgnored(path) {
+    if (!this.ignored.size || this.ignoredRoot !== this.root) return false;
+    for (let p = path; p; p = p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "") if (this.ignored.has(p)) return true;
+    return false;
+  }
+
   // files-qt（QwerTayu の変更）: ファイルとフォルダのアイコンを、VS Code の Material Icon Theme の色付きのものにする。
   // アイコンと表（icon-map.json）は install-icons.sh が入れる。表が読めないときは、元の mod の単色のアイコンに戻す。
   // 引き方は VS Code と同じ: ファイル名がちょうど合うもの、長い拡張子（d.ts など）から順に、なければ既定のアイコン。
@@ -279,7 +311,7 @@ export default class Files extends View {
         .on_click((_e, cx) => entry.dir ? this.toggle(path, cx) : this.show(path, cx))
         .child(entry.dir ? svg(`mods/files/chevron-${open ? "down" : "right"}.svg`).size(12).flex_none().text_color(t.dim) : div().w(12).flex_none())
         .child(this.icon(entry, open, t))
-        .child(div().flex_1().min_w(0).truncate().child(entry.name))
+        .child(div().flex_1().min_w(0).truncate().when(this.isIgnored(path), el => el.text_color(IGNORED_COLOR)).child(entry.name))
         .when(Boolean(mark), el => el.child(div().text_size(11).text_color(mark === "A" ? t.ansi2 : mark === "D" || mark === "U" ? t.ansi1 : t.blocked).child(mark))));
       if (entry.dir && open) this.rows(path, depth + 1, out, t);
     }
@@ -287,6 +319,7 @@ export default class Files extends View {
   }
 
   render(cx) {
+    if (this.root && this.root !== this.ignoredRoot) this.refreshIgnored(cx);
     if (key() !== this.context?.key) this.refresh(cx);
     else this.refreshIfDue(cx);
     const t = theme();
