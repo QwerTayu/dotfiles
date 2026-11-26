@@ -97,6 +97,9 @@ export default class MdPreview extends View {
     this.images = new Map(); // src -> { path, w, h } または { error }
     this.imageDir = null;
     this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
+    this.popup = null; // リンクの URL のポップアップ { url, x, y }
+    this.pointer = null; // ペインの中のマウスの位置（ウィンドウの px）
+    this.cmd = false; // ⌘ を押しているか
     // mod の読み直しや落ちたときは close() が呼ばれず、PNG が残る。開くたびに 1 日より古いものを消す
     exec("/usr/bin/find", [`${appHome()}/${CACHE_REL}`, "-mindepth", "1", "-maxdepth", "1", "-mtime", "+0", "-exec", "/bin/rm", "-rf", "{}", "+"]).catch(() => {});
     if (this.file) this.load(cx);
@@ -249,6 +252,22 @@ export default class MdPreview extends View {
     });
   }
 
+  // 文章の部品。リンクを押しても開かず、押した所のそばに URL を出す（⌘ を押しながらなら、そのままブラウザで開く）。
+  // 部品はマウスを乗せたことを知らせないので、押したときに出す。押した位置は、ペイン全体で見ているマウスの位置を使う。
+  markdown(id, text, t) {
+    return TextView.markdown(id, text).selectable(true).text_size(14).text_color(t.foreground)
+      .on_link_click((url, cx) => {
+        if (this.cmd) { this.openUrl(url); return; }
+        const zoom = settings().zoom || 1;
+        this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom };
+        cx.notify();
+      });
+  }
+
+  openUrl(url) {
+    exec("/usr/bin/open", [url]);
+  }
+
   go(delta, cx) {
     this.page = Math.min(this.slides.length - 1, Math.max(0, this.page + delta));
     cx.notify();
@@ -289,7 +308,7 @@ export default class MdPreview extends View {
   } else if (!this.marp) {
     body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
       .children(this.blocks.map((b, i) => {
-        if (b.kind === "md") return TextView.markdown(`md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground);
+        if (b.kind === "md") return this.markdown(`md-${i}`, b.text, t);
         if (b.kind === "details") {
           const open = this.opened.get(i) ?? b.open;
           return v_flex().id(`details-${i}`).my(6).gap(6)
@@ -298,7 +317,7 @@ export default class MdPreview extends View {
               .on_click((_e, cx) => { this.opened.set(i, !open); cx.notify(); })
               .child(div().w(12).flex_none().text_size(11).text_color(t.muted).child(open ? "\u25bc" : "\u25b6"))
               .child(b.summary))
-            .when(open && Boolean(b.text), (e) => e.child(div().pl(18).child(TextView.markdown(`details-md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground))));
+            .when(open && Boolean(b.text), (e) => e.child(div().pl(18).child(this.markdown(`details-md-${i}`, b.text, t))));
         }
         if (b.kind === "alert") {
           const a = ALERTS[b.type];
@@ -306,7 +325,7 @@ export default class MdPreview extends View {
             .child(h_flex().gap(7).items_center().text_size(14).font_semibold().text_color(a.color)
               .child(svg(`mods/md-preview/icons/${b.type.toLowerCase()}.svg`).size(15).text_color(a.color))
               .child(a.label))
-            .child(TextView.markdown(`alert-md-${i}`, b.text).selectable(true).text_size(14).text_color(t.foreground));
+            .child(this.markdown(`alert-md-${i}`, b.text, t));
         }
         const img = this.images.get(b.src);
         if (!img?.path) {
@@ -337,7 +356,21 @@ export default class MdPreview extends View {
         .child(button("next", "→", (cx) => this.go(1, cx))));
   }
 
-  return v_flex().id("root").size_full().bg(t.background).track_focus(this.handle)
+  const popup = this.popup && (() => {
+    const w = Math.min(460, Math.max(200, this.width - 24));
+    const x = Math.max(8, Math.min(this.popup.x - 12, this.width - w - 8));
+    return v_flex().id("link-popup").absolute().left(x).top(this.popup.y + 14).max_w(w).px(10).py(7).gap(3)
+      .rounded(6).border_1().border_color(t.border).bg(t.popover).shadow_md()
+      .on_mouse_down_out((_e, cx) => { this.popup = null; cx.notify(); })
+      .child(div().id("link-url").text_size(12.5).text_color(t.accent).underline().cursor_pointer()
+        .hover((s) => s.text_color(t.foreground))
+        .on_click((_e, cx) => { this.openUrl(this.popup.url); this.popup = null; cx.notify(); })
+        .child(this.popup.url))
+      .child(div().text_size(11).text_color(t.dim).child("Click to open · \u2318+click on the link opens it directly"));
+  })();
+  return v_flex().id("root").relative().size_full().bg(t.background).track_focus(this.handle)
+    .on_window_mouse_move((e) => { this.pointer = e.local_position; this.cmd = e.modifiers.platform; })
+    .on_modifiers_changed((e) => { this.cmd = e.modifiers.platform; })
     .on_size_change((size, cx) => { const w = size.width / (settings().zoom || 1); if (Math.abs(w - this.width) > 4) { this.width = w; cx.notify(); } })
     .on_mouse_down("left", () => this.handle.focus())
     .on_key_down((e, cx) => {
@@ -345,6 +378,7 @@ export default class MdPreview extends View {
       if (["right", "down", "space", "pagedown"].includes(e.key)) { this.go(1, cx); cx.stop_propagation(); }
       if (["left", "up", "pageup"].includes(e.key)) { this.go(-1, cx); cx.stop_propagation(); }
     })
-    .child(header).child(body);
+    .child(header).child(body)
+    .when(Boolean(popup), (el) => el.child(popup));
   }
 }
