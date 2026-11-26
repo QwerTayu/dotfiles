@@ -3,7 +3,7 @@
   "sounds": {
     "enabled": true
   },
-  "font": "HackGen Console NF",
+  "font": "UDEV Gothic NF",
   "font_weight": 400,
   "font_ligatures": false,
   "terminal_line_height": 1.0,

@@ -40,7 +40,7 @@ dotfiles/
 │       ├── ascii-input-source/  英字で使うアプリのペインで入力ソースを英字にする
 │       └── dev-layout/          タブを claude / fresh / lazygit / ターミナル に並べる
 ├── herdr-app/
-│   ├── settings.json       → ~/.config/herdr-app/settings.json（テーマ・フォント・利用状況の送信を切る）
+│   ├── settings.json       → ~/.config/herdr-app/settings.json（テーマ・フォント（UDEV Gothic NF）・利用状況の送信を切る）
 │   ├── themes/
 │   │   └── dark-modern.json → ~/.config/herdr-app/themes/dark-modern.json（VS Code の Dark Modern の色）
 │   ├── AGENTS.local.md     → ~/.config/herdr-app/AGENTS.local.md（この Mac の設定の決まりを agent に伝える）
@@ -365,7 +365,7 @@ git push
 - `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
   welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
 - fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。
-  Nerd Font のアイコンを使うので、ターミナルのフォントが Nerd Font（HackGen Console NF）である必要がある。
+  Nerd Font のアイコンを使うので、ターミナルのフォントが Nerd Font（Ghostty は HackGen Console NF、Herdr アプリは UDEV Gothic NF）である必要がある。
   起動時にプロジェクトのファイルをたどってアイコンを付け、その後は保存・作成・名前変更されたファイルだけ付け直す。
   `node_modules`・`.git`・キャッシュ系のフォルダは中をたどらない（フォルダ自体には付ける）。対象は `SKIP_DIRS` で変える。
   fresh の外で増えたファイルは、コマンドパレットの `File Icons: Refresh` で付け直す。
