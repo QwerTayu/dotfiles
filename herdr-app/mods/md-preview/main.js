@@ -3,7 +3,7 @@
 // 開き方: コマンドパレットの「Markdown Preview」（ファイルを選ぶ）、またはターミナルで `mdview <ファイル>`（props.file）。
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex, TextView } from "gpui-base";
+import { v_flex, h_flex, TextView, EditorState, Editor } from "gpui-base";
 import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
@@ -20,6 +20,16 @@ const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
 // image() は ~/.config/herdr-app からの相対パスしか読まないので、画像はそこにコピーする（http の画像は curl で落とす）。
 const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])?\s*\)|<img\s[^>]*src=["']([^"']+)["'][^>]*>)\s*$/i;
+// コードブロックの色付け。言語の別名をそろえ、色は VS Code の Dark Modern（Dark+）に合わせる
+const LANG_ALIAS = { js: "javascript", jsx: "javascript", mjs: "javascript", cjs: "javascript", ts: "typescript", tsx: "tsx",
+  sh: "bash", shell: "bash", zsh: "bash", console: "bash", py: "python", rb: "ruby", rs: "rust", yml: "yaml", md: "markdown",
+  "c++": "cpp", "c#": "csharp", cs: "csharp", kt: "kotlin", golang: "go", htm: "html", jsonc: "json" };
+const SYNTAX = { keyword: "#569cd6", string: "#ce9178", "string.escape": "#d7ba7d", comment: "#6a9955", function: "#dcdcaa",
+  type: "#4ec9b0", number: "#b5cea8", constant: "#4fc1ff", variable: "#9cdcfe", operator: "#d4d4d4", punctuation: "#d4d4d4",
+  boolean: "#569cd6", heading: "#569cd6", strong: "#569cd6", code: "#ce9178", quote: "#6a9955", list: "#6796e6", link: "#3794ff" };
+const CODE_FONT_SIZE = 13;
+const CODE_LINE = 20; // コードの 1 行の高さ（px）。部品は自分の高さを決めないので、行数から高さを出す
+
 // ```mermaid のブロックは mermaid-png.sh（mermaid.js を Google Chrome の headless で動かす）で PNG にして、画像と同じように出す。
 // GitHub のアラート（> [!NOTE] など）。表示の部品はただの引用として描くので、mod が色付きの枠で描く。
 const ALERT_START = /^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i;
@@ -49,6 +59,17 @@ function splitBlocks(text) {
       while (i + 1 < lines.length && !new RegExp(`^\\s*${mermaid[1]}\\s*$`).test(lines[i + 1])) code.push(lines[++i]);
       i++;
       blocks.push({ kind: "mermaid", src: `mermaid:${code.join("\n")}`, code: code.join("\n") });
+      continue;
+    }
+    // ほかの ``` のブロックは、mod が色付きのコードとして描く（言語は ``` のうしろの名前）
+    const codeStart = !fence && line.match(/^\s*(```+|~~~+)\s*([^\s`]*)[^`]*$/);
+    if (codeStart) {
+      flush();
+      const close = new RegExp(`^\\s*${codeStart[1][0] === "`" ? "`" : "~"}{${codeStart[1].length},}\\s*$`);
+      const code = [];
+      while (i + 1 < lines.length && !close.test(lines[i + 1])) code.push(lines[++i]);
+      i++;
+      blocks.push({ kind: "code", lang: codeStart[2].toLowerCase(), code: code.join("\n") });
       continue;
     }
     if (/^\s*(```|~~~)/.test(line)) fence = !fence;
@@ -100,6 +121,8 @@ export default class MdPreview extends View {
     this.images = new Map(); // src -> { path, w, h } または { error }
     this.imageDir = null;
     this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
+    this.editors = new Map(); // コードブロックの部品（言語と中身 -> EditorState）。同じ中身なら作り直さない
+    this.copied = null; // コピーしたばかりのコードブロックの番号（「Copied」を出す）
     this.popup = null; // リンクの URL のポップアップ { url, x, y }
     this.pointer = null; // ペインの中のマウスの位置（ウィンドウの px）
     this.cmd = false; // ⌘ を押しているか
@@ -207,6 +230,22 @@ export default class MdPreview extends View {
   // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
   prepare(cx) {
     this.blocks = splitBlocks(this.text);
+    // コードブロックの部品を作る（作るのは描く前の、ここでだけ）。使わなくなったものは捨てる
+    const keep = new Set();
+    for (const b of this.blocks) {
+      if (b.kind !== "code") continue;
+      b.key = `${b.lang}\n${b.code}`;
+      keep.add(b.key);
+      if (this.editors.has(b.key)) continue;
+      const lang = LANG_ALIAS[b.lang] ?? b.lang;
+      const opts = { value: b.code, readonly: true, line_numbers: false, folding: false, soft_wrap: false,
+        font_family: TEXT_FONT, font_size: CODE_FONT_SIZE, syntax: SYNTAX };
+      let state;
+      try { state = EditorState.new(lang ? { ...opts, language: lang } : opts); }
+      catch { state = EditorState.new(opts); } // 知らない言語は色を付けずに出す
+      this.editors.set(b.key, state);
+    }
+    for (const [key, state] of this.editors) if (!keep.has(key)) { state.release(); this.editors.delete(key); }
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
@@ -312,6 +351,24 @@ export default class MdPreview extends View {
     body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
       .children(this.blocks.map((b, i) => {
         if (b.kind === "md") return this.markdown(`md-${i}`, b.text, t);
+        if (b.kind === "code") {
+          const state = this.editors.get(b.key);
+          const lines = Math.max(1, b.code.split("\n").length);
+          const copied = this.copied === i;
+          return div().id(`code-${i}`).relative().my(8).rounded(6).border_1().border_color(t.border).bg(t.background).overflow_hidden()
+            .child(div().h(lines * CODE_LINE + 20).py(10).px(4).when(Boolean(state), (e) => e.child(Editor.new(state))))
+            .child(h_flex().id(`copy-${i}`).absolute().top(6).right(6).h(22).px(8).gap(5).items_center().rounded(5)
+              .bg(t.raised).border_1().border_color(t.border).text_size(11.5).text_color(copied ? t.ansi2 : t.muted).cursor_pointer()
+              .hover((s) => s.text_color(t.foreground))
+              .on_click((_e, cx) => {
+                cx.write_to_clipboard(b.code);
+                this.copied = i;
+                cx.notify();
+                cx.spawn(async (cx) => { await cx.sleep(1500); if (this.copied === i) { this.copied = null; cx.notify(); } });
+              })
+              .child(copied ? "Copied" : "Copy"))
+            .when(Boolean(b.lang), (e) => e.child(div().absolute().top(9).right(70).text_size(11).text_color(t.dim).child(b.lang)));
+        }
         if (b.kind === "details") {
           const open = this.opened.get(i) ?? b.open;
           return v_flex().id(`details-${i}`).my(6).gap(6)
