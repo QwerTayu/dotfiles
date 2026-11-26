@@ -24,7 +24,6 @@ link vscode/snippets                 "Library/Application Support/Code/User/snip
 link claude/settings.json            .claude/settings.json
 link claude/CLAUDE.md                .claude/CLAUDE.md
 link claude/statusline.sh            .claude/statusline.sh
-link herdr/config.toml               .config/herdr/config.toml
 # Herdr アプリは、自分で書くファイルだけをリンクする（同じフォルダに状態のファイルが溜まるため）
 link herdr-app/settings.json         .config/herdr-app/settings.json
 link herdr-app/themes/dark-modern.json .config/herdr-app/themes/dark-modern.json
@@ -84,20 +83,6 @@ for src in "$DOTFILES"/launchd/*.plist; do
   launchctl bootstrap "gui/$(id -u)" "$PLIST"
   echo "launchd: $label"
 done
-
-# herdr のプラグインを登録する（登録は herdr が持つので、新しい環境ではここで登録し直す）
-if command -v herdr >/dev/null; then
-  for plugin in "$DOTFILES"/herdr/plugins/*/; do
-    herdr plugin link "$plugin" >/dev/null 2>&1 || true
-    echo "herdr plugin: $(basename "$plugin")"
-  done
-  # 未読の印のプラグイン（QwerTayu/herdr-marks-as-unread。他人のプラグインの fork）を clone してあれば登録する
-  marks="$HOME/Documents/personal/herdr-marks-as-unread"
-  if [ -f "$marks/herdr-plugin.toml" ]; then
-    herdr plugin link "$marks" >/dev/null 2>&1 || true
-    echo "herdr plugin: herdr-marks-as-unread"
-  fi
-fi
 
 # Python は uv で管理する（Homebrew の Python は使わない）。uv の Python 3.15 を ~/.local/bin の python / python3 にする
 # （Python 製の CLI は Brewfile の uv "..." の行で、brew bundle が uv tool install する）

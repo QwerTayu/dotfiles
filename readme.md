@@ -34,11 +34,7 @@ dotfiles/
 │   ├── statusline.sh       → ~/.claude/statusline.sh（入力欄の下にモデル・effort・組織・利用上限の使用率を出す）
 │   └── skills.txt          gh skill install で入れる他人の skill の一覧
 ├── herdr/
-│   ├── readme.md           ワークスペースとタブの分け方
-│   ├── config.toml         → ~/.config/herdr/config.toml
-│   └── plugins/
-│       ├── ascii-input-source/  英字で使うアプリのペインで入力ソースを英字にする
-│       └── dev-layout/          タブを claude / fresh / lazygit / ターミナル に並べる
+│   └── readme.md           Herdr アプリの space とタブの分け方（TUI のころの設定はブランチ herdr-tui に残してある）
 ├── herdr-app/
 │   ├── settings.json       → ~/.config/herdr-app/settings.json（テーマ・フォント（UDEV Gothic NF）・利用状況の送信を切る）
 │   ├── themes/
@@ -217,8 +213,6 @@ sudo scutil --set HostName      名前   # ターミナルのプロンプトの 
 - **SwiftBar**：`setup.sh` がプラグインのフォルダを `~/.config/swiftbar` に設定する。起動して、設定の「Launch at login」をオンにする。
   localhost のポート一覧のプラグインは別のリポジトリ（`QwerTayu/swiftbar-ports`）。`~/Documents/personal/swiftbar-ports` に clone しておくと、
   `setup.sh` がその `install.sh` を実行してリンクを張る。
-- **herdr の未読の印**：プラグインは別のリポジトリ（`QwerTayu/herdr-marks-as-unread`）。`~/Documents/personal/herdr-marks-as-unread` に clone しておくと、
-  `setup.sh` が herdr に登録する（詳しくは `herdr/readme.md`）。
 - **Logi Options+**：初回起動時にアクセシビリティ・入力監視を許可する。
   マウスの「ポイント＆スクロール」でスクロールの向きを「標準」にする（macOS 側はナチュラルなスクロールがオンなので、マウスだけ逆にする）。
 - **Chrome のウィンドウ名**：`setup.sh` のあと、launchd の `chrome-window-names` が Chrome を操作する許可を求めてくるので「許可」する。
@@ -284,7 +278,7 @@ Claude Code の skill は別に更新する。
 
 ```sh
 gh skill update --all     # claude/skills.txt から入れた skill（--dry-run で確認だけ）
-./setup-agent-skills.sh   # herdr の skill を今の herdr の版で書き出し直す
+./setup-agent-skills.sh   # Herdr アプリと herdr-core の skill を、今の版で書き出し直す
 ```
 
 ### macOS の設定を変えたいとき
@@ -350,9 +344,6 @@ git push
 - `~/.claude/` はフォルダごとリンクせず、自分で書くファイルだけを個別にリンクする
   （フォルダ内には会話履歴なども溜まるため）。
 - `~/.claude.json` は Claude Code が自動で書き換える状態ファイルなので dotfiles に入れない。
-- `~/.config/herdr/` もフォルダごとリンクせず `config.toml` だけをリンクする（同じフォルダにログが溜まるため）。
-  herdr の plugin は設定ファイルで宣言できない。自作のもの（`herdr/plugins/`）は `setup.sh` が `herdr plugin link` で登録し、
-  他人のもの（`herdr plugin install owner/repo`）は新しい環境で入れ直す。
 - `~/.config/herdr-app/` もフォルダごとリンクせず、`settings.json`・`themes/dark-modern.json`・`AGENTS.local.md` だけをリンクする
   （同じフォルダに、アプリが書く状態のファイルや同梱の mod が溜まるため）。アプリの Settings で変えても、リンクは切れずに dotfiles の
   `settings.json` が書き換わる（ズームを変えたときも書き換わるので、差分が出たらコミットするか戻す）。
@@ -394,30 +385,16 @@ git push
   Marp のスライドの中の Mermaid は、まだ図にならない。
   Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
-- herdr のワークスペースとタブの分け方（ワークスペース 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
-- 新しく herdr のワークスペースを作ると、プラグイン `dev-layout` が「左 1/4 に claude、右上に fresh と lazygit、
-  右下 1/4 にターミナル」の並びにし、タブの名前を `main` にする。既存のタブは `prefix+shift+l` で、今いるペインを左に残して同じ並びにできる。
-  ペインを移して作ったワークスペースなど、最初からペインが2つ以上あるときやシェル以外が動いているときは並べ替えない。
-  起動するコマンドは `herdr/plugins/dev-layout/apply-layout.sh` の先頭で変えられる。
-- lazygit などを使っている間は入力ソースを英字（ABC）にし、離れたら元の入力ソースに戻す。
-  ペインの移動は herdr のプラグイン `ascii-input-source` が担当する（`pane.focused` のたびに、そのペインで
-  `on-pane-focused.sh` の `ASCII_APPS` に書いたアプリが動いているかを見る）。英字にしたいアプリが増えたらそこに足す。
-  元の入力ソースは `~/.local/state/ascii-input-source/saved` に覚えておく。
-  切り替わるのはペインを移ったときだけで、今いるペインでアプリを起動・終了しても切り替わらない。
-  コミットメッセージなどで日本語を打つときは自分で切り替える（lazygit には入力欄を開いたときに知らせる仕組みがない）。
-  入力ソースの切り替えはプラグインの中の `input-source.js`（JXA で macOS の API を呼ぶ）で、追加のコマンドは入れていない。
-- fresh・lazygit・herdr・Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
-  Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。
+- Herdr アプリの space とタブの分け方（space 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
+- fresh・lazygit・Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
+  Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を TUI のころの herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
   fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
   lazygit の diff は delta（git-delta）で表示し、背景色・変わった文字の強調・構文の色・行番号を VS Code の inline の diff に合わせている。
   背景色は VS Code の半透明の色を Ghostty の背景 #181818 に重ねて計算した値なので、Ghostty の背景を変えたら計算し直す。
-  lazygit と herdr のペインの背景色はターミナル（Ghostty）の色がそのまま使われるので、
-  Ghostty の背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
-- ターミナルは Terminal.app ではなく Ghostty を使う（herdr の TUI を動かすため）。herdr の `[experimental] kitty_graphics = true` は、
-  ペインの中で kitty graphics protocol の画像を出すための設定（Terminal.app は対応していない）。
+  lazygit の背景色はターミナルの色がそのまま使われるので、Ghostty と Herdr アプリの背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
+- ふだんのターミナルは Herdr アプリ。Herdr の外で使うターミナルとして Ghostty も残している（Terminal.app より速く、kitty graphics protocol の画像も出せる）。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
-  - herdr の公式 skill: `herdr --skill` の出力を `~/.claude/skills/herdr/SKILL.md` に書き出す（リンクではなく普通のファイル）。
   - Herdr アプリと herdr-core の skill: `herdr-app --skill` と `hc --skill` の出力を、`~/.claude/skills/herdr-app/SKILL.md` と
     `~/.claude/skills/herdr-core/SKILL.md` に書き出す。出力に skill の名前と説明（frontmatter）がないので、`setup-agent-skills.sh` が先頭に足す。
   - 他人の skill: `claude/skills.txt` の各行を `gh skill install ... --agent claude-code --scope user` で入れる。
@@ -433,13 +410,6 @@ git push
        `SKILL.md` がないフォルダは飛ばす。
     リンクなので、リポジトリで編集すればすぐ反映される（`gh skill` のコピーではなくリンクにしている理由）。
     skill を足したら `./setup-agent-skills.sh` を実行し直す。
-- `claude/settings.json` の `SessionStart` フックは herdr の Claude 連携が書き込んだもので、
-  `/Users/icoca/.claude/hooks/herdr-agent-state.sh` を絶対パスで呼んでいる。
-  `$HOME` には書き換えない。herdr は文字列の完全一致で自分のフックを見分けるので、
-  書き換えると `herdr integration install claude` のたびにフックが追加されて二重に実行される。
-  ユーザー名が違う Mac では、このフックを消してから `herdr integration install claude` を実行し、
-  herdr にその Mac のパスで書き直させる。
-  なお `herdr integration status` はスクリプトの有無しか見ないので、フックの確認には使えない。
 - 認証情報（SSH鍵、トークンなど）はコミットしない。
 - Raycast の 1Password 拡張は入れない（Raycast と 1Password CLI を連携しない）。
   CLI 連携は一度許可すると、しばらく Raycast のプロセスから `op` で vault を読めるため、

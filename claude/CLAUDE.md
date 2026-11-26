@@ -22,19 +22,14 @@
 
 - `gws`（`~/.local/bin/gws`）は、実行したときのカレントディレクトリの `mise.local.toml` で Google アカウントを切り替える。scratchpad や `/tmp` に移動して実行すると既定のアカウントになり、検索が空になったり別のアカウントのデータを読んだりする。`gws` はリポジトリの中で実行し、ファイルを scratchpad に保存したいときは `--output` に scratchpad のパスを渡す。どのアカウントかは `gws auth status` の `user` で確かめられる。詳しくは `~/dotfiles/gws/readme.md`。
 
-# herdr
-
-- herdr でワークスペースやタブを作る・並べ替える前に、`~/dotfiles/herdr/readme.md` を読む。名前の付け方、グループの表し方（見出しのワークスペース）、`workspace.move` での並べ替え、`dev-layout` プラグインによるペインの並びが書いてある。
-- herdr の中でブランチを切るときは、main のチェックアウトで `git switch -c` せず、git worktree も一緒に切る。`herdr worktree create --workspace <元 repo のワークスペース ID> --branch <ブランチ名> --base main --label <短い名前> --no-focus` で worktree とワークスペースを作る（worktree は `~/.herdr/worktrees/<repo>/<branch>` にできる）。`--label` には `├─ ` を付けない（herdr が元のワークスペースの下に字下げして並べるため）。作ったワークスペースは、`workspace.move` で今アクティブなワークスペースのすぐ下に動かす。
-- セルフレビューや敵対的評価を頼まれたとき、code-review / security-review を使う前に、skill `review-subagent` に従う。
-
 # Herdr アプリ
 
-- TUI の herdr から Herdr アプリへ乗り換え中。アプリの中（`HC_TERMINAL_ID` がある、`HERDR_ENV` がない）では、TUI の `herdr` コマンドは使わない。画面（space・タブ・layout・mod）は skill `herdr-app`、ターミナルと agent は skill `herdr-core`（`hc`）に従う。
-- space を作る・並べ替える前に、`~/dotfiles/herdr/readme.md` の「Herdr アプリでは」を読む。名前の付け方は TUI と同じ。
-- アプリの中でブランチを切るときも、main のチェックアウトで `git switch -c` せず、`git worktree add ~/.herdr/worktrees/<repo>/<branch> -b <branch> origin/main` で worktree を切り、`herdr-app do space.new --name <短い名前> --folder <worktree> --focus false` で space にする。
+- ターミナルは Herdr アプリ（herdr-core の上で動く）を使う。herdr の TUI は 2026-11-26 にやめた（TUI のころの dotfiles は、ブランチ `herdr-tui` に残してある）。画面（space・タブ・layout・mod）は skill `herdr-app`、ターミナルと agent は skill `herdr-core`（`hc`）に従う。
+- space を作る・並べ替える前に、`~/dotfiles/herdr/readme.md` を読む。名前の付け方、グループの表し方（見出しの space）、並べ替え方が書いてある。
+- ブランチを切るときは、main のチェックアウトで `git switch -c` せず、`git worktree add ~/.herdr/worktrees/<repo>/<branch> -b <branch> origin/main` で worktree を切り、`herdr-app do space.new --name <短い名前> --folder <worktree> --focus false` で space にする。
 - `hc` を打つ前に、core が動いているかを `ps -axo command | grep -q '[h]erdr-core hold'` で確かめる（アプリの中では `pgrep` が core を見つけられない）。止まっていたら自分では起動せず、ユーザーに Herdr アプリを開いてもらう（claude の中から起動した core は claude の環境変数を持ち、アプリで開く claude の会話が保存されなくなる）。
 - アプリの設定ファイルを変えるときは、`~/.config/herdr-app/AGENTS.local.md` を先に読む（dotfiles でリンクしているファイルと、していないファイルがある）。
+- セルフレビューや敵対的評価を頼まれたとき、code-review / security-review を使う前に、skill `review-subagent` に従う。
 
 # cctag
 
