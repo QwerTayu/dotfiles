@@ -8,6 +8,9 @@ import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home,
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
+// 文章の字体。既定の字体では太字・斜体が効かなかったので、太字と斜体の字形がある Helvetica Neue にする。
+// 日本語の文字はヒラギノに替わる（太字は効くが、ヒラギノに斜体の字形はないので、日本語の斜体は傾かない）
+const TEXT_FONT = "Helvetica Neue";
 const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
 
 const isMarp = (text) => /^---\s*\n[\s\S]*?^marp:\s*true\s*$[\s\S]*?^---\s*$/m.test(text);
@@ -255,7 +258,7 @@ export default class MdPreview extends View {
   // 文章の部品。リンクを押しても開かず、押した所のそばに URL を出す（⌘ を押しながらなら、そのままブラウザで開く）。
   // 部品はマウスを乗せたことを知らせないので、押したときに出す。押した位置は、ペイン全体で見ているマウスの位置を使う。
   markdown(id, text, t) {
-    return TextView.markdown(id, text).selectable(true).text_size(14).text_color(t.foreground)
+    return TextView.markdown(id, text).selectable(true).font_family(TEXT_FONT).text_size(14).text_color(t.foreground)
       .on_link_click((url, cx) => {
         if (this.cmd) { this.openUrl(url); return; }
         const zoom = settings().zoom || 1;
