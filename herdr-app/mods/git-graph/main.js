@@ -56,12 +56,14 @@ function layout(commits) {
     const [first, ...rest] = c.parents;
     slots[lane] = first ?? null;
     const outs = [];
+    const created = new Set(); // この行で新しく作った列（上から来る線がない）
     for (const p of rest) {
       let i = slots.indexOf(p);
       if (i < 0) {
         i = takeFree();
         slots[i] = p;
         colors[i] = nextColor++;
+        created.add(i);
       }
       outs.push([lane, i, colors[i]]);
     }
@@ -69,7 +71,8 @@ function layout(commits) {
     slots.forEach((h, i) => {
       if (h === null) return;
       if (i === lane) bottom.push([lane, lane, color]);
-      else if (!outs.some((o) => o[1] === i)) bottom.push([i, i, colors[i]]);
+      // すでにある列は、マージの曲線が合流しても、まっすぐな線を残す（省くと丸の高さから下端まで途切れる）
+      else if (!created.has(i)) bottom.push([i, i, colors[i]]);
     });
     bottom.push(...outs);
     const width = Math.max(lane + 1, ...top.map((s) => Math.max(s[0], s[1]) + 1), ...bottom.map((s) => Math.max(s[0], s[1]) + 1));
