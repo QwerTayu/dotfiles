@@ -8,9 +8,9 @@ import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home,
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
-// 文章の字体。既定の字体では太字・斜体が効かなかったので、太字と斜体の字形がある Helvetica Neue にする。
-// 日本語の文字はヒラギノに替わる（太字は効くが、ヒラギノに斜体の字形はないので、日本語の斜体は傾かない）
-const TEXT_FONT = "Helvetica Neue";
+// 文章の字体。UDEV Gothic NF（アプリのターミナルと同じ）にする。既定の字体では太字・斜体が効かず、
+// Helvetica Neue では日本語の斜体が傾かなかった。UDEV Gothic の斜体は日本語の字形も傾いているので、日本語の斜体も出る（等幅の見た目になる）
+const TEXT_FONT = "UDEV Gothic NF";
 const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
 
 const isMarp = (text) => /^---\s*\n[\s\S]*?^marp:\s*true\s*$[\s\S]*?^---\s*$/m.test(text);
