@@ -371,6 +371,11 @@ export default class GitGraph extends View {
         (e) => e.border_l(1).border_color(edge).bg(c.head ? t.background + "33" : edge + "1f"))));
   }
 
+  narrow() {
+    const w = (this.size?.width ?? 1000) / (settings().zoom || 1);
+    return w < 640;
+  }
+
   matches(r) {
     if (!this.q) return true;
     return [r.subject, r.author, r.hash, r.short, ...r.refs].some((v) => v && v.toLowerCase().includes(this.q));
@@ -399,8 +404,9 @@ export default class GitGraph extends View {
       .child(this.graph(r, t))
       .child(h_flex().flex_none().gap(4).children(this.chips(r.refs).map((c) => this.chip(c, t, laneColor, mono))))
       .child(div().flex_1().min_w(0).truncate().text_color(r.merge || r.wip ? t.muted : t.foreground).when(r.wip, (e) => e.italic()).child(r.subject))
-      .child(div().w(110).flex_none().truncate().text_color(t.muted).child(r.author))
-      .child(div().w(112).flex_none().text_color(t.dim).child(r.date))
+      // 右のパネルのように狭いときは、作った人と日時を隠して、メッセージと印を優先する
+      .when(!this.narrow(), (e) => e.child(div().w(110).flex_none().truncate().text_color(t.muted).child(r.author))
+        .child(div().w(112).flex_none().text_color(t.dim).child(r.date)))
       .child(div().w(62).flex_none().font_family(settings().font_family ?? settings().font ?? "JetBrains Mono").text_color(t.dim).child(r.short));
   }
 
@@ -415,7 +421,7 @@ export default class GitGraph extends View {
         .text_size(12).text_color(this.branch ? t.foreground : t.muted).cursor_pointer().hover((st) => st.bg(t.hover))
         .on_click((_e, cx) => { this.menu = !this.menu; cx.notify(); })
         .child(`${this.branch ?? "All branches"}  \u25be`))
-      .child(div().id("search").w(280).flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(this.q ? t.accent : t.border)
+      .child(div().id("search").w(this.narrow() ? 170 : 280).flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(this.q ? t.accent : t.border)
         .cursor_text().on_mouse_down("left", (_e, cx) => cx.stop_propagation())
         .child(Input.new(this.search).h_full().text_size(12).text_color(t.foreground)))
       .when(Boolean(this.q), (el) => {

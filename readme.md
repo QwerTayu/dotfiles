@@ -48,7 +48,8 @@ dotfiles/
 │   ├── mods/md-preview/    → ~/.config/herdr-app/mods/md-preview/（Markdown を整形して出す。Marp は 1 枚ずつめくる・縦に並べるを切り替え）
 │   ├── mdview.sh           → ~/.local/bin/mdview（Markdown Preview を今のペインの右に開く）
 │   ├── mods/git-graph/     → ~/.config/herdr-app/mods/git-graph/（コミットの履歴を枝の線つきで出す。コマンドパレットの「Git Graph」）
-│   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt にしたもの）
+│   ├── mods/tabs-qt/       → ~/.config/herdr-app/mods/tabs-qt/（同梱の tabs を複製し、右上に Git Graph のパネルのボタン「Graph」を足す）
+│   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt、タブバーを tabs-qt にして、右のパネルに Git Graph を足したもの）
 │   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
 │   └── check-upstream.sh   複製した元がアプリの更新で変わったら通知する（brew-check が毎日呼ぶ）
 ├── fresh/
@@ -354,7 +355,8 @@ git push
   （同じフォルダに、アプリが書く状態のファイルや同梱の mod が溜まるため）。アプリの Settings で変えても、リンクは切れずに dotfiles の
   `settings.json` が書き換わる（ズームを変えたときも書き換わるので、差分が出たらコミットするか戻す）。
   `keys.json` はリンクしない（一度でも書き換えると、アプリを更新したときに新しい既定のキーが入らなくなるため）。
-- Herdr アプリの mod を複製して直したもの: 同梱の `spaces`（サイドバーの space の一覧）を `spaces-qt` に、layout の `main` を `qt` に複製した。
+- Herdr アプリの mod を複製して直したもの: 同梱の `spaces`（サイドバーの space の一覧）を `spaces-qt` に、`tabs`（タブバー）を `tabs-qt` に、layout の `main` を `qt` に複製した。
+  `tabs-qt` は、右上の Files・Changes のボタンの右に「Graph」を足し、右のパネルで自作の Git Graph を開けるようにしたもの。
   `spaces-qt` は、`├─ ` で始まる space（グループの中のリポジトリ）と、それ以外の space（見出し。名前に絵文字を付けない）でアバターを分ける。
   見出しは青の 📂、`├─ ` の space はグレーに名前の頭文字（`├` ではなく）を出す（`main.js` の先頭の `QT_HEADING_COLOR`・`QT_HEADING_AVATAR`・`QT_REPO_COLOR`）。
   `main.js` を書き換えても、リンクなのでアプリは読み直さない。`touch -h ~/.config/herdr-app/mods/spaces-qt/main.js` で読み直させる。

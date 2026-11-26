@@ -32,6 +32,8 @@ link herdr-app/AGENTS.local.md       .config/herdr-app/AGENTS.local.md
 # 同梱の spaces を複製して直した mod と、それを使う layout（アプリが書く jsconfig.json などが混ざらないよう、ファイルごとにリンクする）
 link herdr-app/mods/spaces-qt/main.js  .config/herdr-app/mods/spaces-qt/main.js
 link herdr-app/mods/spaces-qt/mod.json .config/herdr-app/mods/spaces-qt/mod.json
+link herdr-app/mods/tabs-qt/main.js    .config/herdr-app/mods/tabs-qt/main.js    # 同梱の tabs の複製（右上に Graph のボタンを足す）
+link herdr-app/mods/tabs-qt/mod.json   .config/herdr-app/mods/tabs-qt/mod.json
 link herdr-app/layouts/qt.json       .config/herdr-app/layouts/qt.json
 # 自作の mod: Git Graph（コマンドパレットの「Git Graph」でタブとして開く）
 link herdr-app/mods/git-graph/main.js  .config/herdr-app/mods/git-graph/main.js
