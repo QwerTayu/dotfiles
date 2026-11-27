@@ -345,7 +345,11 @@ export default class MdPreview extends View {
 
   // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
   prepare(cx) {
-    this.blocks = splitBlocks(this.text);
+    // Marp でないファイルの先頭の frontmatter は、本文として描かずに、枠に入れて先頭に出す
+    const fm = this.text.match(FRONTMATTER);
+    this.blocks = fm
+      ? [{ kind: "frontmatter", text: fm[1] }, ...splitBlocks(this.text.slice(fm[0].length))]
+      : splitBlocks(this.text);
     for (const b of this.blocks) {
       if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
       if (b.kind === "img" || b.kind === "mermaid") b.key = this.imageKey(b);
@@ -547,6 +551,12 @@ export default class MdPreview extends View {
     body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
       .children(this.blocks.map((b, i) => {
         if (b.kind === "md") return this.markdown(`md-${i}`, b.text, t);
+        // 先頭の frontmatter は、小さな灰色の枠に、書いたままの行で出す
+        if (b.kind === "frontmatter") {
+          return v_flex().id(`fm-${i}`).flex_none().mb(10).px(10).py(6).rounded(5).border_1().border_color(t.border).bg(t.raised)
+            .font_family(TEXT_FONT).text_size(12).text_color(t.dim)
+            .children(b.text.split("\n").map((l, n) => div().id(`fm-${i}-${n}`).whitespace_nowrap().child(l || " ")));
+        }
         if (b.kind === "code") {
           const copied = this.copied === i;
           const toks = this.tokens.get(b.key);
