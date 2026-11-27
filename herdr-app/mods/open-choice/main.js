@@ -13,17 +13,19 @@ export default class OpenChoice extends View {
     this.handle = cx.focus_handle();
     this.handle.focus();
     this.error = null;
+    this.busy = false; // open を走らせている間は、もう一度選ばせない（2 回押すと open と open -R が両方走る）
   }
 
   async run(args, cx) {
     const r = await exec("/usr/bin/open", args).catch((e) => ({ code: 1, stderr: String(e) }));
-    if (r.code !== 0) { this.error = r.stderr.trim() || "Could not open it"; cx.notify(); return; }
+    if (r.code !== 0) { this.error = r.stderr.trim() || "Could not open it"; this.busy = false; cx.notify(); return; }
     closeOverlay(props().overlay);
   }
 
   choose(n, cx) {
-    if (n === 1) cx.spawn(async (cx) => this.run([this.path], cx));
-    if (n === 2) cx.spawn(async (cx) => this.run(["-R", this.path], cx));
+    if (this.busy || (n !== 1 && n !== 2)) return;
+    this.busy = true;
+    cx.spawn(async (cx) => this.run(n === 1 ? [this.path] : ["-R", this.path], cx));
   }
 
   render(_cx) {
