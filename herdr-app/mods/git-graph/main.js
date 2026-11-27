@@ -349,29 +349,26 @@ export default class GitGraph extends View {
   }
 
   // 1 行ぶんの枝の線と丸。上半分は行の上端から丸の高さへ、下半分は丸の高さから下端へ、列が変わるときは曲線で結ぶ。
+  // マージとまだコミットしていない変更の丸は、中を塗らない輪にする。中を背景の色で塗ると、選んだ行や hover した行で
+  // 丸の中だけ色が違って見えるので、塗らずに、この丸に入る線と出る線を輪の手前で止める。
   graph(row, t) {
     const mid = ROW / 2;
     const color = (i) => t[COLORS[i % COLORS.length]];
+    const hollow = row.merge || row.wip;
     const segment = ([from, to, c], y0, y1) => {
       const start = PathBuilder.stroke(2).move_to(x(from), y0);
       const p = from === to ? start.line_to(x(to), y1) : start.cubic_bezier_to(x(to), y1, x(from), (y0 + y1) / 2, x(to), (y0 + y1) / 2);
       return window.paint_path(p.build(), color(c)).absolute().top(0).left(0).size_full();
     };
     const cx0 = x(row.lane);
-    const dot = PathBuilder.fill().move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
+    const circle = (builder) => builder.move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
     const parts = [
-      ...row.top.map((s) => segment(s, 0, mid)),
-      ...row.bottom.map((s) => segment(s, mid, ROW)),
-      window.paint_path(dot.build(), row.merge ? t.surface : color(row.color)).absolute().top(0).left(0).size_full(),
+      ...row.top.map((s) => segment(s, 0, hollow && s[1] === row.lane ? mid - DOT : mid)),
+      ...row.bottom.map((s) => segment(s, hollow && s[0] === row.lane ? mid + DOT : mid, ROW)),
     ];
-    if (row.wip) {
-      parts.splice(parts.length - 1, 1);
-      const ring = PathBuilder.stroke(1.5).dash_array([2, 2]).move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
-      parts.push(window.paint_path(ring.build(), t.muted).absolute().top(0).left(0).size_full());
-    } else if (row.merge) {
-      const ring = PathBuilder.stroke(2).move_to(cx0 + DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 - DOT, mid).arc_to(DOT, DOT, 0, false, true, cx0 + DOT, mid).close();
-      parts.push(window.paint_path(ring.build(), color(row.color)).absolute().top(0).left(0).size_full());
-    }
+    if (row.wip) parts.push(window.paint_path(circle(PathBuilder.stroke(1.5).dash_array([2, 2])).build(), t.muted).absolute().top(0).left(0).size_full());
+    else if (row.merge) parts.push(window.paint_path(circle(PathBuilder.stroke(2)).build(), color(row.color)).absolute().top(0).left(0).size_full());
+    else parts.push(window.paint_path(circle(PathBuilder.fill()).build(), color(row.color)).absolute().top(0).left(0).size_full());
     return div().relative().flex_none().w(PAD + this.width * LANE + 6).h(ROW).children(parts);
   }
 
