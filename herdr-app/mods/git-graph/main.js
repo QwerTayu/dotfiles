@@ -153,7 +153,7 @@ export default class GitGraph extends View {
       const at = rows.findIndex((r) => r.hash === this.selected);
       pick(at < 0 ? 0 : at + (c === "next" ? 1 : -1));
     }
-    else if (c === "unselect") { this.selected = null; this.file = null; this.diff = []; }
+    else if (c === "unselect") this.clearSelection();
     else if ((m = c.match(/^file-(\d+)$/))) { const f = this.files[Number(m[1]) - 1]; if (f) this.openFile(f.path, cx); }
     else if (c === "back") { this.file = null; this.diff = []; }
     else if (c === "top") this.scroll.scroll_to_item(0);
@@ -162,19 +162,25 @@ export default class GitGraph extends View {
 
   refresh(cx) {
     const s = activeSpace();
-    if (!s || this.loading) return;
+    if (!s) return;
+    if (this.loading) { this.again = true; return; } // 読み直しの途中に頼まれたら、終わってからもう一度読む
     const key = JSON.stringify([s.machine, s.folder]);
+    // space が替わったら、先に key を変えておく（git が失敗しても、render から同じ space を何度も読み直さない）
+    if (key !== this.key) {
+      this.key = key;
+      this.clearSelection();
+      this.root = null; // 前の space のパスを出さない
+      this.raw = null;
+      this.branch = null;
+      this.menu = false;
+    }
+    const branch = this.branch; // 読んでいる間にブランチを選び直されても、この回の結果は、読み始めたときのブランチのもの
     this.loading = true;
+    this.again = false;
     cx.spawn(async (cx) => {
       try {
         const top = await exec("git", ["rev-parse", "--show-toplevel"], { cwd: s.folder, on: s.machine });
-        if (key !== this.key) {
-          this.key = key;
-          this.selected = null;
-          this.raw = null;
-          this.branch = null;
-          this.menu = false;
-        }
+        if (key !== this.key) return; // 読んでいる間に space が替わった
         if (top.code !== 0) {
           this.root = null;
           this.rows = [];
@@ -185,19 +191,21 @@ export default class GitGraph extends View {
         this.on = s.machine;
         const opt = { cwd: this.root, on: this.on };
         const [r, status, head, current, refs] = await Promise.all([
-          exec("git", [...READ, "log", ...(this.branch ? [this.branch] : ["--all"]), "--date-order", `--max-count=${MAX}`, "--date=format:%Y-%m-%d %H:%M",
+          // stash（refs/stash）はコミットとして出さない。--exclude は --all より前に置く
+          exec("git", [...READ, "log", ...(branch ? [branch] : ["--exclude=refs/stash", "--all"]), "--date-order", `--max-count=${MAX}`, "--date=format:%Y-%m-%d %H:%M",
             `--format=%H${SEP}%P${SEP}%h${SEP}%D${SEP}%s${SEP}%an${SEP}%ad`, "--"], opt),
           exec("git", [...READ, "status", "--porcelain=v1", "--untracked-files=all"], opt),
           exec("git", ["rev-parse", "--verify", "-q", "HEAD"], opt),
           exec("git", ["branch", "--show-current"], opt),
           exec("git", ["for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"], opt),
         ]);
+        if (key !== this.key || branch !== this.branch) return; // 読んでいる間に space かブランチが替わった（finally で読み直す）
         const refNames = refs.stdout.split("\n").filter((x) => x && !x.endsWith("/HEAD"));
         // ローカルとリモートのブランチを分けて覚える（名前に / を含むローカルのブランチもあるので、名前では見分けない）
         this.locals = new Set(refNames.filter((x) => x.startsWith("refs/heads/")).map((x) => x.slice(11)));
         this.remotes = new Set(refNames.filter((x) => x.startsWith("refs/remotes/")).map((x) => x.slice(13)));
         this.branches = [...this.locals, ...this.remotes];
-        if (this.branch && !this.branches.includes(this.branch)) this.branch = null;
+        if (this.branch && !this.branches.includes(this.branch)) { this.branch = null; this.again = true; }
         if (r.code !== 0) {
           this.error = r.stderr.trim() || "git log failed";
           return;
@@ -205,59 +213,77 @@ export default class GitGraph extends View {
         this.error = null;
         const dirty = status.stdout.split("\n").filter(Boolean).length;
         const headHash = head.stdout.trim();
-        const showWip = dirty > 0 && headHash && (!this.branch || this.branch === current.stdout.trim());
-        const raw = `${this.branch}\n${showWip ? dirty : 0}\n${headHash}\n${r.stdout}`;
+        const showWip = dirty > 0 && headHash && (!branch || branch === current.stdout.trim());
+        const raw = `${branch}\n${showWip ? status.stdout : 0}\n${headHash}\n${r.stdout}`;
         if (raw !== this.raw) {
           this.raw = raw;
           const commits = parse(r.stdout);
           if (showWip) commits.unshift({ hash: WIP, parents: [headHash], short: "", refs: [], subject: `Uncommitted Changes (${dirty})`, author: "", date: "" });
           this.rows = layout(commits);
           this.width = Math.max(1, ...this.rows.map((row) => row.width));
+          // 選んでいたコミットが一覧から消えたら（コミットした・amend した、など）、詳しい表示を閉じる。
+          // まだコミットしていない変更を選んでいて、中身が変わったら、ファイルの一覧を読み直す
+          if (this.selected && !this.rows.some((row) => row.hash === this.selected)) this.clearSelection();
+          else if (this.selected === WIP) this.loadDetail(WIP, cx);
         }
       } catch (e) {
-        this.error = String(e);
+        if (key === this.key) { this.error = String(e); this.rows = []; this.root = null; }
       } finally {
         this.loading = false;
         cx.notify();
+        if (this.again) this.refresh(cx);
       }
     });
   }
 
-  // コミットを押すと、メッセージと変わったファイルの一覧を読む。マージは 1 つ目の親との差を出す。
-  select(hash, cx) {
-    if (this.selected === hash) {
-      this.selected = null;
-      cx.notify();
-      return;
-    }
-    this.selected = hash;
+  clearSelection() {
+    this.selected = null;
     this.info = null;
     this.files = [];
     this.file = null;
     this.diff = [];
+  }
+
+  // コミットを押すと、メッセージと変わったファイルの一覧を読む。マージは 1 つ目の親との差を出す。もう一度押すと閉じる。
+  select(hash, cx) {
+    if (this.selected === hash) {
+      this.clearSelection();
+      cx.notify();
+      return;
+    }
+    this.clearSelection();
+    this.selected = hash;
     cx.notify();
+    this.loadDetail(hash, cx);
+  }
+
+  // 選んだコミットの詳しい表示を読む。ファイルの名前は -z（NUL 区切り）で読む（日本語などの名前を "\346..." の形にさせない）
+  loadDetail(hash, cx) {
     const root = this.root, on = this.on;
+    const opt = { cwd: root, on };
     if (hash === WIP) {
       cx.spawn(async (cx) => {
-        const opt = { cwd: root, on };
         const [status, stat, untracked] = await Promise.all([
-          exec("git", [...READ, "diff", "HEAD", "--name-status", "--no-renames"], opt),
-          exec("git", [...READ, "diff", "HEAD", "--numstat", "--no-renames"], opt),
-          exec("git", [...READ, "ls-files", "--others", "--exclude-standard"], opt),
+          exec("git", [...READ, "diff", "HEAD", "--name-status", "--no-renames", "-z"], opt),
+          exec("git", [...READ, "diff", "HEAD", "--numstat", "--no-renames", "-z"], opt),
+          exec("git", [...READ, "ls-files", "--others", "--exclude-standard", "-z"], opt),
         ]);
         if (this.selected !== hash) return;
         this.info = { full: "", author: "Working tree vs HEAD", date: "", message: "Uncommitted Changes" };
         this.files = [...this.fileList(status.stdout, stat.stdout),
-          ...untracked.stdout.split("\n").filter(Boolean).map((path) => ({ status: "U", path, add: "", del: "", untracked: true }))];
+          ...untracked.stdout.split("\0").filter(Boolean).map((path) => ({ status: "U", path, add: "", del: "", untracked: true }))];
+        // 差分を出しているファイルが、もう変更の一覧にないなら閉じる
+        if (this.file && !this.files.some((f) => f.path === this.file)) { this.file = null; this.diff = []; }
+        else if (this.file) this.openFile(this.file, cx);
         cx.notify();
       });
       return;
     }
     cx.spawn(async (cx) => {
       const [info, status, stat] = await Promise.all([
-        exec("git", [...READ, "show", "-s", "--date=format:%Y-%m-%d %H:%M", "--format=%H%n%an <%ae>%n%ad%n%B", hash], { cwd: root, on }),
-        exec("git", [...READ, "show", "-m", "--first-parent", "--format=", "--name-status", "--no-renames", hash], { cwd: root, on }),
-        exec("git", [...READ, "show", "-m", "--first-parent", "--format=", "--numstat", "--no-renames", hash], { cwd: root, on }),
+        exec("git", [...READ, "show", "-s", "--date=format:%Y-%m-%d %H:%M", "--format=%H%n%an <%ae>%n%ad%n%B", hash], opt),
+        exec("git", [...READ, "show", "-m", "--first-parent", "--format=", "--name-status", "--no-renames", "-z", hash], opt),
+        exec("git", [...READ, "show", "-m", "--first-parent", "--format=", "--numstat", "--no-renames", "-z", hash], opt),
       ]);
       if (this.selected !== hash) return;
       const [full, author, date, ...message] = info.stdout.split("\n");
@@ -267,17 +293,23 @@ export default class GitGraph extends View {
     });
   }
 
-  // --name-status と --numstat の出力を合わせて、ファイルの一覧にする。
+  // --name-status -z（「状態 NUL パス NUL」の並び）と --numstat -z（「増 TAB 減 TAB パス NUL」）を合わせて、ファイルの一覧にする。
   fileList(statusText, statText) {
-    const counts = new Map(statText.split("\n").filter(Boolean).map((l) => {
-      const [add, del, ...path] = l.split("\t");
-      return [path.join("\t"), { add, del }];
-    }));
-    return statusText.split("\n").filter(Boolean).map((l) => {
-      const [st, ...path] = l.split("\t");
-      const name = path.join("\t");
-      return { status: st, path: name, ...(counts.get(name) ?? { add: "-", del: "-" }) };
-    });
+    const counts = new Map();
+    for (const rec of statText.split("\0")) {
+      if (!rec) continue;
+      const [add, del, ...path] = rec.split("\t");
+      counts.set(path.join("\t"), { add, del });
+    }
+    const f = statusText.split("\0");
+    const out = [];
+    for (let i = 0; i + 1 < f.length; i += 2) {
+      const status = f[i].trim();
+      if (!status) break;
+      const path = f[i + 1];
+      out.push({ status, path, ...(counts.get(path) ?? { add: "-", del: "-" }) });
+    }
+    return out;
   }
 
   // 押したファイルの、そのコミットでの差分を読む。
@@ -488,7 +520,7 @@ export default class GitGraph extends View {
     const menuItem = (name, label) => div().id(`b-${label}`).h(24).flex_none().px(10).flex().items_center().text_size(12)
       .text_color(name === this.branch ? t.foreground : t.muted).bg(name === this.branch ? t.selected : t.popover)
       .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
-      .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.selected = null; this.matchAt = -1; this.refresh(cx); cx.notify(); })
+      .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.clearSelection(); this.matchAt = -1; this.refresh(cx); cx.notify(); })
       .child(label);
     const width = (this.size?.width ?? 1000) / (settings().zoom || 1);
     const menu = v_flex().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320).max_h(360).overflow_y_scrollbar().py(4)
