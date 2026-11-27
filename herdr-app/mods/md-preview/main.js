@@ -13,11 +13,12 @@ const CACHE_REL = "cache/md-preview";
 const TEXT_FONT = "UDEV Gothic NF";
 const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
 
-// 先頭の frontmatter（ファイルの 1 行目の --- から次の --- まで）だけを見る。本文の途中の --- や marp: true では Marp にしない
-const FRONTMATTER = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
+// 先頭の frontmatter（ファイルの 1 行目の --- から次の --- まで）だけを見る。本文の途中の --- や marp: true では Marp にしない。
+// 先頭の BOM と、中身が空の frontmatter（--- の次の行がすぐ ---）も受ける
+const FRONTMATTER = /^\uFEFF?---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 const isMarp = (text) => {
   const fm = text.match(FRONTMATTER);
-  return Boolean(fm && /^marp:\s*true\s*$/m.test(fm[1]));
+  return Boolean(fm && /^marp:\s*true\s*$/m.test(fm[1] ?? ""));
 };
 const dirname = (p) => p.slice(0, p.lastIndexOf("/")) || "/";
 // SVG の大きさ。<svg> の width・height（数字か px のとき）を使い、なければ viewBox から出す。わからなければ [0, 0]
@@ -87,7 +88,12 @@ function splitBlocks(text) {
       const code = [];
       while (i + 1 < lines.length && !close.test(lines[i + 1])) code.push(lines[++i]);
       i++;
-      const dedent = (l) => l.replace(new RegExp(`^ {0,${indent}}`), "");
+      // 行の頭の空白とタブ（タブは 4 文字ぶん）を、``` の字下げのぶんまで取る
+      const dedent = (l) => {
+        let col = 0, k = 0;
+        while (k < l.length && col < indent && (l[k] === " " || l[k] === "\t")) { col += l[k] === "\t" ? 4 : 1; k++; }
+        return l.slice(k);
+      };
       blocks.push({ kind: "code", lang: codeStart[3].toLowerCase(), code: code.map(dedent).join("\n"), indent });
       continue;
     }
@@ -96,14 +102,18 @@ function splitBlocks(text) {
     if (details) {
       flush();
       // 対になる </details> まで（同じ行で閉じていればその行まで）を中身にする。
-      // 中の <details> は数えておき、入れ子の </details> では外側を閉じない
+      // 中の <details> は数えておき、入れ子の </details> では外側を閉じない。
+      // `…` の中と ``` の囲みの中の <details> は、タグとして数えない（タグの書き方を説明している文のため）
       const body = [];
       let depth = 0;
+      let inFence = false;
       let rest = details[2];
       for (;;) {
+        if (/^\s*(```|~~~)/.test(rest)) inFence = !inFence;
+        const scan = inFence || /^\s*(```|~~~)/.test(rest) ? "" : rest.replace(/`[^`]*`/g, (m) => " ".repeat(m.length));
         const tag = /<details\b|<\/details>/gi;
         let cut = -1, m;
-        while ((m = tag.exec(rest))) {
+        while ((m = tag.exec(scan))) {
           if (m[0][1] !== "/") depth++;
           else if (depth > 0) depth--;
           else { cut = m.index; break; }
@@ -350,9 +360,8 @@ export default class MdPreview extends View {
   prepare(cx) {
     // Marp でないファイルの先頭の frontmatter は、本文として描かずに、枠に入れて先頭に出す
     const fm = this.text.match(FRONTMATTER);
-    this.blocks = fm
-      ? [{ kind: "frontmatter", text: fm[1] }, ...splitBlocks(this.text.slice(fm[0].length))]
-      : splitBlocks(this.text);
+    const rest = fm ? splitBlocks(this.text.slice(fm[0].length)) : splitBlocks(this.text);
+    this.blocks = fm?.[1]?.trim() ? [{ kind: "frontmatter", text: fm[1] }, ...rest] : rest;
     for (const b of this.blocks) {
       if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
       if (b.kind === "img" || b.kind === "mermaid") b.key = this.imageKey(b);
@@ -558,7 +567,7 @@ export default class MdPreview extends View {
         if (b.kind === "frontmatter") {
           return v_flex().id(`fm-${i}`).flex_none().mb(10).px(10).py(6).rounded(5).border_1().border_color(t.border).bg(t.raised)
             .font_family(TEXT_FONT).text_size(12).text_color(t.dim)
-            .children(b.text.split("\n").map((l, n) => div().id(`fm-${i}-${n}`).whitespace_nowrap().child(l || " ")));
+            .children(b.text.split("\n").map((l, n) => div().id(`fm-${i}-${n}`).child(l || " "))); // 長い行は枠の中で折り返す
         }
         if (b.kind === "code") {
           const copied = this.copied === i;
