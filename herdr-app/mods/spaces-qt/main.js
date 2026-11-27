@@ -371,7 +371,8 @@ export default class Spaces extends View {
   // 閉じていても、いま開いている space は隠さない。
   fold(rows) {
     const out = [];
-    let head = null, inMember = false;
+    // 開いている worktree を残すときは、親のリポジトリの行も残す（見出しの worktree に見えないように）。
+    let head = null, inMember = false, parent = null;
     for (const r of rows) {
       if (head && (r.w.machine ?? null) !== (head.w.machine ?? null)) head = null;
       if (qtHeading(r)) {
@@ -380,8 +381,10 @@ export default class Spaces extends View {
         out.push(head);
         continue;
       }
-      if (head && qtMember(r)) { head.group.count += 1; inMember = true; }
+      if (head && qtMember(r)) { head.group.count += 1; inMember = true; parent = { row: r, shown: false }; }
       if (head && inMember && head.group.folded && !r.w.active) continue;
+      if (head && inMember && head.group.folded && r.tree && parent && !parent.shown) out.push(parent.row);
+      if (parent?.row === r || (parent && r.tree)) parent.shown = true;
       out.push(r);
     }
     for (const r of out) if (r.group?.count === 0) r.group = null;
@@ -390,14 +393,50 @@ export default class Spaces extends View {
 
   toggleGroup(id) {
     this.groupsFolded.has(id) ? this.groupsFolded.delete(id) : this.groupsFolded.add(id);
-    const ids = new Set(spaces().map((s) => s.id));
-    localStorage.setItem("groups.folded", JSON.stringify([...this.groupsFolded].filter((k) => ids.has(k))));
+    localStorage.setItem("groups.folded", JSON.stringify([...this.groupsFolded]));
+  }
+
+  // spaces-qt: 見出しの space から次の見出しの手前までの space の ID（"├─ " の space と worktree）。
+  // 見出しでない space なら、その space を含むグループ。
+  block(id) {
+    const rows = this.lastRows ?? [];
+    const at = rows.findIndex((r) => r.w.id === id);
+    if (at === -1) return [id];
+    const machine = rows[at].w.machine ?? null;
+    let start = at;
+    while (start > 0 && !qtHeading(rows[start]) && (rows[start - 1].w.machine ?? null) === machine) start--;
+    let end = start + 1;
+    while (end < rows.length && !qtHeading(rows[end]) && (rows[end].w.machine ?? null) === machine) end++;
+    return rows.slice(start, end).map((r) => r.w.id);
+  }
+
+  // spaces-qt: 見出しの space を落としたら、グループごと動かす。落とした先がグループの中なら、そのグループの前か後ろに置く。
+  moveGroup(from, to) {
+    const order = spaces().map((s) => s.id);
+    const group = this.block(from);
+    const target = this.block(to);
+    if (group.includes(to) || group[0] !== from) return false;
+    const down = order.indexOf(from) < order.indexOf(to);
+    const rest = order.filter((id) => !group.includes(id));
+    const anchor = down ? target[target.length - 1] : target[0];
+    const at = rest.indexOf(anchor);
+    if (at === -1) return false;
+    const want = [...rest.slice(0, down ? at + 1 : at), ...group, ...rest.slice(down ? at + 1 : at)];
+    for (let i = 0; i < want.length; i++) {
+      const j = order.indexOf(want[i]);
+      if (j === i) continue;
+      run("space.move", { id: want[i], index: i + 1 });
+      order.splice(i, 0, order.splice(j, 1)[0]);
+    }
+    return true;
   }
 
   // The rows, under a header per machine once one isn't this computer.
   grouped(t, collapsed) {
     // 細いサイドバー（番号だけ）には矢印を出せないので、折りたたまない。
-    const rows = collapsed ? this.ordered() : this.fold(this.ordered());
+    const all = this.ordered();
+    this.lastRows = all;
+    const rows = collapsed ? all : this.fold(all);
     const draw = (r) => (collapsed ? this.compact(r, t) : this.row(r, t));
     // Where the active space's row lands among the children this returns: the list scrolls by its direct
     // children, and machine headers, login notes and loading rows count too.
@@ -548,7 +587,10 @@ export default class Spaces extends View {
         this.over = null;
         if (from !== null && over === w.id && from !== w.id) {
           const index = spaces().findIndex(s => s.id === w.id);
-          if (index !== -1) run("space.move", { id: from, index: index + 1 });
+          const source = spaces().find((s) => s.id === from);
+          if (source && !source.name.startsWith(QT_REPO_PREFIX) && this.lastRows?.some((r) => r.w.id === from && !r.tree)) {
+            this.moveGroup(from, w.id);
+          } else if (index !== -1) run("space.move", { id: from, index: index + 1 });
         } else if (from === w.id) run("space.select", { id: w.id });
         cx.notify();
       })
@@ -559,14 +601,14 @@ export default class Spaces extends View {
           .items_center()
           .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).flex_none().text_color(t.dim)))
           .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child(spaceAvatar(w.name))))
-          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(group?.folded ? `${w.name} (${group.count})` : w.name))
+          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(w.name))
+          .when(Boolean(group?.folded), el => el.child(div().flex_none().ml(-5).text_color(t.muted).child(`(${group.count})`)))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1())
           // spaces-qt: グループを開け閉めする矢印。押しても space は切り替えない。
           .when(Boolean(group), el => el.child(div().id(`space-fold-${w.id}`).flex_none().p(3).rounded(4).text_color(t.dim)
             .hover(s => s.bg(t.hover).text_color(t.foreground))
             .tooltip(group.folded ? "グループを開く" : "グループを閉じる")
             .on_mouse_down("left", (_e, cx) => { cx.stop_propagation(); this.toggleGroup(w.id); cx.notify(); })
-            .on_mouse_up("left", (_e, cx) => cx.stop_propagation())
             .child(svg(`mods/workspace-chrome/chevron-${group.folded ? "right" : "down"}.svg`).size(11)))),
       );
   }
