@@ -534,11 +534,13 @@ export default class GitGraph extends View {
       .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.clearSelection(); this.matchAt = -1; this.refresh(cx, { queue: true }); cx.notify(); })
       .child(label);
     const width = (this.size?.width ?? 1000) / (settings().zoom || 1);
-    const menu = v_flex().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320).max_h(360).overflow_y_scrollbar().py(4)
+    // 位置は外側の箱で決め、スクロールは中の箱でする（スクロールする要素に直接 absolute と top を付けると、top が効かずに下のほうに出た）
+    const menu = div().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320)
       .rounded(6).border_1().border_color(t.border).bg(t.popover)
       .on_mouse_down_out((_e, cx) => { this.menu = false; cx.notify(); })
-      .child(menuItem(null, "All branches"))
-      .children(this.branches.map((b) => menuItem(b, b)));
+      .child(v_flex().id("branch-menu-list").max_h(360).overflow_y_scrollbar().py(4)
+        .child(menuItem(null, "All branches"))
+        .children(this.branches.map((b) => menuItem(b, b))));
     const detail = this.selected ? this.detailView(t, mono) : null;
     // 一覧と詳細の境界。上下にドラッグすると詳細の欄の高さが変わる
     const splitter = div().id("splitter").h(5).flex_none().mt(-2).cursor_row_resize()
