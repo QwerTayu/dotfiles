@@ -460,7 +460,13 @@ export default class GitGraph extends View {
       .child(div().text_size(12.5).font_semibold().text_color(t.foreground).child("Git Graph"))
       .child(div().id("branch").flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(t.border)
         .text_size(12).text_color(this.branch ? t.foreground : t.muted).cursor_pointer().hover((st) => st.bg(t.hover))
-        .on_click((_e, cx) => { this.menu = !this.menu; cx.notify(); })
+        .on_click((_e, cx) => {
+          // メニューは押した所の下に出す（ボタンの位置は字の幅で変わるので、決め打ちしない）
+          const zoom = settings().zoom || 1;
+          this.menuX = this.pointer ? this.pointer.x / zoom - 16 : 90;
+          this.menu = !this.menu;
+          cx.notify();
+        })
         .child(`${this.branch ?? "All branches"}  \u25be`))
       .child(div().id("search").w(this.narrow() ? 170 : 280).flex_none().h(24).px(8).flex().items_center().rounded(5).border_1().border_color(this.q ? t.accent : t.border)
         .cursor_text().on_mouse_down("left", (_e, cx) => cx.stop_propagation())
@@ -484,7 +490,8 @@ export default class GitGraph extends View {
       .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
       .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.selected = null; this.matchAt = -1; this.refresh(cx); cx.notify(); })
       .child(label);
-    const menu = v_flex().id("branch-menu").absolute().top(34).left(90).w(320).max_h(360).overflow_y_scrollbar().py(4)
+    const width = (this.size?.width ?? 1000) / (settings().zoom || 1);
+    const menu = v_flex().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320).max_h(360).overflow_y_scrollbar().py(4)
       .rounded(6).border_1().border_color(t.border).bg(t.popover)
       .on_mouse_down_out((_e, cx) => { this.menu = false; cx.notify(); })
       .child(menuItem(null, "All branches"))
@@ -497,6 +504,7 @@ export default class GitGraph extends View {
     return v_flex().id("root").relative().size_full().bg(t.surface)
       .on_size_change((size, cx) => { this.size = size; cx.notify(); })
       .on_window_mouse_move((e, cx) => {
+        if (e.local_position) this.pointer = e.local_position; // ブランチのメニューを出す位置に使う
         if (!this.drag) return;
         if (e.pressed_button !== "left") { this.endDrag(cx); return; }
         const zoom = settings().zoom || 1;
