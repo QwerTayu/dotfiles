@@ -541,10 +541,12 @@ export default class GitGraph extends View {
           .on_item_click((hash, cx) => this.select(hash, cx)))
         .child(Scrollbar.vertical("rows").absolute().inset_0());
     // ブランチのメニューも、見えている項目だけを作る（ブランチが数百本あるリポジトリのため）。先頭は「All branches」
-    const ALL = "*all-branches*";
-    const items = [ALL, ...this.branches];
-    const menuItem = (key) => {
-      const name = key === ALL ? null : key;
+    // key はローカルとリモートを分けた ref の名前にする（ローカルに origin/main というブランチがあると、短い名前は重なる。
+    // virtual list は key が重なると描けない）。出す名前と、選んだときに絞り込む名前は、今までどおり短い名前
+    const items = [{ key: "*all-branches*", name: null },
+      ...[...(this.locals ?? [])].map((n) => ({ key: `refs/heads/${n}`, name: n })),
+      ...[...(this.remotes ?? [])].map((n) => ({ key: `refs/remotes/${n}`, name: n }))];
+    const menuItem = ({ key, name }) => {
       return div().id(`b-${key}`).h(24).flex_none().px(10).flex().items_center().text_size(12)
         .text_color(name === this.branch ? t.foreground : t.muted).bg(name === this.branch ? t.selected : t.popover)
         .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
@@ -556,11 +558,11 @@ export default class GitGraph extends View {
       .rounded(6).border_1().border_color(t.border).bg(t.popover)
       .on_mouse_down_out((_e, cx) => { this.menu = false; this.menuClosedAt = Date.now(); cx.notify(); })
       .child(v_flex().relative().h(Math.min(360, items.length * 24)).my(4)
-        .child(v_virtual_list("branch-menu-list", items.length, 24, (i) => items[i],
+        .child(v_virtual_list("branch-menu-list", items.length, 24, (i) => items[i].key,
           (range) => items.slice(range.start, range.end).map(menuItem))
           .size_full()
           .on_item_click((key, cx) => {
-            this.branch = key === ALL ? null : key;
+            this.branch = items.find((it) => it.key === key)?.name ?? null;
             this.menu = false; this.raw = null; this.clearSelection(); this.matchAt = -1;
             this.refresh(cx, { queue: true }); cx.notify();
           }))
