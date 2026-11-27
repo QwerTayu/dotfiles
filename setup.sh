@@ -54,10 +54,6 @@ link herdr-app/mods/open-choice/mod.json .config/herdr-app/mods/open-choice/mod.
 cp "$DOTFILES/herdr-app/mods/open-choice/link.js" "$HOME/.config/herdr-app/mods/open-choice/link.js" && echo "copy: open-choice/link.js"
 link herdr-app/mdview.sh             .local/bin/mdview
 link mise/config.toml                .config/mise/config.toml
-link fresh/config.json               .config/fresh/config.json
-link fresh/themes/vscode-dark-modern.json .config/fresh/themes/vscode-dark-modern.json
-link fresh/plugins/file_icons.ts     .config/fresh/plugins/file_icons.ts
-link lazygit/config.yml              "Library/Application Support/lazygit/config.yml"
 link ghostty/config.ghostty          .config/ghostty/config.ghostty
 link karabiner                       .config/karabiner   # フォルダごとリンクする（Karabiner はファイルを置き換えて保存するので、ファイルのリンクは切れる）
 link homebrew/brew-check.sh          .local/bin/brew-check

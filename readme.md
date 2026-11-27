@@ -50,14 +50,6 @@ dotfiles/
 │   ├── layouts/qt.json     → ~/.config/herdr-app/layouts/qt.json（同梱の main を複製し、サイドバーを spaces-qt、タブバーを tabs-qt にして、右のパネルに Git Graph を足したもの）
 │   ├── upstream.json       複製した元（spaces・main）の版。アプリの installed.json のハッシュを控えたもの
 │   └── check-upstream.sh   複製した元がアプリの更新で変わったら通知する（brew-check が毎日呼ぶ）
-├── fresh/
-│   ├── config.json         → ~/.config/fresh/config.json
-│   ├── themes/
-│   │   └── vscode-dark-modern.json → ~/.config/fresh/themes/vscode-dark-modern.json
-│   └── plugins/
-│       └── file_icons.ts   → ~/.config/fresh/plugins/file_icons.ts
-├── lazygit/
-│   └── config.yml          → ~/Library/Application Support/lazygit/config.yml
 ├── ghostty/
 │   └── config.ghostty      → ~/.config/ghostty/config.ghostty
 ├── karabiner/              → ~/.config/karabiner（フォルダごとリンク）
@@ -359,16 +351,7 @@ git push
   複製したものには、アプリを更新しても同梱の版の直しが入らない。`check-upstream.sh` が、アプリの `installed.json` に記録された同梱のファイルの
   ハッシュを `upstream.json` と比べ、変わっていたら通知する。そのときは `~/.config/herdr-app/mods/spaces/main.js`（新しい版）と
   `spaces-qt/main.js` の差を見て取り込み、`upstream.json` を今の `installed.json` の値に書き直す。
-- `~/.config/fresh/` も `config.json` だけをリンクする（`tsconfig.json` と `types/` は fresh が自動で作る）。
-  welcome 画面の「Show this screen on startup」は `~/Library/Application Support/fresh/` の状態ファイルに保存されるので管理しない。新しい環境では手でチェックを外す。
-- fresh のファイル一覧のアイコンは自作のプラグイン `fresh/plugins/file_icons.ts`（vscode-icons の代わり）。
-  Nerd Font のアイコンを使うので、ターミナルのフォントが Nerd Font（Ghostty は HackGen Console NF、Herdr アプリは UDEV Gothic NF）である必要がある。
-  起動時にプロジェクトのファイルをたどってアイコンを付け、その後は保存・作成・名前変更されたファイルだけ付け直す。
-  `node_modules`・`.git`・キャッシュ系のフォルダは中をたどらない（フォルダ自体には付ける）。対象は `SKIP_DIRS` で変える。
-  fresh の外で増えたファイルは、コマンドパレットの `File Icons: Refresh` で付け直す。
-  フォルダ名も標準の青（`syntax.keyword` の色）ではなく、ファイル名と同じ文字色にしている。
-- Markdown は fresh のコマンドパレットの `Markdown: Toggle Compose/Preview` で読みやすく折り返せる（見た目のプレビューではない）。
-  整形して見たいときは別のペインで `glow ファイル.md`。
+- Markdown を整形して見たいときは、別のペインで `glow ファイル.md`。
   Herdr アプリの中では、`mdview ファイル.md` で右のペインに整形して開く（コマンドパレットの「Markdown Preview」でも開ける）。
   ターミナルに出た `.md` のパスを Cmd を押しながらクリックすると、ダイアログで開く（`link.js`。リンクにすると読まれないので `setup.sh` がコピーする）。
   ほかのローカルのパス（`.html`・画像・PDF・フォルダなど）は、Cmd を押しながらクリックすると、既定のアプリで開くか Finder で場所を開くかを選ぶダイアログが出る（mod の `open-choice`）。
@@ -386,13 +369,10 @@ git push
   Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
 - `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
 - Herdr アプリの space とタブの分け方（space 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
-- fresh・lazygit・Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
+- Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を TUI のころの herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。
   色の値は VS Code 本体の `extensions/theme-defaults/themes/dark_modern.json` から取った。
-  fresh は内蔵の `dark`（構文の色が VS Code の Dark+ と同じ）を `extends` して、背景や UI の色だけ上書きしている。
-  lazygit の diff は delta（git-delta）で表示し、背景色・変わった文字の強調・構文の色・行番号を VS Code の inline の diff に合わせている。
-  背景色は VS Code の半透明の色を Ghostty の背景 #181818 に重ねて計算した値なので、Ghostty の背景を変えたら計算し直す。
-  lazygit の背景色はターミナルの色がそのまま使われるので、Ghostty と Herdr アプリの背景と ANSI の16色も VS Code の統合ターミナルの値にしている。
+  Ghostty と Herdr アプリの背景と ANSI の16色も、VS Code の統合ターミナルの値にしている。
 - ふだんのターミナルは Herdr アプリ。Herdr の外で使うターミナルとして Ghostty も残している（Terminal.app より速く、kitty graphics protocol の画像も出せる）。
 - `~/.claude/skills/` の中身は dotfiles に入れない。`setup-agent-skills.sh` が出どころごとに入れる。
   - Herdr アプリと herdr-core の skill: `herdr-app --skill` と `hc --skill` の出力を、`~/.claude/skills/herdr-app/SKILL.md` と
@@ -416,3 +396,11 @@ git push
   Raycast 本体や他の拡張機能に問題があったときに 1Password の中身が漏れるおそれがある。
   代わりに 1Password 標準のクイックアクセス（`Cmd + Shift + Space`）を使う。
 - 最終目標はこの[dotfiles](https://github.com/YosukeIida/dotfiles)
+
+## やめたもの
+
+使わなくなったものは消して、ここに 1 行ずつ書く。戻すときは、書いてあるコミットから取り出す（例: `git checkout 55c600b -- fresh lazygit`）。
+
+- herdr の TUI（2026-11-26 に Herdr アプリへ乗り換え）: ブランチ `herdr-tui`（`03bf25e`）
+- terminal-browser と marp-preview（Herdr アプリの md-preview と、既定のブラウザで開く形に置き換え）: `637e327`
+- fresh（エディタ）と lazygit（2026-11-27。コミットの履歴は git-graph、変更の確かめは Herdr アプリの Changes パネルで見る）: `55c600b`

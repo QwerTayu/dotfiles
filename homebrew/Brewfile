@@ -9,11 +9,9 @@ brew "whisper.cpp"
 # Play, record, convert, and stream many audio and video codecs
 brew "ffmpeg-full"
 # Text editor for your terminal: easy, powerful and fast
-brew "fresh-editor"
 # GitHub command-line tool
 brew "gh"
 # Syntax-highlighting pager for git and diff output
-brew "git-delta"
 # Quickly rewrite git repository history
 brew "git-filter-repo"
 # Render markdown on the CLI
@@ -24,7 +22,6 @@ brew "googleworkspace-cli"
 # Review-first terminal diff viewer for agent-authored changesets
 brew "hunk"
 # Simple terminal UI for git commands
-brew "lazygit"
 # Polyglot runtime manager (asdf rust clone)
 brew "mise"
 # Extremely fast Python package installer and resolver, written in Rust
