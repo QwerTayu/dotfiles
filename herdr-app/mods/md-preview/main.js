@@ -4,7 +4,7 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, panes, nextCommand } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, nextCommand } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
@@ -181,7 +181,7 @@ export default class MdPreview extends View {
   command(c, cx) {
     const details = this.blocks.map((b, i) => (b.kind === "details" ? i : -1)).filter((i) => i >= 0);
     const m = c.match(/^(open|close|toggle)-(\d+|all)$/);
-    if (c === "focus") this.handle.focus();
+    if (c === "focus") { this.handle.focus(); this.recheck(cx); }
     else if (c === "slides" || c === "scroll") this.setMode(c, cx);
     else if (c === "next") this.go(1, cx);
     else if (c === "prev") this.go(-1, cx);
@@ -451,8 +451,9 @@ export default class MdPreview extends View {
   }
 
   render(cx) {
-    // ペインにフォーカスが移ったら読み直す（同じタブで横に並べて、別のペインで書き換えている使い方のため）
-    const focusedNow = panes().some((p) => p.mod === "md-preview" && p.focused);
+    // このペインにフォーカスが移ったら読み直す（同じタブで横に並べて、別のペインで書き換えている使い方のため）。
+    // ほかの md-preview のペインではなく、自分のキーボードのフォーカスで見る（pane.go で移ったときは "focus" の命令でも読み直す）
+    const focusedNow = this.handle.is_focused();
     if (focusedNow && !this.wasFocused) this.recheck(cx);
     this.wasFocused = focusedNow;
   const t = theme();
