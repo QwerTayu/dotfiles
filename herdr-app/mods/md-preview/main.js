@@ -228,6 +228,9 @@ export default class MdPreview extends View {
     if (this.slides.length) exec("/bin/rm", ["-rf", `${appHome()}/${dirname(this.slides[0])}`]);
     this.file = file;
     this.text = "";
+    this.error = null;
+    this.marp = false; // 前のファイルが Marp でも、新しいファイルを marp-cli で描かない
+    this.again = false;
     this.blocks = [];
     this.images = new Map();
     this.imageDir = null;
@@ -280,6 +283,8 @@ export default class MdPreview extends View {
         }
         if (this.file !== file) return;
         if (!changed.length) return; // cancel された
+        // 画像のファイルだけが変わったときは、画像だけを読み直す
+        if (!this.marp && changed.some((p) => this.images.has(p))) this.recheckImages(cx);
         if (changed.some((p) => p === file || p === dirname(file))) {
           await cx.sleep(150);
           const text = await this.read(file);
@@ -334,23 +339,28 @@ export default class MdPreview extends View {
   // 画像を覚えておく key。ローカルの画像は md ファイルのフォルダから見た絶対パスにする（同じ相対パスでも、ファイルが違えば別の画像）
   imageKey(b) {
     if (b.kind === "mermaid" || /^https?:\/\//.test(b.src)) return b.src;
-    const src = decodeURI(b.src.replace(/^file:\/\//, ""));
+    let src = b.src.replace(/^file:\/\//, "");
+    try { src = decodeURI(src); } catch {} // 100%.png のような % は、そのままのパスとして扱う
     return src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(this.file)}/${src}`;
   }
 
-  // 前に読んだローカルの画像が書き換わっていたら（mtime が変わっていたら）、覚えた結果を捨てて読み直す
+  // ローカルの画像を見直す。前に読んだ画像が書き換わっていたら（mtime が変わっていたら）、読めなかった画像のファイルが
+  // できていたら、覚えた結果を捨てて読み直す。Mermaid の図と http の画像は、中身や URL が変わると key が変わるので、ここではやり直さない
   recheckImages(cx) {
-    const local = this.blocks.filter((b) => b.kind === "img" && b.key.startsWith("/") && this.images.get(b.key)?.mtime);
+    const local = this.blocks.filter((b) => b.kind === "img" && b.key.startsWith("/") && (this.images.get(b.key)?.mtime || this.images.get(b.key)?.error));
     if (!local.length) return;
-    const file = this.file;
+    const file = this.file, images = this.images;
     cx.spawn(async (cx) => {
-      const r = await exec("/usr/bin/stat", ["-f", "%m %N", ...new Set(local.map((b) => b.key))]).catch(() => null);
-      if (!r || this.file !== file) return;
+      // 小数のある秒（%Fm）で比べる。同じ 1 秒の中の書き換えも見落とさない。ないファイルは出力に出ない
+      const r = await exec("/usr/bin/stat", ["-f", "%Fm %N", ...new Set(local.map((b) => b.key))]).catch(() => null);
+      if (!r || this.file !== file || this.images !== images) return;
       const now = new Map(r.stdout.split("\n").filter(Boolean).map((l) => [l.slice(l.indexOf(" ") + 1), l.slice(0, l.indexOf(" "))]));
       let changed = false;
       for (const b of local) {
         const img = this.images.get(b.key);
-        if (img?.mtime && now.get(b.key) !== img.mtime) { this.images.delete(b.key); changed = true; }
+        const stale = img?.mtime && now.get(b.key) !== img.mtime;
+        const appeared = img?.error && now.has(b.key) && now.get(b.key) !== img.errorMtime;
+        if (stale || appeared) { this.images.delete(b.key); changed = true; }
       }
       if (changed) this.prepare(cx);
     });
@@ -370,9 +380,7 @@ export default class MdPreview extends View {
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
-    // 読めなかった画像は、読み直すたびにやり直す（あとから画像を置いたときのため）
-    for (const b of this.blocks) if (b.key && this.images.get(b.key)?.error) this.images.delete(b.key);
-    this.recheckImages(cx);
+    this.recheckImages(cx); // 読めなかった画像のファイルができていたら、やり直す
     const todo = [];
     for (const b of this.blocks) {
       if ((b.kind !== "img" && b.kind !== "mermaid") || this.images.has(b.key)) continue;
@@ -380,9 +388,12 @@ export default class MdPreview extends View {
       todo.push(b);
     }
     if (!todo.length) return;
+    // 途中で別のファイルに替わったら（images が新しい Map になったら）、結果を書かずにやめる。パスは、写した先のフォルダから作る
+    const images = this.images, imageDir = this.imageDir;
     cx.spawn(async (cx) => {
       await exec("/bin/mkdir", ["-p", dir]);
       for (const [i, b] of todo.entries()) {
+        if (this.images !== images) return;
         const ext = (b.src.match(/\.(png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i)?.[1] ?? "png").toLowerCase();
         const name = `${Date.now()}-${i}.${ext}`;
         const dest = `${dir}/${name}`;
@@ -394,6 +405,7 @@ export default class MdPreview extends View {
             const r = await exec(`${appHome()}/mods/md-preview/mermaid-png.sh`, [srcFile, png], { timeout: 120000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "Mermaid の図を描けませんでした");
             const [w, h] = r.stdout.trim().split(" ").map(Number);
+            if (this.images !== images) return;
             this.images.set(b.key, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
             if (this.file === file) cx.notify();
             continue;
@@ -405,18 +417,24 @@ export default class MdPreview extends View {
           } else {
             const r = await exec("/bin/cp", [b.key, dest]);
             if (r.code !== 0) throw new Error(r.stderr.trim() || "not found");
-            mtime = (await exec("/usr/bin/stat", ["-f", "%m", b.key])).stdout.trim() || null;
+            mtime = (await exec("/usr/bin/stat", ["-f", "%Fm", b.key])).stdout.trim() || null;
           }
           let w = 0, h = 0;
-          if (ext === "svg") [w, h] = svgSize((await readTextFile(dest)) ?? "");
+          // SVG は大きさを中から読む。読めなければ（大きすぎるなど）、既定の大きさで出す
+          if (ext === "svg") [w, h] = svgSize((await readTextFile(dest).catch(() => null)) ?? "");
           else {
             const size = await exec("/usr/bin/sips", ["-g", "pixelWidth", "-g", "pixelHeight", dest]);
             w = Number(size.stdout.match(/pixelWidth: (\d+)/)?.[1]) || 0;
             h = Number(size.stdout.match(/pixelHeight: (\d+)/)?.[1]) || 0;
           }
-          this.images.set(b.key, { path: `${this.imageDir}/${name}`, w: w || 800, h: h || 450, mtime });
+          if (this.images !== images) return;
+          this.images.set(b.key, { path: `${imageDir}/${name}`, w: w || 800, h: h || 450, mtime });
         } catch (e) {
-          this.images.set(b.key, { error: String(e.message ?? e) });
+          if (this.images !== images) return;
+          // ローカルの画像なら、そのときの mtime（ファイルがなければ null）を覚え、ファイルができたか変わったときだけやり直す
+          const errorMtime = b.key.startsWith("/") ? (await exec("/usr/bin/stat", ["-f", "%Fm", b.key]).catch(() => null))?.stdout?.trim() || null : null;
+          if (this.images !== images) return;
+          this.images.set(b.key, { error: String(e.message ?? e), errorMtime });
         }
         if (this.file === file) cx.notify();
       }
@@ -511,7 +529,10 @@ export default class MdPreview extends View {
         this.marp = isMarp(text);
         if (this.marp) this.build(cx);
         else this.prepare(cx);
-      } else if (!this.marp) this.highlight(cx);
+      } else if (!this.marp) {
+        this.highlight(cx);
+        this.recheckImages(cx); // 画像だけを差し替えたときのため
+      }
       cx.notify();
     });
   }
