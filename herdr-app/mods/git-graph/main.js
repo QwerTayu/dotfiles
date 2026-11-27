@@ -159,7 +159,7 @@ export default class GitGraph extends View {
     else if (c === "back") { this.file = null; this.diff = []; }
     else if (c === "menu") this.menu = !this.menu;
     else if (c === "top") this.scroll.scroll_to_item(0);
-    else if (c === "bottom" && rows.length) this.scroll.scroll_to_item(rows.length - 1);
+    else if (c === "bottom") this.scroll.scroll_to_bottom();
   }
 
   // queue: 読み直しの途中に頼まれたら、終わってからもう一度読む（ブランチを選んだ・↻ を押したとき）。
