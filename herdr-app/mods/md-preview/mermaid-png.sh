@@ -36,18 +36,20 @@ fi
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
+# ページからほかのローカルのファイルを読ませない（--allow-file-access-from-files は付けない）。外への通信も名前の解決で止める
 chrome() {
   "$CHROME" --headless=new --disable-gpu --no-first-run --no-default-browser-check \
-    --user-data-dir="$work/profile" --allow-file-access-from-files "$@" 2>/dev/null
+    --user-data-dir="$work/profile" --host-resolver-rules="MAP * ~NOTFOUND" "$@" 2>/dev/null
 }
 
-# 1 回目: SVG にする。図の文字は JSON にして埋め込む（HTML として解釈させない）
+# 1 回目: SVG にする。図の文字は JSON にして埋め込む。< を \u003c にして、図の中の </script> で script を閉じさせない
 "$PY" -I - "$src" "$JS" "$work/render.html" <<'PY'
 import json, sys
 code = open(sys.argv[1]).read()
+js = json.dumps(code).replace("<", "\\u003c")
 page = f"""<!doctype html><html><body><div id="out"></div><script src="file://{sys.argv[2]}"></script><script>
 mermaid.initialize({{ startOnLoad: false, theme: "dark", securityLevel: "strict" }});
-mermaid.render("d", {json.dumps(code)})
+mermaid.render("d", {js})
   .then(r => {{ document.getElementById("out").innerHTML = r.svg; }})
   .catch(e => {{ document.getElementById("out").setAttribute("data-error", String(e && e.message || e)); }});
 </script></body></html>"""
