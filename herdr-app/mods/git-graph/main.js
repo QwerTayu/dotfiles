@@ -295,8 +295,8 @@ export default class GitGraph extends View {
       if (this.selected !== hash || this.file !== path) return;
       const lines = r.stdout.split("\n");
       const at = lines.findIndex((l) => l.startsWith("@@"));
-      // git diff --no-index は差分があると 1 で終わるので、まだ追加していないファイルでは 1 も成功とみなす
-      const ok = r.code === 0 || (untracked && r.code === 1);
+      // git diff --no-index は差分があると 1 で終わる。ファイルが読めないときも 1 なので、差分が出ているときだけ成功とみなす
+      const ok = r.code === 0 || (untracked && r.code === 1 && r.stdout.trim() !== "");
       if (!ok) this.diff = [`git failed (exit ${r.code}): git ${args.slice(3).join(" ")}`, ...r.stderr.trim().split("\n")];
       else if (at >= 0) this.diff = lines.slice(at);
       else if (/^Binary files /m.test(r.stdout)) this.diff = ["(Binary file)"];
