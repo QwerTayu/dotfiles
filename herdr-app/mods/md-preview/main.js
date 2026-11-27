@@ -13,8 +13,27 @@ const CACHE_REL = "cache/md-preview";
 const TEXT_FONT = "UDEV Gothic NF";
 const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
 
-const isMarp = (text) => /^---\s*\n[\s\S]*?^marp:\s*true\s*$[\s\S]*?^---\s*$/m.test(text);
+// 先頭の frontmatter（ファイルの 1 行目の --- から次の --- まで）だけを見る。本文の途中の --- や marp: true では Marp にしない
+const FRONTMATTER = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
+const isMarp = (text) => {
+  const fm = text.match(FRONTMATTER);
+  return Boolean(fm && /^marp:\s*true\s*$/m.test(fm[1]));
+};
 const dirname = (p) => p.slice(0, p.lastIndexOf("/")) || "/";
+// SVG の大きさ。<svg> の width・height（数字か px のとき）を使い、なければ viewBox から出す。わからなければ [0, 0]
+const svgSize = (text) => {
+  const tag = text.match(/<svg\b[^>]*>/i)?.[0] ?? "";
+  const num = (name) => Number(tag.match(new RegExp(`\\s${name}\\s*=\\s*["']\\s*([\\d.]+)(?:px)?\\s*["']`, "i"))?.[1]) || 0;
+  let w = num("width"), h = num("height");
+  const vb = tag.match(/viewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+  if ((!w || !h) && vb) {
+    const vw = Number(vb[1]), vh = Number(vb[2]);
+    if (w && vw) h = (w * vh) / vw;
+    else if (h && vh) w = (h * vw) / vh;
+    else { w = vw; h = vh; }
+  }
+  return [Math.round(w), Math.round(h)];
+};
 const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
@@ -73,9 +92,24 @@ function splitBlocks(text) {
     const details = !fence && line.match(DETAILS_START);
     if (details) {
       flush();
-      const body = [details[2]];
-      while (i + 1 < lines.length && !/<\/details>/i.test(lines[i + 1])) body.push(lines[++i]);
-      if (i + 1 < lines.length) body.push(lines[++i].replace(/<\/details>.*$/i, ""));
+      // 対になる </details> まで（同じ行で閉じていればその行まで）を中身にする。
+      // 中の <details> は数えておき、入れ子の </details> では外側を閉じない
+      const body = [];
+      let depth = 0;
+      let rest = details[2];
+      for (;;) {
+        const tag = /<details\b|<\/details>/gi;
+        let cut = -1, m;
+        while ((m = tag.exec(rest))) {
+          if (m[0][1] !== "/") depth++;
+          else if (depth > 0) depth--;
+          else { cut = m.index; break; }
+        }
+        if (cut >= 0) { body.push(rest.slice(0, cut)); break; }
+        body.push(rest);
+        if (i + 1 >= lines.length) break;
+        rest = lines[++i];
+      }
       let inner = body.join("\n");
       const summary = inner.match(SUMMARY);
       inner = inner.replace(SUMMARY, "").trim();
