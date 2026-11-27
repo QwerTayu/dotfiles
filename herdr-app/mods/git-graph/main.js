@@ -4,7 +4,7 @@
 // 読むだけで、git の状態は変えない（--no-optional-locks）。
 // 枝の線は git log --graph の文字を使わず、各コミットの親から列（lane）を計算して、行ごとに曲線で描く。
 import { View, div, svg, PathBuilder } from "gpui-kit";
-import { v_flex, h_flex, InputState, Input, ScrollHandle } from "gpui-base";
+import { v_flex, h_flex, InputState, Input, v_virtual_list, VirtualListScrollHandle, Scrollbar } from "gpui-base";
 import { spaces, exec, theme, settings, window as appWindow, nextCommand } from "herdr";
 
 const SEP = "\x1f";
@@ -111,7 +111,7 @@ export default class GitGraph extends View {
     this.menu = false;
     this.q = "";
     this.matchAt = -1;
-    this.scroll = ScrollHandle.new();
+    this.scroll = VirtualListScrollHandle.new(); // 一覧は見えている行だけを作る（v_virtual_list）。行へのスクロールはこの handle でする
     this.search = InputState.new({ placeholder: "Search (message, author, hash, branch)" });
     this.search.on("change", (_e, cx) => { this.q = this.search.value().trim().toLowerCase(); this.matchAt = -1; cx.notify(); });
     this.search.on("submit", (_e, cx) => this.jump(1, cx));
@@ -483,10 +483,10 @@ export default class GitGraph extends View {
     const hit = this.q && this.matches(r);
     const laneColor = t[COLORS[r.color % COLORS.length]];
     const mono = settings().font_family ?? settings().font ?? "JetBrains Mono";
-    return h_flex().id(`row-${i}`).h(ROW).flex_none().items_center().gap(6).pr(10).text_size(12.5).cursor_pointer()
+    // 行の中には handler を置かない（virtual list の行では使えない）。押したときは一覧の on_item_click が受ける
+    return h_flex().id(`row-${r.hash}`).h(ROW).flex_none().items_center().gap(6).pr(10).text_size(12.5).cursor_pointer()
       .bg(on ? t.selected : i === this.matchAt ? t.accent + "40" : hit ? t.accent + "1c" : t.surface).hover((s) => s.bg(on ? t.selected : t.hover))
       .when(Boolean(this.q) && !hit, (e) => e.opacity(0.35))
-      .on_click((_e, cx) => this.select(r.hash, cx))
       .child(this.graph(r, t))
       .child(h_flex().flex_none().gap(4).children(this.chips(r.refs).map((c) => this.chip(c, t, laneColor, mono))))
       .child(div().flex_1().min_w(0).truncate().text_color(r.merge || r.wip ? t.muted : t.foreground).when(r.wip, (e) => e.italic()).child(r.subject))
@@ -532,20 +532,39 @@ export default class GitGraph extends View {
         .on_click((_e, cx) => this.refresh(cx, { queue: true })).child(this.loading ? "…" : "↻"));
     const body = this.error
       ? div().p(12).text_size(12.5).text_color(t.muted).child(this.error)
-      : v_flex().id("list").flex_1().min_h(0).overflow_y_scrollbar().track_scroll(this.scroll).children(this.rows.map((r, i) => this.row(r, i, t)));
-    const menuItem = (name, label) => div().id(`b-${label}`).h(24).flex_none().px(10).flex().items_center().text_size(12)
-      .text_color(name === this.branch ? t.foreground : t.muted).bg(name === this.branch ? t.selected : t.popover)
-      .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
-      .on_click((_e, cx) => { this.branch = name; this.menu = false; this.raw = null; this.clearSelection(); this.matchAt = -1; this.refresh(cx, { queue: true }); cx.notify(); })
-      .child(label);
+      // 見えている行だけを作る。全部の行を毎回作ると、ブランチの多いリポジトリ（線が数千本）で描くのが間に合わず、
+      // Herdr が描くのを打ち切って「This view could not be re-rendered（interrupted）」になった
+      : v_flex().id("list").relative().flex_1().min_h(0)
+        .child(v_virtual_list("rows", this.rows.length, ROW, (i) => this.rows[i].hash,
+          (range) => this.rows.slice(range.start, range.end).map((r, k) => this.row(r, range.start + k, t)))
+          .track_scroll(this.scroll).size_full()
+          .on_item_click((hash, cx) => this.select(hash, cx)))
+        .child(Scrollbar.vertical("rows").absolute().inset_0());
+    // ブランチのメニューも、見えている項目だけを作る（ブランチが数百本あるリポジトリのため）。先頭は「All branches」
+    const ALL = "*all-branches*";
+    const items = [ALL, ...this.branches];
+    const menuItem = (key) => {
+      const name = key === ALL ? null : key;
+      return div().id(`b-${key}`).h(24).flex_none().px(10).flex().items_center().text_size(12)
+        .text_color(name === this.branch ? t.foreground : t.muted).bg(name === this.branch ? t.selected : t.popover)
+        .cursor_pointer().hover((st) => st.bg(t.hover).text_color(t.foreground))
+        .child(name ?? "All branches");
+    };
     const width = (this.size?.width ?? 1000) / (settings().zoom || 1);
     // 位置は外側の箱で決め、スクロールは中の箱でする（スクロールする要素に直接 absolute と top を付けると、top が効かずに下のほうに出た）
     const menu = div().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320)
       .rounded(6).border_1().border_color(t.border).bg(t.popover)
       .on_mouse_down_out((_e, cx) => { this.menu = false; this.menuClosedAt = Date.now(); cx.notify(); })
-      .child(v_flex().id("branch-menu-list").max_h(360).overflow_y_scrollbar().py(4)
-        .child(menuItem(null, "All branches"))
-        .children(this.branches.map((b) => menuItem(b, b))));
+      .child(v_flex().relative().h(Math.min(360, items.length * 24)).my(4)
+        .child(v_virtual_list("branch-menu-list", items.length, 24, (i) => items[i],
+          (range) => items.slice(range.start, range.end).map(menuItem))
+          .size_full()
+          .on_item_click((key, cx) => {
+            this.branch = key === ALL ? null : key;
+            this.menu = false; this.raw = null; this.clearSelection(); this.matchAt = -1;
+            this.refresh(cx, { queue: true }); cx.notify();
+          }))
+        .child(Scrollbar.vertical("branch-menu-list").absolute().inset_0()));
     const detail = this.selected ? this.detailView(t, mono) : null;
     // 一覧と詳細の境界。上下にドラッグすると詳細の欄の高さが変わる
     const splitter = div().id("splitter").h(5).flex_none().mt(-2).cursor_row_resize()
