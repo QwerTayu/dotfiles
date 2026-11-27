@@ -29,6 +29,8 @@ dotfiles/
 │   ├── keybindings.json    → ~/Library/Application Support/Code/User/keybindings.json
 │   └── snippets/           → ~/Library/Application Support/Code/User/snippets/
 ├── claude/
+│   ├── readme.md           フォルダごとに Claude Code のアカウント（個人・TMLlab）を分ける仕組みと、TMLlab のアカウントへの入り方
+│   ├── claude.sh           → ~/.local/bin/claude（フォルダの mise.local.toml の CLAUDE_ACCOUNT を見て、個人は ~/.claude、TMLlab は ~/.claude-tmllab で claude を起動する）
 │   ├── settings.json       → ~/.claude/settings.json
 │   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
 │   ├── statusline.sh       → ~/.claude/statusline.sh（入力欄の下にモデル・effort・組織・利用上限の使用率を出す）
@@ -148,18 +150,23 @@ GitHub.com → HTTPS → Yes → Login with a web browser の順に選ぶ。
 
 ### 7. Claude Code にログイン
 
+`claude` は、起動したフォルダでアカウントを選ぶラッパー（`claude/claude.sh`）を通る。何も書いていないフォルダでは TMLlab になるので、
+先に個人のフォルダを決めてから、そこで個人のアカウントに入る。仕組みと TMLlab への入り方は [`claude/readme.md`](claude/readme.md)。
+
 ```sh
+mkdir -p ~/Documents/personal && cd ~/Documents/personal
+printf '[env]\nCLAUDE_ACCOUNT = "me"\n' > mise.local.toml && mise trust
 claude
 ```
 
 ブラウザが開くので Claude アカウント（有料プラン）でログインする。
-ユーザー全体で使う MCP サーバーがあれば `claude mcp add --scope user ...` で追加する。
+ユーザー全体で使う MCP サーバーがあれば、このフォルダで `claude mcp add --scope user ...` で追加する（TMLlab の側には、起動のたびに写る）。
 
 #### Slack の MCP をワークスペースごとに追加する
 
 Slack 公式の MCP（`https://mcp.slack.com/mcp`）を、ワークスペースごとに別の名前で追加する。
 名前ごとに認証するので、切り替えなしで、どのワークスペースも同時に使える。
-登録は `~/.claude.json` に、トークンはキーチェーンに入るので、このリポジトリには何も入らない。
+登録は `~/.claude.json` に、トークンはキーチェーンに入るので、このリポジトリには何も入らない（個人のフォルダで追加する。上の 7 を参照）。
 本物のワークスペース名はここに書かない（このリポジトリは public のため）。下の `sample-space` は例。
 
 1. ワークスペースごとに、`slack-<短い名前>` で追加する。`clientId` は Slack 公式の Claude Code 用プラグイン（`slackapi/slack-skills-plugin`）と同じ値。
@@ -367,7 +374,7 @@ git push
   mermaid.js（版を決めて npm から 1 度だけ落とし、sha512 で確かめて `~/.local/share/herdr-md-preview/` に置く）を Google Chrome の headless で動かす。
   Marp のスライドの中の Mermaid は、まだ図にならない。
   Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
-- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
+- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`、`claude`）をここにリンクする。
 - Herdr アプリの space とタブの分け方（space 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を TUI のころの herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。
