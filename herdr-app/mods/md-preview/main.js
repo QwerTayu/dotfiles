@@ -428,7 +428,7 @@ export default class MdPreview extends View {
   markdown(id, text, t) {
     return TextView.markdown(id, text).selectable(true).font_family(TEXT_FONT).text_size(14).text_color(t.foreground)
       .on_link_click((url, cx) => {
-        if (this.cmd) { this.openLink(url); return; }
+        if (this.cmd) { this.openLink(url, cx); return; }
         const zoom = settings().zoom || 1;
         this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom };
         cx.notify();
@@ -453,10 +453,18 @@ export default class MdPreview extends View {
     return { kind: "local", path: `/${parts.join("/")}` };
   }
 
-  openLink(url) {
+  // 開けなかったとき（リンク先のファイルがないなど）は、ポップアップで知らせる
+  openLink(url, cx) {
     const t = this.linkTarget(url);
-    if (t.kind === "web") exec("/usr/bin/open", [url]);
-    else if (t.kind === "local") exec("/usr/bin/open", ["-R", t.path]);
+    if (t.kind === "none") return;
+    cx.spawn(async (cx) => {
+      const r = await exec("/usr/bin/open", t.kind === "web" ? [url] : ["-R", t.path]).catch((e) => ({ code: 1, stderr: String(e) }));
+      if (r.code === 0) return;
+      const zoom = settings().zoom || 1;
+      this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom,
+        error: t.kind === "local" ? "ファイルがありません" : (r.stderr.trim() || "開けませんでした") };
+      cx.notify();
+    });
   }
 
   // まだ色付けしていないコードブロックを、まとめて Shiki に色付けしてもらう。失敗したブロックは、色なしで出したまま
@@ -654,9 +662,9 @@ export default class MdPreview extends View {
       .on_mouse_down_out((_e, cx) => { this.popup = null; cx.notify(); })
       .child(div().id("link-url").text_size(12.5).text_color(target.kind === "none" ? t.muted : t.accent)
         .when(target.kind !== "none", (e) => e.underline().cursor_pointer().hover((s) => s.text_color(t.foreground))
-          .on_click((_e, cx) => { this.openLink(this.popup.url); this.popup = null; cx.notify(); }))
+          .on_click((_e, cx) => { const url = this.popup.url; this.popup = null; this.openLink(url, cx); cx.notify(); }))
         .child(target.kind === "local" ? target.path : this.popup.url))
-      .child(div().text_size(11).text_color(t.dim).child(hint));
+      .child(this.popup.error ? div().text_size(11.5).text_color(t.ansi1).child(this.popup.error) : div().text_size(11).text_color(t.dim).child(hint));
   })();
   return v_flex().id("root").relative().size_full().bg(t.background).track_focus(this.handle)
     .on_window_mouse_move((e) => { this.pointer = e.local_position; this.cmd = e.modifiers.platform; })
