@@ -5,7 +5,7 @@
 // 枝の線は git log --graph の文字を使わず、各コミットの親から列（lane）を計算して、行ごとに曲線で描く。
 import { View, div, svg, PathBuilder } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input, ScrollHandle } from "gpui-base";
-import { spaces, exec, theme, settings, window as appWindow } from "herdr";
+import { spaces, exec, theme, settings, window as appWindow, nextCommand } from "herdr";
 
 const SEP = "\x1f";
 const MAX = 400; // 読むコミットの数（多すぎると描くのが重くなる）
@@ -120,6 +120,44 @@ export default class GitGraph extends View {
       this.refresh(cx);
     });
     this.refresh(cx);
+    // 外からの操作（`herdr-app do git-graph.<命令>`）。マウスで押すのと同じことを、コマンドでもできるようにする
+    cx.spawn(async (cx) => {
+      for (;;) {
+        const c = await nextCommand();
+        this.command(c, cx);
+        cx.notify();
+      }
+    });
+  }
+
+  // 命令の一覧（`herdr-app do git-graph.<命令>`）。<hash> は短いハッシュでもよい（先頭が合うコミット）
+  //   select-<hash>          そのコミットを選んで、そこまでスクロールする
+  //   next / prev            選んでいるコミットの 1 つ下・上を選ぶ（何も選んでいなければ一番上）
+  //   unselect               選ぶのをやめて、詳しい表示を閉じる
+  //   file-N                 選んだコミットの N 番目（1 から）のファイルの差分を出す
+  //   back                   差分からファイルの一覧に戻る
+  //   goto-<hash>            選ばずに、そのコミットまでスクロールする
+  //   top / bottom           一覧の一番上・下までスクロールする
+  command(c, cx) {
+    const rows = this.rows ?? [];
+    const find = (h) => rows.findIndex((r) => r.hash !== WIP && h && r.hash.startsWith(h.toLowerCase()));
+    const pick = (i) => {
+      if (i < 0 || i >= rows.length) return;
+      if (this.selected !== rows[i].hash) this.select(rows[i].hash, cx);
+      this.scroll.scroll_to_item(i);
+    };
+    let m;
+    if ((m = c.match(/^select-([0-9a-f]+)$/i))) pick(find(m[1]));
+    else if ((m = c.match(/^goto-([0-9a-f]+)$/i))) { const i = find(m[1]); if (i >= 0) this.scroll.scroll_to_item(i); }
+    else if (c === "next" || c === "prev") {
+      const at = rows.findIndex((r) => r.hash === this.selected);
+      pick(at < 0 ? 0 : at + (c === "next" ? 1 : -1));
+    }
+    else if (c === "unselect") { this.selected = null; this.file = null; this.diff = []; }
+    else if ((m = c.match(/^file-(\d+)$/))) { const f = this.files[Number(m[1]) - 1]; if (f) this.openFile(f.path, cx); }
+    else if (c === "back") { this.file = null; this.diff = []; }
+    else if (c === "top") this.scroll.scroll_to_item(0);
+    else if (c === "bottom" && rows.length) this.scroll.scroll_to_item(rows.length - 1);
   }
 
   refresh(cx) {

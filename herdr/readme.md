@@ -60,13 +60,16 @@ TUI のころの `dev-layout`（claude・fresh・lazygit・ターミナルの並
 
 ## mod を外から動かす
 
-自作の md-preview は、マウスで押す操作の一部を、コマンドでもできる（`herdr-app do <mod>.<命令>`）。
+自作の md-preview と git-graph は、マウスで押す操作の一部を、コマンドでもできる（`herdr-app do <mod>.<命令>`）。
 スクショを撮るときや、claude に画面を見せながら作業するときに使う。命令の一覧は、各 mod の `main.js` の `command()` の上に書いてある。
 
 ```sh
 herdr-app do md-preview.scroll       # Marp を縦に並べて見せる（slides で 1 枚ずつ）
 herdr-app do md-preview.next         # 次のスライド（prev・first・last）
 herdr-app do md-preview.open-2       # 2 番目の折りたたみを開く（close-2・toggle-2・open-all・close-all）
+herdr-app do git-graph.select-961bb2b  # そのコミットを選んで、そこまでスクロールする（next・prev・unselect）
+herdr-app do git-graph.file-1        # 選んだコミットの 1 番目のファイルの差分を出す（back で一覧に戻る）
+herdr-app do git-graph.goto-961bb2b  # 選ばずにスクロールだけする（top・bottom）
 ```
 
 - 命令は、表示しているその mod のすべてに届く（md-preview を 2 つ開いていれば、どちらも切り替わる）。
