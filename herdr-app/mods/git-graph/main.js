@@ -507,6 +507,9 @@ export default class GitGraph extends View {
         .text_size(12).text_color(this.branch ? t.foreground : t.muted).cursor_pointer().hover((st) => st.bg(t.hover))
         .on_click((_e, cx) => {
           // メニューは押した所の下に出す（ボタンの位置は字の幅で変わるので、決め打ちしない）
+          // 開いているときにこのボタンを押すと、先にメニューの外を押したとして閉じる（on_mouse_down_out）。
+          // その直後のこの click で開き直さないよう、閉じたばかりなら何もしない
+          if (Date.now() - (this.menuClosedAt ?? 0) < 400) return;
           const zoom = settings().zoom || 1;
           this.menuX = this.pointer ? this.pointer.x / zoom - 16 : 90;
           this.menu = !this.menu;
@@ -539,7 +542,7 @@ export default class GitGraph extends View {
     // 位置は外側の箱で決め、スクロールは中の箱でする（スクロールする要素に直接 absolute と top を付けると、top が効かずに下のほうに出た）
     const menu = div().id("branch-menu").absolute().top(34).left(Math.max(4, Math.min(this.menuX ?? 90, width - 324))).w(320)
       .rounded(6).border_1().border_color(t.border).bg(t.popover)
-      .on_mouse_down_out((_e, cx) => { this.menu = false; cx.notify(); })
+      .on_mouse_down_out((_e, cx) => { this.menu = false; this.menuClosedAt = Date.now(); cx.notify(); })
       .child(v_flex().id("branch-menu-list").max_h(360).overflow_y_scrollbar().py(4)
         .child(menuItem(null, "All branches"))
         .children(this.branches.map((b) => menuItem(b, b))));
