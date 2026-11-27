@@ -138,6 +138,7 @@ export default class GitGraph extends View {
   //   back                   差分からファイルの一覧に戻る
   //   goto-<hash>            選ばずに、そのコミットまでスクロールする
   //   top / bottom           一覧の一番上・下までスクロールする
+  //   menu                   ブランチのメニューを開く・閉じる
   command(c, cx) {
     const rows = this.rows ?? [];
     const find = (h) => rows.findIndex((r) => r.hash !== WIP && h && r.hash.startsWith(h.toLowerCase()));
@@ -156,6 +157,7 @@ export default class GitGraph extends View {
     else if (c === "unselect") this.clearSelection();
     else if ((m = c.match(/^file-(\d+)$/))) { const f = this.files[Number(m[1]) - 1]; if (f) this.openFile(f.path, cx); }
     else if (c === "back") { this.file = null; this.diff = []; }
+    else if (c === "menu") this.menu = !this.menu;
     else if (c === "top") this.scroll.scroll_to_item(0);
     else if (c === "bottom" && rows.length) this.scroll.scroll_to_item(rows.length - 1);
   }
