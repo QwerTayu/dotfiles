@@ -27,6 +27,32 @@ brew bundle dump --file=homebrew/Brewfile --force   # 現状を Brewfile に書�
 ./macos/macos.sh                             # macOS 設定を反映（Finder/Dock を再起動する）
 ```
 
+## 開発の進め方
+
+- **main に直接コミットしてよいもの**: `brew install` と Brewfile の更新、設定の値の小さな変更、文書の直し、既存のものの小さな修正。
+- **ブランチを切るもの**: 新しく作るもの（mod・スクリプト・skill など）と、既存の mod やスクリプトへの機能の追加。どちらか迷ったら、ユーザーに聞く。
+- ブランチはグローバルの CLAUDE.md のとおり worktree で切る（`git worktree add ~/.herdr/worktrees/dotfiles/<branch> -b <branch> origin/main`）。終わったら `gh pr create --assignee @me` で PR を作り、ユーザーがよいと言ってからマージする。マージしたら worktree とブランチを片付ける。
+
+### worktree の mod を Herdr アプリで試す
+
+`~/.config/herdr-app/mods/<mod>/` のファイルは、main のチェックアウト（`~/dotfiles`）にリンクしている。worktree で直している mod を試す間だけ、リンクを worktree に付け替える（`link.js` はリンクできないので写す）。
+
+```sh
+src=~/.herdr/worktrees/dotfiles/<branch>/herdr-app/mods/<mod>   # 戻すときは ~/dotfiles/herdr-app/mods/<mod>
+dst=~/.config/herdr-app/mods/<mod>
+new=0; [ -d "$dst" ] || { new=1; mkdir -p "$dst"; }
+for f in "$src"/*; do
+  n=$(basename "$f")
+  # 今リンクしているものだけ付け替える（新しい mod なら全部リンクする）。setup.sh がリンクしないもの（install-icons.sh など）は増やさない
+  if [ "$n" = link.js ]; then cp "$f" "$dst/$n"
+  elif [ -L "$dst/$n" ] || [ "$new" = 1 ]; then ln -sfn "$f" "$dst/$n"; fi
+done
+touch -h "$dst/main.js"   # リンクした main.js は自動で読み直されないので、読み直させる
+```
+
+- 付け替えたことは、ユーザーに伝える。マージしたら、同じ手順で `~/dotfiles` に戻す（PR をやめたときも戻す）。
+- 新しい mod は、PR の中で `setup.sh` に `link` の行を足しておく。
+
 ## 設定ファイルを追加するとき
 
 1. `<ツール名>/<ドットなしのファイル名>` に置く
