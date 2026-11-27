@@ -4,10 +4,11 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, nextCommand } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, openOverlay, nextCommand } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
+const DIALOG_WIDTH = 860; // 手元の md へのリンクを開くダイアログの幅（px）。link.js と同じ
 // 文章の字体。UDEV Gothic NF（アプリのターミナルと同じ）にする。既定の字体では太字・斜体が効かず、
 // Helvetica Neue では日本語の斜体が傾かなかった。UDEV Gothic の斜体は日本語の字形も傾いているので、日本語の斜体も出る（等幅の見た目になる）
 const TEXT_FONT = "UDEV Gothic NF";
@@ -453,7 +454,8 @@ export default class MdPreview extends View {
       });
   }
 
-  // リンクの開き方を決める。http・https はブラウザで開き、ローカルのパス（相対・絶対・~/・file://）は Finder で場所を見せる。
+  // リンクの開き方を決める。http・https はブラウザで開き、手元の md はプレビューのダイアログで開き、
+  // ほかのローカルのパス（相対・絶対・~/・file://）は Finder で場所を見せる。
   // 相対パスは md ファイルのフォルダから見る。#見出し・ほかのスキーム（mailto: など）は開かない（ポップアップに出すだけ）
   linkTarget(url) {
     if (/^https?:\/\//i.test(url)) return { kind: "web" };
@@ -468,7 +470,9 @@ export default class MdPreview extends View {
       if (seg === "" || seg === ".") continue;
       if (seg === "..") parts.pop(); else parts.push(seg);
     }
-    return { kind: "local", path: `/${parts.join("/")}` };
+    const path = `/${parts.join("/")}`;
+    // 手元の md は、Finder ではなく md-preview のダイアログで開く（ターミナルの .md のパスを Cmd+クリックしたときと同じ）
+    return { kind: /\.(md|markdown)$/i.test(path) ? "md" : "local", path };
   }
 
   // 開けなかったとき（リンク先のファイルがないなど）は、ポップアップで知らせる
@@ -476,11 +480,17 @@ export default class MdPreview extends View {
     const t = this.linkTarget(url);
     if (t.kind === "none") return;
     cx.spawn(async (cx) => {
-      const r = await exec("/usr/bin/open", t.kind === "web" ? [url] : ["-R", t.path]).catch((e) => ({ code: 1, stderr: String(e) }));
-      if (r.code === 0) return;
+      let r;
+      if (t.kind === "md") {
+        r = await exec("/bin/test", ["-f", t.path]).catch(() => ({ code: 1 }));
+        if (r.code === 0) { openOverlay({ mod: "md-preview", props: { file: t.path }, kind: "dialog", width: DIALOG_WIDTH, height: 0.85 }); return; }
+      } else {
+        r = await exec("/usr/bin/open", t.kind === "web" ? [url] : ["-R", t.path]).catch((e) => ({ code: 1, stderr: String(e) }));
+        if (r.code === 0) return;
+      }
       const zoom = settings().zoom || 1;
       this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom,
-        error: t.kind === "local" ? "ファイルがありません" : (r.stderr.trim() || "開けませんでした") };
+        error: t.kind === "web" ? (r.stderr?.trim() || "開けませんでした") : "ファイルがありません" };
       cx.notify();
     });
   }
@@ -676,6 +686,7 @@ export default class MdPreview extends View {
     const x = Math.max(8, Math.min(this.popup.x - 12, this.width - w - 8));
     const target = this.linkTarget(this.popup.url);
     const hint = target.kind === "web" ? "Click to open in the browser \u00b7 \u2318+click on the link opens it directly"
+      : target.kind === "md" ? "Click to preview it \u00b7 \u2318+click on the link does the same"
       : target.kind === "local" ? "Click to show it in Finder \u00b7 \u2318+click on the link does the same"
       : "This link is not opened";
     return v_flex().id("link-popup").absolute().left(x).top(this.popup.y + 14).max_w(w).px(10).py(7).gap(3)
@@ -684,7 +695,7 @@ export default class MdPreview extends View {
       .child(div().id("link-url").text_size(12.5).text_color(target.kind === "none" ? t.muted : t.accent)
         .when(target.kind !== "none", (e) => e.underline().cursor_pointer().hover((s) => s.text_color(t.foreground))
           .on_click((_e, cx) => { const url = this.popup.url; this.popup = null; this.openLink(url, cx); cx.notify(); }))
-        .child(target.kind === "local" ? target.path : this.popup.url))
+        .child(target.kind === "local" || target.kind === "md" ? target.path : this.popup.url))
       .child(this.popup.error ? div().text_size(11.5).text_color(t.ansi1).child(this.popup.error) : div().text_size(11).text_color(t.dim).child(hint));
   })();
   return v_flex().id("root").relative().size_full().bg(t.background).track_focus(this.handle)
