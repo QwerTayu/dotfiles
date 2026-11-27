@@ -38,9 +38,12 @@ export default class OpenChoice extends View {
         .child(div().text_size(13).text_color(t.foreground).child(label))
         .child(div().text_size(11.5).text_color(t.dim).truncate().child(hint)));
     return v_flex().id("root").w_full().p(14).gap(8).bg(t.popover).track_focus(this.handle)
+      // 修飾キーなしの 1・2・Enter だけを受ける（Cmd+1 などはアプリに渡す）。押しっぱなしのくり返しは受けない
       .on_key_down((e, cx) => {
-        if (e.key === "1" || e.key === "enter") { this.choose(1, cx); cx.stop_propagation(); }
-        else if (e.key === "2") { this.choose(2, cx); cx.stop_propagation(); }
+        const k = e.keystroke;
+        if (k !== "1" && k !== "2" && k !== "enter") return;
+        cx.stop_propagation();
+        if (!e.is_held) this.choose(k === "2" ? 2 : 1, cx);
       })
       .child(div().text_size(14).font_semibold().text_color(t.foreground).truncate().child(basename(this.path)))
       .child(div().text_size(11.5).text_color(t.dim).truncate().child(this.path))
