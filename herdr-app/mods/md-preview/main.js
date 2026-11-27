@@ -143,13 +143,12 @@ export default class MdPreview extends View {
     this.page = 0;
     this.rendering = false;
     this.again = false;
-    this.mode = "slides";
-    try { this.mode = localStorage.getItem("marpMode") || "slides"; } catch {}
+    this.mode = "scroll"; // Marp はいつも縦に並べた形で開く（切り替えは覚えない）
     this.width = 800;
     this.handle = cx.focus_handle();
     this.watch = null;
     this.blocks = [];
-    this.images = new Map(); // src -> { path, w, h } または { error }
+    this.images = new Map(); // 画像の key（ローカルなら絶対パス）-> { path, w, h, mtime } または { error }
     this.imageDir = null;
     this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
     this.tokens = new Map(); // コードブロックの色付けの結果（言語と中身 -> 行ごとの [{t, c, s}]）。同じ中身なら色付けし直さない
@@ -206,23 +205,44 @@ export default class MdPreview extends View {
     cx.spawn(async (cx) => {
       const picked = await pickFiles({ prompt: "Markdown のファイルを選ぶ", multiple: false });
       if (!picked?.length) return;
-      this.file = picked[0];
-      this.page = 0;
-      this.load(cx);
+      this.switchTo(picked[0], cx);
     });
+  }
+
+  // 別のファイルに替える。前のファイルの画像・折りたたみの開け閉め・スライドは持ち越さない
+  switchTo(file, cx) {
+    if (this.imageDir) exec("/bin/rm", ["-rf", `${appHome()}/${this.imageDir}`]);
+    if (this.slides.length) exec("/bin/rm", ["-rf", `${appHome()}/${dirname(this.slides[0])}`]);
+    this.file = file;
+    this.text = "";
+    this.blocks = [];
+    this.images = new Map();
+    this.imageDir = null;
+    this.opened = new Map();
+    this.slides = [];
+    this.page = 0;
+    this.popup = null;
+    this.load(cx);
+  }
+
+  // ファイルを読む。読めなければ null（readTextFile はファイルがないとき、例外を投げずに null を返す）
+  async read(file) {
+    try { return await readTextFile(file); } catch { return null; }
   }
 
   load(cx) {
     const file = this.file;
     cx.spawn(async (cx) => {
-      try {
-        this.text = await readTextFile(file);
-        this.error = null;
-      } catch (e) {
-        this.error = `読めませんでした: ${file}\n${e}`;
+      const text = await this.read(file);
+      if (this.file !== file) return;
+      if (text == null) {
+        this.error = `読めませんでした: ${file}`;
         cx.notify();
+        this.follow(cx); // あとでファイルができたら、見張りで読み直す
         return;
       }
+      this.text = text;
+      this.error = null;
       this.marp = isMarp(this.text);
       if (!this.marp) this.prepare(cx);
       cx.notify();
@@ -249,7 +269,11 @@ export default class MdPreview extends View {
         if (!changed.length) return; // cancel された
         if (changed.some((p) => p === file || p === dirname(file))) {
           await cx.sleep(150);
-          try { this.text = await readTextFile(file); } catch { continue; }
+          const text = await this.read(file);
+          if (this.file !== file) return;
+          if (text == null) continue; // 一度消えた（ブランチの切り替えなど）。前の表示を残して見張り続ける
+          this.text = text;
+          this.error = null;
           this.marp = isMarp(this.text);
           if (this.marp) this.build(cx);
           else this.prepare(cx);
@@ -259,10 +283,11 @@ export default class MdPreview extends View {
     });
   }
 
-  // marp-cli でスライドを PNG にする。描いている途中に保存されたら、終わってからもう一度描く。
+  // marp-cli でスライドを PNG にする。描いている途中に保存されたり、別のファイルに替えたりしたら、終わってから今のファイルをもう一度描く。
   build(cx) {
     if (this.rendering) { this.again = true; return; }
     this.rendering = true;
+    this.again = false;
     const file = this.file;
     const rel = `${CACHE_REL}/${Date.now()}`;
     const out = `${appHome()}/${rel}`;
@@ -270,6 +295,7 @@ export default class MdPreview extends View {
       try {
         const r = await exec(MARP(), ["--images", "png", "--allow-local-files", file, "-o", `${out}/slide.png`], { cwd: dirname(file), timeout: 120000 });
         if (r.code !== 0) throw new Error(r.stderr.trim() || "marp に失敗しました");
+        if (this.file !== file) { exec("/bin/rm", ["-rf", out]); return; } // 描いている間に別のファイルに替わった
         const ls = await exec("/bin/ls", [out]);
         const slides = ls.stdout.split("\n").filter((n) => /^slide\.\d+\.png$/.test(n)).sort().map((n) => `${rel}/${n}`);
         if (slides.length) {
@@ -279,30 +305,65 @@ export default class MdPreview extends View {
         }
         const old = this.slides.length ? dirname(this.slides[0]) : null;
         this.slides = slides;
-        this.page = Math.min(this.page, Math.max(0, slides.length - 1));
+        this.page = Math.max(0, Math.min(this.page, slides.length - 1));
         this.error = null;
         if (old) exec("/bin/rm", ["-rf", `${appHome()}/${old}`]);
       } catch (e) {
-        this.error = String(e);
+        if (this.file === file) this.error = String(e);
       } finally {
         this.rendering = false;
         cx.notify();
-        if (this.again && this.file === file) { this.again = false; this.build(cx); }
+        if ((this.again || this.file !== file) && this.file && this.marp) this.build(cx);
       }
+    });
+  }
+
+  // 画像を覚えておく key。ローカルの画像は md ファイルのフォルダから見た絶対パスにする（同じ相対パスでも、ファイルが違えば別の画像）
+  imageKey(b) {
+    if (b.kind === "mermaid" || /^https?:\/\//.test(b.src)) return b.src;
+    const src = decodeURI(b.src.replace(/^file:\/\//, ""));
+    return src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(this.file)}/${src}`;
+  }
+
+  // 前に読んだローカルの画像が書き換わっていたら（mtime が変わっていたら）、覚えた結果を捨てて読み直す
+  recheckImages(cx) {
+    const local = this.blocks.filter((b) => b.kind === "img" && b.key.startsWith("/") && this.images.get(b.key)?.mtime);
+    if (!local.length) return;
+    const file = this.file;
+    cx.spawn(async (cx) => {
+      const r = await exec("/usr/bin/stat", ["-f", "%m %N", ...new Set(local.map((b) => b.key))]).catch(() => null);
+      if (!r || this.file !== file) return;
+      const now = new Map(r.stdout.split("\n").filter(Boolean).map((l) => [l.slice(l.indexOf(" ") + 1), l.slice(0, l.indexOf(" "))]));
+      let changed = false;
+      for (const b of local) {
+        const img = this.images.get(b.key);
+        if (img?.mtime && now.get(b.key) !== img.mtime) { this.images.delete(b.key); changed = true; }
+      }
+      if (changed) this.prepare(cx);
     });
   }
 
   // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
   prepare(cx) {
     this.blocks = splitBlocks(this.text);
-    for (const b of this.blocks) if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
+    for (const b of this.blocks) {
+      if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
+      if (b.kind === "img" || b.kind === "mermaid") b.key = this.imageKey(b);
+    }
     this.highlight(cx);
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
-    const todo = this.blocks.filter((b) => (b.kind === "img" || b.kind === "mermaid") && !this.images.has(b.src));
+    // 読めなかった画像は、読み直すたびにやり直す（あとから画像を置いたときのため）
+    for (const b of this.blocks) if (b.key && this.images.get(b.key)?.error) this.images.delete(b.key);
+    this.recheckImages(cx);
+    const todo = [];
+    for (const b of this.blocks) {
+      if ((b.kind !== "img" && b.kind !== "mermaid") || this.images.has(b.key)) continue;
+      this.images.set(b.key, { loading: true });
+      todo.push(b);
+    }
     if (!todo.length) return;
-    for (const b of todo) this.images.set(b.src, { loading: true });
     cx.spawn(async (cx) => {
       await exec("/bin/mkdir", ["-p", dir]);
       for (const [i, b] of todo.entries()) {
@@ -317,28 +378,29 @@ export default class MdPreview extends View {
             const r = await exec(`${appHome()}/mods/md-preview/mermaid-png.sh`, [srcFile, png], { timeout: 120000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "Mermaid の図を描けませんでした");
             const [w, h] = r.stdout.trim().split(" ").map(Number);
-            this.images.set(b.src, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
+            this.images.set(b.key, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
             if (this.file === file) cx.notify();
             continue;
           }
+          let mtime = null;
           if (/^https?:\/\//.test(b.src)) {
             const r = await exec("/usr/bin/curl", ["-fsSL", "--max-time", "20", "-o", dest, b.src], { timeout: 30000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "download failed");
           } else {
-            const src = decodeURI(b.src.replace(/^file:\/\//, ""));
-            const abs = src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(file)}/${src}`;
-            const r = await exec("/bin/cp", [abs, dest]);
+            const r = await exec("/bin/cp", [b.key, dest]);
             if (r.code !== 0) throw new Error(r.stderr.trim() || "not found");
+            mtime = (await exec("/usr/bin/stat", ["-f", "%m", b.key])).stdout.trim() || null;
           }
           let w = 0, h = 0;
-          if (ext !== "svg") {
+          if (ext === "svg") [w, h] = svgSize((await readTextFile(dest)) ?? "");
+          else {
             const size = await exec("/usr/bin/sips", ["-g", "pixelWidth", "-g", "pixelHeight", dest]);
             w = Number(size.stdout.match(/pixelWidth: (\d+)/)?.[1]) || 0;
             h = Number(size.stdout.match(/pixelHeight: (\d+)/)?.[1]) || 0;
           }
-          this.images.set(b.src, { path: `${this.imageDir}/${name}`, w: w || 800, h: h || 450 });
+          this.images.set(b.key, { path: `${this.imageDir}/${name}`, w: w || 800, h: h || 450, mtime });
         } catch (e) {
-          this.images.set(b.src, { error: String(e.message ?? e) });
+          this.images.set(b.key, { error: String(e.message ?? e) });
         }
         if (this.file === file) cx.notify();
       }
@@ -417,11 +479,11 @@ export default class MdPreview extends View {
     const file = this.file;
     if (!file) return;
     cx.spawn(async (cx) => {
-      let text;
-      try { text = await readTextFile(file); } catch { return; }
-      if (this.file !== file) return;
-      if (text !== this.text) {
+      const text = await this.read(file);
+      if (this.file !== file || text == null) return; // 読めなければ、前の表示を残す
+      if (text !== this.text || this.error) {
         this.text = text;
+        this.error = null;
         this.marp = isMarp(text);
         if (this.marp) this.build(cx);
         else this.prepare(cx);
@@ -438,13 +500,13 @@ export default class MdPreview extends View {
   }
 
   go(delta, cx) {
+    if (!this.slides.length) return; // スライドを描き終わる前（または Marp でないファイル）は、めくらない
     this.page = Math.min(this.slides.length - 1, Math.max(0, this.page + delta));
     cx.notify();
   }
 
   setMode(mode, cx) {
     this.mode = mode;
-    try { localStorage.setItem("marpMode", mode); } catch {}
     cx.notify();
   }
 
@@ -528,7 +590,7 @@ export default class MdPreview extends View {
               .child(a.label))
             .child(this.markdown(`alert-md-${i}`, b.text, t));
         }
-        const img = this.images.get(b.src);
+        const img = this.images.get(b.key);
         if (!img?.path) {
           const what = b.kind === "mermaid" ? "Mermaid の図" : b.src;
           return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(img?.error ? t.ansi1 : t.border).text_size(12)
