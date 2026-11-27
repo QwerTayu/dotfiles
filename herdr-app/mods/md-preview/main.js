@@ -405,7 +405,9 @@ export default class MdPreview extends View {
       } catch {} finally {
         this.highlighting = false;
         cx.notify();
-        if (this.blocks.some((b) => b.kind === "code" && !this.tokens.has(b.key))) {} // 失敗したものは、次に読み直したときにもう一度試す
+        // 色付けの途中に増えたブロックがあれば、続けて色付けする。今回失敗したものは、次に読み直したときにもう一度試す（ここで呼び直すと止まらない）
+        const tried = new Set(todo.map((b) => b.key));
+        if (this.blocks.some((b) => b.kind === "code" && !this.tokens.has(b.key) && !tried.has(b.key))) this.highlight(cx);
       }
     });
   }
