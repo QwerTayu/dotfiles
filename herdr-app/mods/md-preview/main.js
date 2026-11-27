@@ -23,6 +23,7 @@ const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])
 // コードブロックの色付けは Shiki（VS Code と同じ文法の定義）に任せる。highlight.mjs を mise の Node で動かし、
 // 返ってきた「文字と色」の並びを、mod が普通の文字として描く（コードエディタの部品は、最後の行の下に余白を取って
 // 中でスクロールしてしまうので使わない）。Shiki は install-shiki.sh が入れる
+// 版を上げるときは、install-shiki.sh の VERSION も同じ値にする（片方だけだと、見つからないフォルダを渡して色付けが黙って止まる）
 const SHIKI_VERSION = "4.6.0";
 const CODE_FONT_SIZE = 13;
 
