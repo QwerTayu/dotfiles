@@ -4,7 +4,7 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, panes } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, panes, nextCommand } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
@@ -127,6 +127,38 @@ export default class MdPreview extends View {
     // mod の読み直しや落ちたときは close() が呼ばれず、PNG が残る。開くたびに 1 日より古いものを消す
     exec("/usr/bin/find", [`${appHome()}/${CACHE_REL}`, "-mindepth", "1", "-maxdepth", "1", "-mtime", "+0", "-exec", "/bin/rm", "-rf", "{}", "+"]).catch(() => {});
     if (this.file) this.load(cx);
+    // 外からの操作（`herdr-app do md-preview.<命令>`）。マウスで押すボタンと同じことを、コマンドでもできるようにする
+    cx.spawn(async (cx) => {
+      for (;;) {
+        const c = await nextCommand();
+        this.command(c, cx);
+        cx.notify();
+      }
+    });
+  }
+
+  // 命令の一覧（`herdr-app do md-preview.<命令>`）
+  //   slides / scroll                   Marp の見せ方を切り替える
+  //   next / prev / first / last        Marp のスライドをめくる（Slides のとき）
+  //   open-N / close-N / toggle-N       N 番目（1 から）の折りたたみブロックを開く・閉じる・切り替える
+  //   open-all / close-all              折りたたみブロックを全部開く・閉じる
+  //   focus                             （Herdr が送る）このペインにキーボードを向ける
+  command(c, cx) {
+    const details = this.blocks.map((b, i) => (b.kind === "details" ? i : -1)).filter((i) => i >= 0);
+    const m = c.match(/^(open|close|toggle)-(\d+|all)$/);
+    if (c === "focus") this.handle.focus();
+    else if (c === "slides" || c === "scroll") this.setMode(c, cx);
+    else if (c === "next") this.go(1, cx);
+    else if (c === "prev") this.go(-1, cx);
+    else if (c === "first") this.go(-this.slides.length, cx);
+    else if (c === "last") this.go(this.slides.length, cx);
+    else if (m) {
+      const targets = m[2] === "all" ? details : [details[Number(m[2]) - 1]].filter((i) => i !== undefined);
+      for (const i of targets) {
+        const open = this.opened.get(i) ?? this.blocks[i].open;
+        this.opened.set(i, m[1] === "open" ? true : m[1] === "close" ? false : !open);
+      }
+    }
   }
 
   async close() {

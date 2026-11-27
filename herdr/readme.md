@@ -57,3 +57,17 @@ Personal                     ~/Documents/personal
 
 TUI のころの `dev-layout`（claude・fresh・lazygit・ターミナルの並び）は作り直していない。
 ソースの管理は標準の Changes パネル、コミットの履歴は自作の Git Graph（右上の Graph）、Markdown は自作の md-preview を使う。
+
+## mod を外から動かす
+
+自作の md-preview は、マウスで押す操作の一部を、コマンドでもできる（`herdr-app do <mod>.<命令>`）。
+スクショを撮るときや、claude に画面を見せながら作業するときに使う。命令の一覧は、各 mod の `main.js` の `command()` の上に書いてある。
+
+```sh
+herdr-app do md-preview.scroll       # Marp を縦に並べて見せる（slides で 1 枚ずつ）
+herdr-app do md-preview.next         # 次のスライド（prev・first・last）
+herdr-app do md-preview.open-2       # 2 番目の折りたたみを開く（close-2・toggle-2・open-all・close-all）
+```
+
+- 命令は、表示しているその mod のすべてに届く（md-preview を 2 つ開いていれば、どちらも切り替わる）。
+- パネルの切り替え（Files・Changes・Graph）とペインの幅は、Herdr のコマンドでできる（`layout.select` と `layout.show`、`pane.resize`）。
