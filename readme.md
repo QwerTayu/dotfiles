@@ -150,18 +150,23 @@ GitHub.com → HTTPS → Yes → Login with a web browser の順に選ぶ。
 
 ### 7. Claude Code にログイン
 
+`claude` は、起動したフォルダでアカウントを選ぶラッパー（`claude/claude.sh`）を通る。何も書いていないフォルダでは TMLlab になるので、
+先に個人のフォルダを決めてから、そこで個人のアカウントに入る。仕組みと TMLlab への入り方は [`claude/readme.md`](claude/readme.md)。
+
 ```sh
+mkdir -p ~/Documents/personal && cd ~/Documents/personal
+printf '[env]\nCLAUDE_ACCOUNT = "me"\n' > mise.local.toml && mise trust
 claude
 ```
 
 ブラウザが開くので Claude アカウント（有料プラン）でログインする。
-ユーザー全体で使う MCP サーバーがあれば `claude mcp add --scope user ...` で追加する。
+ユーザー全体で使う MCP サーバーがあれば、このフォルダで `claude mcp add --scope user ...` で追加する（TMLlab の側には、起動のたびに写る）。
 
 #### Slack の MCP をワークスペースごとに追加する
 
 Slack 公式の MCP（`https://mcp.slack.com/mcp`）を、ワークスペースごとに別の名前で追加する。
 名前ごとに認証するので、切り替えなしで、どのワークスペースも同時に使える。
-登録は `~/.claude.json` に、トークンはキーチェーンに入るので、このリポジトリには何も入らない。
+登録は `~/.claude.json` に、トークンはキーチェーンに入るので、このリポジトリには何も入らない（個人のフォルダで追加する。上の 7 を参照）。
 本物のワークスペース名はここに書かない（このリポジトリは public のため）。下の `sample-space` は例。
 
 1. ワークスペースごとに、`slack-<短い名前>` で追加する。`clientId` は Slack 公式の Claude Code 用プラグイン（`slackapi/slack-skills-plugin`）と同じ値。
