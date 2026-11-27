@@ -74,6 +74,8 @@ const QT_REPO_PREFIX = "\u251c\u2500 ";
 function qtColor(name) {
   return name.startsWith(QT_REPO_PREFIX) ? QT_REPO_COLOR : QT_HEADING_COLOR;
 }
+const qtMember = (r) => !r.tree && r.w.name.startsWith(QT_REPO_PREFIX);
+const qtHeading = (r) => !r.tree && !r.w.name.startsWith(QT_REPO_PREFIX);
 function spaceAvatar(name) {
   if (!name.startsWith(QT_REPO_PREFIX)) return QT_HEADING_AVATAR;
   name = name.slice(QT_REPO_PREFIX.length);
@@ -114,6 +116,8 @@ export default class Spaces extends View {
       for (const state of Object.values(this.reconnecting)) state.busy = false;
     } catch { this.reconnecting = {}; }
     try { this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]")); } catch { this.folded = new Set(); }
+    // spaces-qt: 閉じている見出しの space の ID。
+    try { this.groupsFolded = new Set(JSON.parse(localStorage.getItem("groups.folded") ?? "[]")); } catch { this.groupsFolded = new Set(); }
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
     // Refresh only when the refs could have changed (see `due`).
@@ -362,9 +366,38 @@ export default class Spaces extends View {
     return out.filter(r => this.shown.has(r.w.id));
   }
 
+  // spaces-qt: 見出しの space の下に続く "├─ " の space（とその worktree）を、グループとして折りたたむ。
+  // 見出しの行には group: { count, folded } を付ける（"├─ " の space がないときは付けない）。
+  // 閉じていても、いま開いている space は隠さない。
+  fold(rows) {
+    const out = [];
+    let head = null, inMember = false;
+    for (const r of rows) {
+      if (head && (r.w.machine ?? null) !== (head.w.machine ?? null)) head = null;
+      if (qtHeading(r)) {
+        head = { ...r, group: { count: 0, folded: this.groupsFolded.has(r.w.id) } };
+        inMember = false;
+        out.push(head);
+        continue;
+      }
+      if (head && qtMember(r)) { head.group.count += 1; inMember = true; }
+      if (head && inMember && head.group.folded && !r.w.active) continue;
+      out.push(r);
+    }
+    for (const r of out) if (r.group?.count === 0) r.group = null;
+    return out;
+  }
+
+  toggleGroup(id) {
+    this.groupsFolded.has(id) ? this.groupsFolded.delete(id) : this.groupsFolded.add(id);
+    const ids = new Set(spaces().map((s) => s.id));
+    localStorage.setItem("groups.folded", JSON.stringify([...this.groupsFolded].filter((k) => ids.has(k))));
+  }
+
   // The rows, under a header per machine once one isn't this computer.
   grouped(t, collapsed) {
-    const rows = this.ordered();
+    // 細いサイドバー（番号だけ）には矢印を出せないので、折りたたまない。
+    const rows = collapsed ? this.ordered() : this.fold(this.ordered());
     const draw = (r) => (collapsed ? this.compact(r, t) : this.row(r, t));
     // Where the active space's row lands among the children this returns: the list scrolls by its direct
     // children, and machine headers, login notes and loading rows count too.
@@ -474,7 +507,7 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
-  row({ w, i, g, tree }, t) {
+  row({ w, i, g, tree, group }, t) {
     const on = w.active;
     const fromIndex = this.pressed === null ? -1 : spaces().findIndex(s => s.id === this.pressed);
     const colors = shared("space.colors") ?? {};
@@ -526,8 +559,15 @@ export default class Spaces extends View {
           .items_center()
           .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).flex_none().text_color(t.dim)))
           .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child(spaceAvatar(w.name))))
-          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(w.name))
-          .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
+          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(group?.folded ? `${w.name} (${group.count})` : w.name))
+          .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1())
+          // spaces-qt: グループを開け閉めする矢印。押しても space は切り替えない。
+          .when(Boolean(group), el => el.child(div().id(`space-fold-${w.id}`).flex_none().p(3).rounded(4).text_color(t.dim)
+            .hover(s => s.bg(t.hover).text_color(t.foreground))
+            .tooltip(group.folded ? "グループを開く" : "グループを閉じる")
+            .on_mouse_down("left", (_e, cx) => { cx.stop_propagation(); this.toggleGroup(w.id); cx.notify(); })
+            .on_mouse_up("left", (_e, cx) => cx.stop_propagation())
+            .child(svg(`mods/workspace-chrome/chevron-${group.folded ? "right" : "down"}.svg`).size(11)))),
       );
   }
 
