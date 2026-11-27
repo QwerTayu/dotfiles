@@ -78,14 +78,17 @@ function splitBlocks(text) {
       continue;
     }
     // ほかの ``` のブロックは、mod が色付きのコードとして描く（言語は ``` のうしろの名前）
-    const codeStart = !fence && line.match(/^\s*(```+|~~~+)\s*([^\s`]*)[^`]*$/);
+    // リストの中のコードブロック（``` が字下げされている）は、その字下げを各行から取り、ブロックごと右にずらして描く
+    const codeStart = !fence && line.match(/^(\s*)(```+|~~~+)\s*([^\s`]*)[^`]*$/);
     if (codeStart) {
       flush();
-      const close = new RegExp(`^\\s*${codeStart[1][0] === "`" ? "`" : "~"}{${codeStart[1].length},}\\s*$`);
+      const indent = codeStart[1].replace(/\t/g, "    ").length;
+      const close = new RegExp(`^\\s*${codeStart[2][0] === "`" ? "`" : "~"}{${codeStart[2].length},}\\s*$`);
       const code = [];
       while (i + 1 < lines.length && !close.test(lines[i + 1])) code.push(lines[++i]);
       i++;
-      blocks.push({ kind: "code", lang: codeStart[2].toLowerCase(), code: code.join("\n") });
+      const dedent = (l) => l.replace(new RegExp(`^ {0,${indent}}`), "");
+      blocks.push({ kind: "code", lang: codeStart[3].toLowerCase(), code: code.map(dedent).join("\n"), indent });
       continue;
     }
     if (/^\s*(```|~~~)/.test(line)) fence = !fence;
@@ -567,7 +570,8 @@ export default class MdPreview extends View {
               .when(Boolean(sp.s & 1), (e) => e.italic()).when(Boolean(sp.s & 2), (e) => e.font_semibold())
               .when(Boolean(sp.s & 4), (e) => e.underline()).child(sp.t)));
           // flex_none: ファイルが長いとき、縦に並べたブロックが押し縮められないようにする
-          return div().id(`code-${i}`).relative().flex_none().my(8).rounded(6).border_1().border_color(t.border).bg(t.background)
+          // リストの中のブロックは、リストの字に揃うように右にずらす（字下げ 1 つぶんを 7px ほどとする）
+          return div().id(`code-${i}`).relative().flex_none().my(8).ml(Math.min(b.indent ?? 0, 12) * 7).rounded(6).border_1().border_color(t.border).bg(t.background)
             .child(v_flex().px(14).py(12).pr(110).font_family(TEXT_FONT).text_size(CODE_FONT_SIZE)
               .children(lines.map((spans, n) => lineEl(spans, n))))
             .child(h_flex().id(`copy-${i}`).absolute().top(6).right(6).h(22).px(8).gap(5).items_center().rounded(5)
