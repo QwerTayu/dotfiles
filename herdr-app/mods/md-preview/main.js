@@ -248,8 +248,14 @@ export default class MdPreview extends View {
   }
 
   load(cx) {
-    const file = this.file;
+    let file = this.file;
     cx.spawn(async (cx) => {
+      // シンボリックリンクのパス（~/.claude/CLAUDE.md など）は、リンクをたどった本物のパスで開く。
+      // macOS は本物のパスで変更を知らせてくるので、リンクのパスのまま見張ると、保存しても描き直さない。
+      // 中の相対パスの画像やリンクも、本物のファイルのフォルダから見るのが正しい
+      const real = (await exec("/bin/realpath", [file]).catch(() => null))?.stdout?.trim();
+      if (this.file !== file) return;
+      if (real && real !== file) this.file = file = real;
       const text = await this.read(file);
       if (this.file !== file) return;
       if (text == null) {
