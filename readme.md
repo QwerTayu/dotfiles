@@ -403,4 +403,4 @@ git push
 
 - herdr の TUI（2026-11-26 に Herdr アプリへ乗り換え）: ブランチ `herdr-tui`（`03bf25e`）
 - terminal-browser と marp-preview（Herdr アプリの md-preview と、既定のブラウザで開く形に置き換え）: `637e327`
-- fresh（エディタ）と lazygit（2026-11-27。コミットの履歴は git-graph、変更の確かめは Herdr アプリの Changes パネルで見る）: `55c600b`
+- fresh（エディタ）、lazygit、delta（lazygit の差分の表示に使っていた）（2026-11-27。コミットの履歴は git-graph、変更の確かめは Herdr アプリの Changes パネルで見る）: `55c600b`
