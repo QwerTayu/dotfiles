@@ -3,6 +3,7 @@
 # Shiki は VS Code と同じ文法の定義（TextMate）で色を付ける。版を決めて ~/.local/share/herdr-md-preview/ に入れ、mise の Node で動かす。
 # npm の install スクリプトは動かさない（--ignore-scripts）。Shiki はそれを必要としない。
 set -eu
+# 版を上げるときは、main.js の SHIKI_VERSION も同じ値にする（片方だけだと、色付けが黙って止まる）
 VERSION=4.6.0
 DEST="$HOME/.local/share/herdr-md-preview/shiki-$VERSION"
 NPM="$HOME/.local/share/mise/shims/npm"

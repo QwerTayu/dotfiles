@@ -4,17 +4,38 @@
 // ファイルを保存すると、表示も更新する。
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, TextView } from "gpui-base";
-import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, panes, nextCommand } from "herdr";
+import { props, readTextFile, writeTextFile, watchFolder, pickFiles, exec, home, appHome, theme, settings, closeOverlay, openOverlay, nextCommand } from "herdr";
 
 // image() は ~/.config/herdr-app からの相対パスで読むので、PNG はその下に置く（mods/ の外なので、mod の読み直しは起きない）
 const CACHE_REL = "cache/md-preview";
+const DIALOG_WIDTH = 860; // 手元の md へのリンクを開くダイアログの幅（px）。link.js と同じ
 // 文章の字体。UDEV Gothic NF（アプリのターミナルと同じ）にする。既定の字体では太字・斜体が効かず、
 // Helvetica Neue では日本語の斜体が傾かなかった。UDEV Gothic の斜体は日本語の字形も傾いているので、日本語の斜体も出る（等幅の見た目になる）
 const TEXT_FONT = "UDEV Gothic NF";
 const MARP = () => `${home()}/.local/share/mise/shims/marp`; // mise で入れた marp-cli（dotfiles の mise/config.toml）
 
-const isMarp = (text) => /^---\s*\n[\s\S]*?^marp:\s*true\s*$[\s\S]*?^---\s*$/m.test(text);
+// 先頭の frontmatter（ファイルの 1 行目の --- から次の --- まで）だけを見る。本文の途中の --- や marp: true では Marp にしない。
+// 先頭の BOM と、中身が空の frontmatter（--- の次の行がすぐ ---）も受ける
+const FRONTMATTER = /^\uFEFF?---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
+const isMarp = (text) => {
+  const fm = text.match(FRONTMATTER);
+  return Boolean(fm && /^marp:\s*true\s*$/m.test(fm[1] ?? ""));
+};
 const dirname = (p) => p.slice(0, p.lastIndexOf("/")) || "/";
+// SVG の大きさ。<svg> の width・height（数字か px のとき）を使い、なければ viewBox から出す。わからなければ [0, 0]
+const svgSize = (text) => {
+  const tag = text.match(/<svg\b[^>]*>/i)?.[0] ?? "";
+  const num = (name) => Number(tag.match(new RegExp(`\\s${name}\\s*=\\s*["']\\s*([\\d.]+)(?:px)?\\s*["']`, "i"))?.[1]) || 0;
+  let w = num("width"), h = num("height");
+  const vb = tag.match(/viewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+  if ((!w || !h) && vb) {
+    const vw = Number(vb[1]), vh = Number(vb[2]);
+    if (w && vw) h = (w * vh) / vw;
+    else if (h && vh) w = (h * vw) / vh;
+    else { w = vw; h = vh; }
+  }
+  return [Math.round(w), Math.round(h)];
+};
 const basename = (p) => p.slice(p.lastIndexOf("/") + 1);
 
 // Markdown の表示の部品は画像を描かないので、画像だけの行（![alt](src) か <img src="...">）を抜き出して、mod が image() で描く。
@@ -23,6 +44,7 @@ const IMAGE_LINE = /^\s*(?:!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+["'][^"']*["'])
 // コードブロックの色付けは Shiki（VS Code と同じ文法の定義）に任せる。highlight.mjs を mise の Node で動かし、
 // 返ってきた「文字と色」の並びを、mod が普通の文字として描く（コードエディタの部品は、最後の行の下に余白を取って
 // 中でスクロールしてしまうので使わない）。Shiki は install-shiki.sh が入れる
+// 版を上げるときは、install-shiki.sh の VERSION も同じ値にする（片方だけだと、見つからないフォルダを渡して色付けが黙って止まる）
 const SHIKI_VERSION = "4.6.0";
 const CODE_FONT_SIZE = 13;
 
@@ -58,23 +80,50 @@ function splitBlocks(text) {
       continue;
     }
     // ほかの ``` のブロックは、mod が色付きのコードとして描く（言語は ``` のうしろの名前）
-    const codeStart = !fence && line.match(/^\s*(```+|~~~+)\s*([^\s`]*)[^`]*$/);
+    // リストの中のコードブロック（``` が字下げされている）は、その字下げを各行から取り、ブロックごと右にずらして描く
+    const codeStart = !fence && line.match(/^(\s*)(```+|~~~+)\s*([^\s`]*)[^`]*$/);
     if (codeStart) {
       flush();
-      const close = new RegExp(`^\\s*${codeStart[1][0] === "`" ? "`" : "~"}{${codeStart[1].length},}\\s*$`);
+      const indent = codeStart[1].replace(/\t/g, "    ").length;
+      const close = new RegExp(`^\\s*${codeStart[2][0] === "`" ? "`" : "~"}{${codeStart[2].length},}\\s*$`);
       const code = [];
       while (i + 1 < lines.length && !close.test(lines[i + 1])) code.push(lines[++i]);
       i++;
-      blocks.push({ kind: "code", lang: codeStart[2].toLowerCase(), code: code.join("\n") });
+      // 行の頭の空白とタブ（タブは 4 文字ぶん）を、``` の字下げのぶんまで取る
+      const dedent = (l) => {
+        let col = 0, k = 0;
+        while (k < l.length && col < indent && (l[k] === " " || l[k] === "\t")) { col += l[k] === "\t" ? 4 : 1; k++; }
+        return l.slice(k);
+      };
+      blocks.push({ kind: "code", lang: codeStart[3].toLowerCase(), code: code.map(dedent).join("\n"), indent });
       continue;
     }
     if (/^\s*(```|~~~)/.test(line)) fence = !fence;
     const details = !fence && line.match(DETAILS_START);
     if (details) {
       flush();
-      const body = [details[2]];
-      while (i + 1 < lines.length && !/<\/details>/i.test(lines[i + 1])) body.push(lines[++i]);
-      if (i + 1 < lines.length) body.push(lines[++i].replace(/<\/details>.*$/i, ""));
+      // 対になる </details> まで（同じ行で閉じていればその行まで）を中身にする。
+      // 中の <details> は数えておき、入れ子の </details> では外側を閉じない。
+      // `…` の中と ``` の囲みの中の <details> は、タグとして数えない（タグの書き方を説明している文のため）
+      const body = [];
+      let depth = 0;
+      let inFence = false;
+      let rest = details[2];
+      for (;;) {
+        if (/^\s*(```|~~~)/.test(rest)) inFence = !inFence;
+        const scan = inFence || /^\s*(```|~~~)/.test(rest) ? "" : rest.replace(/`[^`]*`/g, (m) => " ".repeat(m.length));
+        const tag = /<details\b|<\/details>/gi;
+        let cut = -1, m;
+        while ((m = tag.exec(scan))) {
+          if (m[0][1] !== "/") depth++;
+          else if (depth > 0) depth--;
+          else { cut = m.index; break; }
+        }
+        if (cut >= 0) { body.push(rest.slice(0, cut)); break; }
+        body.push(rest);
+        if (i + 1 >= lines.length) break;
+        rest = lines[++i];
+      }
       let inner = body.join("\n");
       const summary = inner.match(SUMMARY);
       inner = inner.replace(SUMMARY, "").trim();
@@ -108,13 +157,12 @@ export default class MdPreview extends View {
     this.page = 0;
     this.rendering = false;
     this.again = false;
-    this.mode = "slides";
-    try { this.mode = localStorage.getItem("marpMode") || "slides"; } catch {}
+    this.mode = "scroll"; // Marp はいつも縦に並べた形で開く（切り替えは覚えない）
     this.width = 800;
     this.handle = cx.focus_handle();
     this.watch = null;
     this.blocks = [];
-    this.images = new Map(); // src -> { path, w, h } または { error }
+    this.images = new Map(); // 画像の key（ローカルなら絶対パス）-> { path, w, h, mtime } または { error }
     this.imageDir = null;
     this.opened = new Map(); // <details> の開け閉め（ブロックの番号 -> 開いているか）
     this.tokens = new Map(); // コードブロックの色付けの結果（言語と中身 -> 行ごとの [{t, c, s}]）。同じ中身なら色付けし直さない
@@ -146,7 +194,7 @@ export default class MdPreview extends View {
   command(c, cx) {
     const details = this.blocks.map((b, i) => (b.kind === "details" ? i : -1)).filter((i) => i >= 0);
     const m = c.match(/^(open|close|toggle)-(\d+|all)$/);
-    if (c === "focus") this.handle.focus();
+    if (c === "focus") { this.handle.focus(); this.recheck(cx); }
     else if (c === "slides" || c === "scroll") this.setMode(c, cx);
     else if (c === "next") this.go(1, cx);
     else if (c === "prev") this.go(-1, cx);
@@ -171,23 +219,53 @@ export default class MdPreview extends View {
     cx.spawn(async (cx) => {
       const picked = await pickFiles({ prompt: "Markdown のファイルを選ぶ", multiple: false });
       if (!picked?.length) return;
-      this.file = picked[0];
-      this.page = 0;
-      this.load(cx);
+      this.switchTo(picked[0], cx);
     });
   }
 
+  // 別のファイルに替える。前のファイルの画像・折りたたみの開け閉め・スライドは持ち越さない
+  switchTo(file, cx) {
+    if (this.imageDir) exec("/bin/rm", ["-rf", `${appHome()}/${this.imageDir}`]);
+    if (this.slides.length) exec("/bin/rm", ["-rf", `${appHome()}/${dirname(this.slides[0])}`]);
+    this.file = file;
+    this.text = "";
+    this.error = null;
+    this.marp = false; // 前のファイルが Marp でも、新しいファイルを marp-cli で描かない
+    this.again = false;
+    this.blocks = [];
+    this.images = new Map();
+    this.imageDir = null;
+    this.opened = new Map();
+    this.slides = [];
+    this.page = 0;
+    this.popup = null;
+    this.load(cx);
+  }
+
+  // ファイルを読む。読めなければ null（readTextFile はファイルがないとき、例外を投げずに null を返す）
+  async read(file) {
+    try { return await readTextFile(file); } catch { return null; }
+  }
+
   load(cx) {
-    const file = this.file;
+    let file = this.file;
     cx.spawn(async (cx) => {
-      try {
-        this.text = await readTextFile(file);
-        this.error = null;
-      } catch (e) {
-        this.error = `読めませんでした: ${file}\n${e}`;
+      // シンボリックリンクのパス（~/.claude/CLAUDE.md など）は、リンクをたどった本物のパスで開く。
+      // macOS は本物のパスで変更を知らせてくるので、リンクのパスのまま見張ると、保存しても描き直さない。
+      // 中の相対パスの画像やリンクも、本物のファイルのフォルダから見るのが正しい
+      const real = (await exec("/bin/realpath", [file]).catch(() => null))?.stdout?.trim();
+      if (this.file !== file) return;
+      if (real && real !== file) this.file = file = real;
+      const text = await this.read(file);
+      if (this.file !== file) return;
+      if (text == null) {
+        this.error = `読めませんでした: ${file}`;
         cx.notify();
+        this.follow(cx); // あとでファイルができたら、見張りで読み直す
         return;
       }
+      this.text = text;
+      this.error = null;
       this.marp = isMarp(this.text);
       if (!this.marp) this.prepare(cx);
       cx.notify();
@@ -212,9 +290,15 @@ export default class MdPreview extends View {
         }
         if (this.file !== file) return;
         if (!changed.length) return; // cancel された
+        // 画像のファイルだけが変わったときは、画像だけを読み直す
+        if (!this.marp && changed.some((p) => this.images.has(p))) this.recheckImages(cx);
         if (changed.some((p) => p === file || p === dirname(file))) {
           await cx.sleep(150);
-          try { this.text = await readTextFile(file); } catch { continue; }
+          const text = await this.read(file);
+          if (this.file !== file) return;
+          if (text == null) continue; // 一度消えた（ブランチの切り替えなど）。前の表示を残して見張り続ける
+          this.text = text;
+          this.error = null;
           this.marp = isMarp(this.text);
           if (this.marp) this.build(cx);
           else this.prepare(cx);
@@ -224,10 +308,11 @@ export default class MdPreview extends View {
     });
   }
 
-  // marp-cli でスライドを PNG にする。描いている途中に保存されたら、終わってからもう一度描く。
+  // marp-cli でスライドを PNG にする。描いている途中に保存されたり、別のファイルに替えたりしたら、終わってから今のファイルをもう一度描く。
   build(cx) {
     if (this.rendering) { this.again = true; return; }
     this.rendering = true;
+    this.again = false;
     const file = this.file;
     const rel = `${CACHE_REL}/${Date.now()}`;
     const out = `${appHome()}/${rel}`;
@@ -235,6 +320,7 @@ export default class MdPreview extends View {
       try {
         const r = await exec(MARP(), ["--images", "png", "--allow-local-files", file, "-o", `${out}/slide.png`], { cwd: dirname(file), timeout: 120000 });
         if (r.code !== 0) throw new Error(r.stderr.trim() || "marp に失敗しました");
+        if (this.file !== file) { exec("/bin/rm", ["-rf", out]); return; } // 描いている間に別のファイルに替わった
         const ls = await exec("/bin/ls", [out]);
         const slides = ls.stdout.split("\n").filter((n) => /^slide\.\d+\.png$/.test(n)).sort().map((n) => `${rel}/${n}`);
         if (slides.length) {
@@ -244,33 +330,77 @@ export default class MdPreview extends View {
         }
         const old = this.slides.length ? dirname(this.slides[0]) : null;
         this.slides = slides;
-        this.page = Math.min(this.page, Math.max(0, slides.length - 1));
+        this.page = Math.max(0, Math.min(this.page, slides.length - 1));
         this.error = null;
         if (old) exec("/bin/rm", ["-rf", `${appHome()}/${old}`]);
       } catch (e) {
-        this.error = String(e);
+        if (this.file === file) this.error = String(e);
       } finally {
         this.rendering = false;
         cx.notify();
-        if (this.again && this.file === file) { this.again = false; this.build(cx); }
+        if ((this.again || this.file !== file) && this.file && this.marp) this.build(cx);
       }
+    });
+  }
+
+  // 画像を覚えておく key。ローカルの画像は md ファイルのフォルダから見た絶対パスにする（同じ相対パスでも、ファイルが違えば別の画像）
+  imageKey(b) {
+    if (b.kind === "mermaid" || /^https?:\/\//.test(b.src)) return b.src;
+    let src = b.src.replace(/^file:\/\//, "");
+    try { src = decodeURI(src); } catch {} // 100%.png のような % は、そのままのパスとして扱う
+    return src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(this.file)}/${src}`;
+  }
+
+  // ローカルの画像を見直す。前に読んだ画像が書き換わっていたら（mtime が変わっていたら）、読めなかった画像のファイルが
+  // できていたら、覚えた結果を捨てて読み直す。Mermaid の図と http の画像は、中身や URL が変わると key が変わるので、ここではやり直さない
+  recheckImages(cx) {
+    const local = this.blocks.filter((b) => b.kind === "img" && b.key.startsWith("/") && (this.images.get(b.key)?.mtime || this.images.get(b.key)?.error));
+    if (!local.length) return;
+    const file = this.file, images = this.images;
+    cx.spawn(async (cx) => {
+      // 小数のある秒（%Fm）で比べる。同じ 1 秒の中の書き換えも見落とさない。ないファイルは出力に出ない
+      const r = await exec("/usr/bin/stat", ["-f", "%Fm %N", ...new Set(local.map((b) => b.key))]).catch(() => null);
+      if (!r || this.file !== file || this.images !== images) return;
+      const now = new Map(r.stdout.split("\n").filter(Boolean).map((l) => [l.slice(l.indexOf(" ") + 1), l.slice(0, l.indexOf(" "))]));
+      let changed = false;
+      for (const b of local) {
+        const img = this.images.get(b.key);
+        const stale = img?.mtime && now.get(b.key) !== img.mtime;
+        const appeared = img?.error && now.has(b.key) && now.get(b.key) !== img.errorMtime;
+        if (stale || appeared) { this.images.delete(b.key); changed = true; }
+      }
+      if (changed) this.prepare(cx);
     });
   }
 
   // 本文を Markdown と画像に分け、まだ用意していない画像をコピーして大きさを調べる。
   prepare(cx) {
-    this.blocks = splitBlocks(this.text);
-    for (const b of this.blocks) if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
+    // Marp でないファイルの先頭の frontmatter は、本文として描かずに、枠に入れて先頭に出す
+    const fm = this.text.match(FRONTMATTER);
+    const rest = fm ? splitBlocks(this.text.slice(fm[0].length)) : splitBlocks(this.text);
+    this.blocks = fm?.[1]?.trim() ? [{ kind: "frontmatter", text: fm[1] }, ...rest] : rest;
+    for (const b of this.blocks) {
+      if (b.kind === "code") b.key = `${b.lang}\n${b.code}`;
+      if (b.kind === "img" || b.kind === "mermaid") b.key = this.imageKey(b);
+    }
     this.highlight(cx);
     const file = this.file;
     if (!this.imageDir) this.imageDir = `${CACHE_REL}/img-${Date.now()}`;
     const dir = `${appHome()}/${this.imageDir}`;
-    const todo = this.blocks.filter((b) => (b.kind === "img" || b.kind === "mermaid") && !this.images.has(b.src));
+    this.recheckImages(cx); // 読めなかった画像のファイルができていたら、やり直す
+    const todo = [];
+    for (const b of this.blocks) {
+      if ((b.kind !== "img" && b.kind !== "mermaid") || this.images.has(b.key)) continue;
+      this.images.set(b.key, { loading: true });
+      todo.push(b);
+    }
     if (!todo.length) return;
-    for (const b of todo) this.images.set(b.src, { loading: true });
+    // 途中で別のファイルに替わったら（images が新しい Map になったら）、結果を書かずにやめる。パスは、写した先のフォルダから作る
+    const images = this.images, imageDir = this.imageDir;
     cx.spawn(async (cx) => {
       await exec("/bin/mkdir", ["-p", dir]);
       for (const [i, b] of todo.entries()) {
+        if (this.images !== images) return;
         const ext = (b.src.match(/\.(png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i)?.[1] ?? "png").toLowerCase();
         const name = `${Date.now()}-${i}.${ext}`;
         const dest = `${dir}/${name}`;
@@ -282,28 +412,36 @@ export default class MdPreview extends View {
             const r = await exec(`${appHome()}/mods/md-preview/mermaid-png.sh`, [srcFile, png], { timeout: 120000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "Mermaid の図を描けませんでした");
             const [w, h] = r.stdout.trim().split(" ").map(Number);
-            this.images.set(b.src, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
+            if (this.images !== images) return;
+            this.images.set(b.key, { path: png.slice(appHome().length + 1), w: w || 600, h: h || 300 });
             if (this.file === file) cx.notify();
             continue;
           }
+          let mtime = null;
           if (/^https?:\/\//.test(b.src)) {
             const r = await exec("/usr/bin/curl", ["-fsSL", "--max-time", "20", "-o", dest, b.src], { timeout: 30000 });
             if (r.code !== 0) throw new Error(r.stderr.trim() || "download failed");
           } else {
-            const src = decodeURI(b.src.replace(/^file:\/\//, ""));
-            const abs = src.startsWith("/") ? src : src.startsWith("~/") ? `${home()}/${src.slice(2)}` : `${dirname(file)}/${src}`;
-            const r = await exec("/bin/cp", [abs, dest]);
+            const r = await exec("/bin/cp", [b.key, dest]);
             if (r.code !== 0) throw new Error(r.stderr.trim() || "not found");
+            mtime = (await exec("/usr/bin/stat", ["-f", "%Fm", b.key])).stdout.trim() || null;
           }
           let w = 0, h = 0;
-          if (ext !== "svg") {
+          // SVG は大きさを中から読む。読めなければ（大きすぎるなど）、既定の大きさで出す
+          if (ext === "svg") [w, h] = svgSize((await readTextFile(dest).catch(() => null)) ?? "");
+          else {
             const size = await exec("/usr/bin/sips", ["-g", "pixelWidth", "-g", "pixelHeight", dest]);
             w = Number(size.stdout.match(/pixelWidth: (\d+)/)?.[1]) || 0;
             h = Number(size.stdout.match(/pixelHeight: (\d+)/)?.[1]) || 0;
           }
-          this.images.set(b.src, { path: `${this.imageDir}/${name}`, w: w || 800, h: h || 450 });
+          if (this.images !== images) return;
+          this.images.set(b.key, { path: `${imageDir}/${name}`, w: w || 800, h: h || 450, mtime });
         } catch (e) {
-          this.images.set(b.src, { error: String(e.message ?? e) });
+          if (this.images !== images) return;
+          // ローカルの画像なら、そのときの mtime（ファイルがなければ null）を覚え、ファイルができたか変わったときだけやり直す
+          const errorMtime = b.key.startsWith("/") ? (await exec("/usr/bin/stat", ["-f", "%Fm", b.key]).catch(() => null))?.stdout?.trim() || null : null;
+          if (this.images !== images) return;
+          this.images.set(b.key, { error: String(e.message ?? e), errorMtime });
         }
         if (this.file === file) cx.notify();
       }
@@ -315,15 +453,52 @@ export default class MdPreview extends View {
   markdown(id, text, t) {
     return TextView.markdown(id, text).selectable(true).font_family(TEXT_FONT).text_size(14).text_color(t.foreground)
       .on_link_click((url, cx) => {
-        if (this.cmd) { this.openUrl(url); return; }
+        if (this.cmd) { this.openLink(url, cx); return; }
         const zoom = settings().zoom || 1;
         this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom };
         cx.notify();
       });
   }
 
-  openUrl(url) {
-    exec("/usr/bin/open", [url]);
+  // リンクの開き方を決める。http・https はブラウザで開き、手元の md はプレビューのダイアログで開き、
+  // ほかのローカルのパス（相対・絶対・~/・file://）は Finder で場所を見せる。
+  // 相対パスは md ファイルのフォルダから見る。#見出し・ほかのスキーム（mailto: など）は開かない（ポップアップに出すだけ）
+  linkTarget(url) {
+    if (/^https?:\/\//i.test(url)) return { kind: "web" };
+    if (url.startsWith("#") || (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^file:\/\//i.test(url))) return { kind: "none" };
+    let p = url.replace(/^file:\/\//i, "").replace(/[?#].*$/, "");
+    try { p = decodeURI(p); } catch {}
+    const base = this.file ? dirname(this.file) : home();
+    const abs = p.startsWith("/") ? p : p.startsWith("~/") ? `${home()}/${p.slice(2)}` : `${base}/${p}`;
+    // . と .. を畳んで、ポップアップに出すパスを読みやすくする
+    const parts = [];
+    for (const seg of abs.split("/")) {
+      if (seg === "" || seg === ".") continue;
+      if (seg === "..") parts.pop(); else parts.push(seg);
+    }
+    const path = `/${parts.join("/")}`;
+    // 手元の md は、Finder ではなく md-preview のダイアログで開く（ターミナルの .md のパスを Cmd+クリックしたときと同じ）
+    return { kind: /\.(md|markdown)$/i.test(path) ? "md" : "local", path };
+  }
+
+  // 開けなかったとき（リンク先のファイルがないなど）は、ポップアップで知らせる
+  openLink(url, cx) {
+    const t = this.linkTarget(url);
+    if (t.kind === "none") return;
+    cx.spawn(async (cx) => {
+      let r;
+      if (t.kind === "md") {
+        r = await exec("/bin/test", ["-f", t.path]).catch(() => ({ code: 1 }));
+        if (r.code === 0) { openOverlay({ mod: "md-preview", props: { file: t.path }, kind: "dialog", width: DIALOG_WIDTH, height: 0.85 }); return; }
+      } else {
+        r = await exec("/usr/bin/open", t.kind === "web" ? [url] : ["-R", t.path]).catch((e) => ({ code: 1, stderr: String(e) }));
+        if (r.code === 0) return;
+      }
+      const zoom = settings().zoom || 1;
+      this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom,
+        error: t.kind === "web" ? (r.stderr?.trim() || "開けませんでした") : "ファイルがありません" };
+      cx.notify();
+    });
   }
 
   // まだ色付けしていないコードブロックを、まとめて Shiki に色付けしてもらう。失敗したブロックは、色なしで出したまま
@@ -350,7 +525,9 @@ export default class MdPreview extends View {
       } catch {} finally {
         this.highlighting = false;
         cx.notify();
-        if (this.blocks.some((b) => b.kind === "code" && !this.tokens.has(b.key))) {} // 失敗したものは、次に読み直したときにもう一度試す
+        // 色付けの途中に増えたブロックがあれば、続けて色付けする。今回失敗したものは、次に読み直したときにもう一度試す（ここで呼び直すと止まらない）
+        const tried = new Set(todo.map((b) => b.key));
+        if (this.blocks.some((b) => b.kind === "code" && !this.tokens.has(b.key) && !tried.has(b.key))) this.highlight(cx);
       }
     });
   }
@@ -360,15 +537,18 @@ export default class MdPreview extends View {
     const file = this.file;
     if (!file) return;
     cx.spawn(async (cx) => {
-      let text;
-      try { text = await readTextFile(file); } catch { return; }
-      if (this.file !== file) return;
-      if (text !== this.text) {
+      const text = await this.read(file);
+      if (this.file !== file || text == null) return; // 読めなければ、前の表示を残す
+      if (text !== this.text || this.error) {
         this.text = text;
+        this.error = null;
         this.marp = isMarp(text);
         if (this.marp) this.build(cx);
         else this.prepare(cx);
-      } else if (!this.marp) this.highlight(cx);
+      } else if (!this.marp) {
+        this.highlight(cx);
+        this.recheckImages(cx); // 画像だけを差し替えたときのため
+      }
       cx.notify();
     });
   }
@@ -381,13 +561,13 @@ export default class MdPreview extends View {
   }
 
   go(delta, cx) {
+    if (!this.slides.length) return; // スライドを描き終わる前（または Marp でないファイル）は、めくらない
     this.page = Math.min(this.slides.length - 1, Math.max(0, this.page + delta));
     cx.notify();
   }
 
   setMode(mode, cx) {
     this.mode = mode;
-    try { localStorage.setItem("marpMode", mode); } catch {}
     cx.notify();
   }
 
@@ -396,8 +576,9 @@ export default class MdPreview extends View {
   }
 
   render(cx) {
-    // ペインにフォーカスが移ったら読み直す（同じタブで横に並べて、別のペインで書き換えている使い方のため）
-    const focusedNow = panes().some((p) => p.mod === "md-preview" && p.focused);
+    // このペインにフォーカスが移ったら読み直す（同じタブで横に並べて、別のペインで書き換えている使い方のため）。
+    // ほかの md-preview のペインではなく、自分のキーボードのフォーカスで見る（pane.go で移ったときは "focus" の命令でも読み直す）
+    const focusedNow = this.handle.is_focused();
     if (focusedNow && !this.wasFocused) this.recheck(cx);
     this.wasFocused = focusedNow;
   const t = theme();
@@ -427,6 +608,12 @@ export default class MdPreview extends View {
     body = v_flex().id("md").flex_1().min_h(0).overflow_y_scrollbar().px(28).py(20)
       .children(this.blocks.map((b, i) => {
         if (b.kind === "md") return this.markdown(`md-${i}`, b.text, t);
+        // 先頭の frontmatter は、小さな灰色の枠に、書いたままの行で出す
+        if (b.kind === "frontmatter") {
+          return v_flex().id(`fm-${i}`).flex_none().mb(10).px(10).py(6).rounded(5).border_1().border_color(t.border).bg(t.raised)
+            .font_family(TEXT_FONT).text_size(12).text_color(t.dim)
+            .children(b.text.split("\n").map((l, n) => div().id(`fm-${i}-${n}`).child(l || " "))); // 長い行は枠の中で折り返す
+        }
         if (b.kind === "code") {
           const copied = this.copied === i;
           const toks = this.tokens.get(b.key);
@@ -437,7 +624,8 @@ export default class MdPreview extends View {
               .when(Boolean(sp.s & 1), (e) => e.italic()).when(Boolean(sp.s & 2), (e) => e.font_semibold())
               .when(Boolean(sp.s & 4), (e) => e.underline()).child(sp.t)));
           // flex_none: ファイルが長いとき、縦に並べたブロックが押し縮められないようにする
-          return div().id(`code-${i}`).relative().flex_none().my(8).rounded(6).border_1().border_color(t.border).bg(t.background)
+          // リストの中のブロックは、リストの字に揃うように右にずらす（字下げ 1 つぶんを 7px ほどとする）
+          return div().id(`code-${i}`).relative().flex_none().my(8).ml(Math.min(b.indent ?? 0, 12) * 7).rounded(6).border_1().border_color(t.border).bg(t.background)
             .child(v_flex().px(14).py(12).pr(110).font_family(TEXT_FONT).text_size(CODE_FONT_SIZE)
               .children(lines.map((spans, n) => lineEl(spans, n))))
             .child(h_flex().id(`copy-${i}`).absolute().top(6).right(6).h(22).px(8).gap(5).items_center().rounded(5)
@@ -470,7 +658,7 @@ export default class MdPreview extends View {
               .child(a.label))
             .child(this.markdown(`alert-md-${i}`, b.text, t));
         }
-        const img = this.images.get(b.src);
+        const img = this.images.get(b.key);
         if (!img?.path) {
           const what = b.kind === "mermaid" ? "Mermaid の図" : b.src;
           return div().id(`img-${i}`).my(6).px(10).py(6).rounded(5).border_1().border_color(img?.error ? t.ansi1 : t.border).text_size(12)
@@ -502,14 +690,19 @@ export default class MdPreview extends View {
   const popup = this.popup && (() => {
     const w = Math.min(460, Math.max(200, this.width - 24));
     const x = Math.max(8, Math.min(this.popup.x - 12, this.width - w - 8));
+    const target = this.linkTarget(this.popup.url);
+    const hint = target.kind === "web" ? "Click to open in the browser \u00b7 \u2318+click on the link opens it directly"
+      : target.kind === "md" ? "Click to preview it \u00b7 \u2318+click on the link does the same"
+      : target.kind === "local" ? "Click to show it in Finder \u00b7 \u2318+click on the link does the same"
+      : "This link is not opened";
     return v_flex().id("link-popup").absolute().left(x).top(this.popup.y + 14).max_w(w).px(10).py(7).gap(3)
       .rounded(6).border_1().border_color(t.border).bg(t.popover).shadow_md()
       .on_mouse_down_out((_e, cx) => { this.popup = null; cx.notify(); })
-      .child(div().id("link-url").text_size(12.5).text_color(t.accent).underline().cursor_pointer()
-        .hover((s) => s.text_color(t.foreground))
-        .on_click((_e, cx) => { this.openUrl(this.popup.url); this.popup = null; cx.notify(); })
-        .child(this.popup.url))
-      .child(div().text_size(11).text_color(t.dim).child("Click to open · \u2318+click on the link opens it directly"));
+      .child(div().id("link-url").text_size(12.5).text_color(target.kind === "none" ? t.muted : t.accent)
+        .when(target.kind !== "none", (e) => e.underline().cursor_pointer().hover((s) => s.text_color(t.foreground))
+          .on_click((_e, cx) => { const url = this.popup.url; this.popup = null; this.openLink(url, cx); cx.notify(); }))
+        .child(target.kind === "local" || target.kind === "md" ? target.path : this.popup.url))
+      .child(this.popup.error ? div().text_size(11.5).text_color(t.ansi1).child(this.popup.error) : div().text_size(11).text_color(t.dim).child(hint));
   })();
   return v_flex().id("root").relative().size_full().bg(t.background).track_focus(this.handle)
     .on_window_mouse_move((e) => { this.pointer = e.local_position; this.cmd = e.modifiers.platform; })

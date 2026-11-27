@@ -13,17 +13,19 @@ export default class OpenChoice extends View {
     this.handle = cx.focus_handle();
     this.handle.focus();
     this.error = null;
+    this.busy = false; // open を走らせている間は、もう一度選ばせない（2 回押すと open と open -R が両方走る）
   }
 
   async run(args, cx) {
     const r = await exec("/usr/bin/open", args).catch((e) => ({ code: 1, stderr: String(e) }));
-    if (r.code !== 0) { this.error = r.stderr.trim() || "Could not open it"; cx.notify(); return; }
+    if (r.code !== 0) { this.error = r.stderr.trim() || "Could not open it"; this.busy = false; cx.notify(); return; }
     closeOverlay(props().overlay);
   }
 
   choose(n, cx) {
-    if (n === 1) cx.spawn(async (cx) => this.run([this.path], cx));
-    if (n === 2) cx.spawn(async (cx) => this.run(["-R", this.path], cx));
+    if (this.busy || (n !== 1 && n !== 2)) return;
+    this.busy = true;
+    cx.spawn(async (cx) => this.run(n === 1 ? [this.path] : ["-R", this.path], cx));
   }
 
   render(_cx) {
@@ -36,9 +38,12 @@ export default class OpenChoice extends View {
         .child(div().text_size(13).text_color(t.foreground).child(label))
         .child(div().text_size(11.5).text_color(t.dim).truncate().child(hint)));
     return v_flex().id("root").w_full().p(14).gap(8).bg(t.popover).track_focus(this.handle)
+      // 修飾キーなしの 1・2・Enter だけを受ける（Cmd+1 などはアプリに渡す）。押しっぱなしのくり返しは受けない
       .on_key_down((e, cx) => {
-        if (e.key === "1" || e.key === "enter") { this.choose(1, cx); cx.stop_propagation(); }
-        else if (e.key === "2") { this.choose(2, cx); cx.stop_propagation(); }
+        const k = e.keystroke;
+        if (k !== "1" && k !== "2" && k !== "enter") return;
+        cx.stop_propagation();
+        if (!e.is_held) this.choose(k === "2" ? 2 : 1, cx);
       })
       .child(div().text_size(14).font_semibold().text_color(t.foreground).truncate().child(basename(this.path)))
       .child(div().text_size(11.5).text_color(t.dim).truncate().child(this.path))
