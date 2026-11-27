@@ -59,6 +59,7 @@ link karabiner                       .config/karabiner   # フォルダごとリ
 link homebrew/brew-check.sh          .local/bin/brew-check
 link chrome/chrome-window-names.py   .local/bin/chrome-window-names
 link gws/gws.sh                      .local/bin/gws
+link claude/claude.sh                .local/bin/claude   # フォルダの mise.local.toml で Claude Code のアカウントを分ける（claude/readme.md）
 
 # 1Password CLI の補完を書き出す（bashrc で毎回 op を動かさないため。op を更新したら setup.sh を実行し直す）
 if command -v op >/dev/null; then

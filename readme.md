@@ -29,6 +29,8 @@ dotfiles/
 │   ├── keybindings.json    → ~/Library/Application Support/Code/User/keybindings.json
 │   └── snippets/           → ~/Library/Application Support/Code/User/snippets/
 ├── claude/
+│   ├── readme.md           フォルダごとに Claude Code のアカウント（個人・TMLlab）を分ける仕組みと、TMLlab のアカウントへの入り方
+│   ├── claude.sh           → ~/.local/bin/claude（フォルダの mise.local.toml の CLAUDE_ACCOUNT を見て、個人は ~/.claude、TMLlab は ~/.claude-tmllab で claude を起動する）
 │   ├── settings.json       → ~/.claude/settings.json
 │   ├── CLAUDE.md           → ~/.claude/CLAUDE.md
 │   ├── statusline.sh       → ~/.claude/statusline.sh（入力欄の下にモデル・effort・組織・利用上限の使用率を出す）
@@ -367,7 +369,7 @@ git push
   mermaid.js（版を決めて npm から 1 度だけ落とし、sha512 で確かめて `~/.local/share/herdr-md-preview/` に置く）を Google Chrome の headless で動かす。
   Marp のスライドの中の Mermaid は、まだ図にならない。
   Herdr アプリの外では、VS Code の拡張機能（`marp-team.marp-vscode`）か、`marp --preview` で見る。
-- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`）をここにリンクする。
+- `~/.local/bin` は `bash_profile` で PATH に入れていて、`setup.sh` が dotfiles のスクリプト（`brew-check`、`chrome-window-names`、`gws`、`claude`）をここにリンクする。
 - Herdr アプリの space とタブの分け方（space 1 つ = リポジトリ 1 つ）は `herdr/readme.md` にまとめている。
 - Herdr アプリの色は VS Code の Dark Modern（`workbench.colorTheme`）に合わせている。
   Herdr アプリは、ターミナルの色（背景・ANSI の16色）を Ghostty と同じ値にし、パネルの色を TUI のころの herdr の `[theme.custom]` と同じ値にしている（`herdr-app/themes/dark-modern.json`）。

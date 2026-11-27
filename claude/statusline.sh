@@ -1,7 +1,8 @@
 #!/bin/bash
 # Claude Code のステータスライン（入力欄の下の 1 行）。
 # 「モデル · effort · 組織 · 5 時間と 1 週間の利用上限の使用率」を出す。
-# Claude Code がセッションの情報を JSON で stdin に渡してくる。組織名はその JSON にないので ~/.claude.json から読む。
+# Claude Code がセッションの情報を JSON で stdin に渡してくる。組織名はその JSON にないので .claude.json から読む。
+# CLAUDE_CONFIG_DIR があればその中の（TMLlab の ~/.claude-tmllab/.claude.json。claude/readme.md）、なければ ~/.claude.json。
 # 利用上限（rate_limits）は Pro / Max で、セッションの最初の応答のあとにだけ渡ってくる。
 input="$(cat)"
 
@@ -16,7 +17,7 @@ paint() {
 
 model="$(get .model.display_name)"
 effort="$(get .effort.level)"
-org="$(jq -r '.oauthAccount.organizationName // empty' "$HOME/.claude.json" 2>/dev/null)"
+org="$(jq -r '.oauthAccount.organizationName // empty' "${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json" 2>/dev/null)"
 five="$(get '(.rate_limits.five_hour.used_percentage // empty) | floor')"
 week="$(get '(.rate_limits.seven_day.used_percentage // empty) | floor')"
 
