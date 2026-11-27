@@ -350,15 +350,35 @@ export default class MdPreview extends View {
   markdown(id, text, t) {
     return TextView.markdown(id, text).selectable(true).font_family(TEXT_FONT).text_size(14).text_color(t.foreground)
       .on_link_click((url, cx) => {
-        if (this.cmd) { this.openUrl(url); return; }
+        if (this.cmd) { this.openLink(url); return; }
         const zoom = settings().zoom || 1;
         this.popup = { url, x: (this.pointer?.x ?? 40) / zoom, y: (this.pointer?.y ?? 40) / zoom };
         cx.notify();
       });
   }
 
-  openUrl(url) {
-    exec("/usr/bin/open", [url]);
+  // リンクの開き方を決める。http・https はブラウザで開き、ローカルのパス（相対・絶対・~/・file://）は Finder で場所を見せる。
+  // 相対パスは md ファイルのフォルダから見る。#見出し・ほかのスキーム（mailto: など）は開かない（ポップアップに出すだけ）
+  linkTarget(url) {
+    if (/^https?:\/\//i.test(url)) return { kind: "web" };
+    if (url.startsWith("#") || (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^file:\/\//i.test(url))) return { kind: "none" };
+    let p = url.replace(/^file:\/\//i, "").replace(/[?#].*$/, "");
+    try { p = decodeURI(p); } catch {}
+    const base = this.file ? dirname(this.file) : home();
+    const abs = p.startsWith("/") ? p : p.startsWith("~/") ? `${home()}/${p.slice(2)}` : `${base}/${p}`;
+    // . と .. を畳んで、ポップアップに出すパスを読みやすくする
+    const parts = [];
+    for (const seg of abs.split("/")) {
+      if (seg === "" || seg === ".") continue;
+      if (seg === "..") parts.pop(); else parts.push(seg);
+    }
+    return { kind: "local", path: `/${parts.join("/")}` };
+  }
+
+  openLink(url) {
+    const t = this.linkTarget(url);
+    if (t.kind === "web") exec("/usr/bin/open", [url]);
+    else if (t.kind === "local") exec("/usr/bin/open", ["-R", t.path]);
   }
 
   // まだ色付けしていないコードブロックを、まとめて Shiki に色付けしてもらう。失敗したブロックは、色なしで出したまま
@@ -537,14 +557,18 @@ export default class MdPreview extends View {
   const popup = this.popup && (() => {
     const w = Math.min(460, Math.max(200, this.width - 24));
     const x = Math.max(8, Math.min(this.popup.x - 12, this.width - w - 8));
+    const target = this.linkTarget(this.popup.url);
+    const hint = target.kind === "web" ? "Click to open in the browser \u00b7 \u2318+click on the link opens it directly"
+      : target.kind === "local" ? "Click to show it in Finder \u00b7 \u2318+click on the link does the same"
+      : "This link is not opened";
     return v_flex().id("link-popup").absolute().left(x).top(this.popup.y + 14).max_w(w).px(10).py(7).gap(3)
       .rounded(6).border_1().border_color(t.border).bg(t.popover).shadow_md()
       .on_mouse_down_out((_e, cx) => { this.popup = null; cx.notify(); })
-      .child(div().id("link-url").text_size(12.5).text_color(t.accent).underline().cursor_pointer()
-        .hover((s) => s.text_color(t.foreground))
-        .on_click((_e, cx) => { this.openUrl(this.popup.url); this.popup = null; cx.notify(); })
-        .child(this.popup.url))
-      .child(div().text_size(11).text_color(t.dim).child("Click to open · \u2318+click on the link opens it directly"));
+      .child(div().id("link-url").text_size(12.5).text_color(target.kind === "none" ? t.muted : t.accent)
+        .when(target.kind !== "none", (e) => e.underline().cursor_pointer().hover((s) => s.text_color(t.foreground))
+          .on_click((_e, cx) => { this.openLink(this.popup.url); this.popup = null; cx.notify(); }))
+        .child(target.kind === "local" ? target.path : this.popup.url))
+      .child(div().text_size(11).text_color(t.dim).child(hint));
   })();
   return v_flex().id("root").relative().size_full().bg(t.background).track_focus(this.handle)
     .on_window_mouse_move((e) => { this.pointer = e.local_position; this.cmd = e.modifiers.platform; })
