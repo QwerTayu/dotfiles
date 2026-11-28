@@ -59,5 +59,6 @@
   "agentPushNotifEnabled": true,
   "enabledPlugins": {
     "obsidian@obsidian-skills": true
-  }
+  },
+  "cleanupPeriodDays": 3650
 }
